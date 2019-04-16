@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example
+spec:
+  rules:
+  - host: hello-world.xyz
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: example
+          servicePort: 8080

@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    app: {{ .Values.name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+{{- if .Values.caddyingresscontroller.deployment.labels }}
+{{ toYaml .Values.caddyingresscontroller.deployment.labels | indent 4 }}
+{{- end }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+      release: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: {{ .Release.Name | quote }}
+        heritage: {{ .Release.Service | quote }}
+{{- if .Values.caddyingresscontroller.deployment.labels }}
+{{ toYaml .Values.caddyingresscontroller.deployment.labels | indent 8 }}
+{{- end }}
+    spec:
+      containers:
+      - env:
+      {{- if .Values.caddyingresscontroller.watchNamespace }}
+        - name: KUBERNETES_NAMESPACE
+          value: {{ .Values.caddyingresscontroller.watchNamespace | quote }}
+      {{- end }}
+        image: "{{ .Values.caddyingresscontroller.image.name }}:{{ .Values.caddyingresscontroller.image.tag }}"
+        imagePullPolicy: {{ .Values.caddyingresscontroller.image.pullPolicy }}
+        name: {{ .Values.name }}
+      serviceAccountName: {{ .Values.serviceAccountName }}

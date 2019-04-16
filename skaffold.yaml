@@ -1,0 +1,12 @@
+apiVersion: skaffold/v1beta8
+kind: Config
+build:
+  artifacts:
+  - image: caddy/ingresscontroller
+deploy:
+  kubectl:
+    manifests:
+    - kubernetes/generated/clusterrole.yaml
+    - kubernetes/generated/clusterrolebinding.yaml
+    - kubernetes/generated/deployment.yaml
+    - kubernetes/generated/serviceaccount.yaml

@@ -1,0 +1,30 @@
+{{- if and ( .Values.caddyingresscontroller.rbac.create ) (.Values.caddyingresscontroller.watchNamespace) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Values.name }}-role
+  namespace: {{ .Values.caddyingresscontroller.watchNamespace | quote }}
+rules:
+  - apiGroups:
+      - ""
+      - "extensions"
+    resources:
+      - ingresses
+      - routes
+    verbs:
+      - list
+      - get
+      - update
+      - patch
+      - watch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - pods
+    verbs:
+      - list
+      - get
+      - watch
+{{- end }}
