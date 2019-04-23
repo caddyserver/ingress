@@ -1,11 +1,17 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
+	"bitbucket.org/lightcodelabs/caddy2"
+	"bitbucket.org/lightcodelabs/ingress/internal/pod"
 	"bitbucket.org/lightcodelabs/ingress/internal/store"
+	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
 	run "k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +22,11 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
+
+	// load required caddy plugins
+	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/caddylog"
+	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/staticfiles"
+	_ "bitbucket.org/lightcodelabs/proxy"
 )
 
 // ResourceMap are resources from where changes are going to be detected
@@ -23,8 +34,10 @@ var ResourceMap = map[string]run.Object{
 	"ingresses": &v1beta1.Ingress{},
 }
 
-// how often we should attempt to keep ingress resource's source address in sync
-const syncInterval = time.Second * 60
+const (
+	// how often we should attempt to keep ingress resource's source address in sync
+	syncInterval = time.Second * 10
+)
 
 // CaddyController represents an caddy ingress controller.
 type CaddyController struct {
@@ -35,6 +48,7 @@ type CaddyController struct {
 	syncQueue     workqueue.RateLimitingInterface
 	statusQueue   workqueue.RateLimitingInterface // statusQueue performs ingress status updates every 60 seconds but inserts the work into the sync queue
 	informer      cache.Controller
+	podInfo       *pod.Info
 }
 
 // NewCaddyController returns an instance of the caddy ingress controller.
@@ -57,30 +71,28 @@ func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, reso
 	controller.informer = informer
 	controller.resourceStore = store.NewStore(controller.kubeClient)
 
-	// =======
-	// TODO :- get info of the current pod, we'll need the ip address so we can forward requests to this ingress
-	// controller
+	podInfo, err := pod.GetPodDetails(kubeClient)
+	if err != nil {
+		klog.Fatalf("Unexpected error obtaining pod information: %v", err)
+	}
+	controller.podInfo = podInfo
 
-	// podInfo, err := k8s.GetPodDetails(kubeClient)
-	// if err != nil {
-	// 	klog.Fatalf("Unexpected error obtaining pod information: %v", err)
-	// }
-	// =======
-
-	// TODO :- attempt to do initial sync with ingresses here
+	// attempt to do initial sync with ingresses
+	controller.syncQueue.Add(SyncStatusAction{})
 
 	return controller
 }
 
 // Shutdown stops the caddy controller.
 func (c *CaddyController) Shutdown() error {
-	// TODO :- implement a graceful shutdown for the ingress controller and caddy server
+	// remove this ingress controller's ip from ingress resources.
+	c.updateIngStatuses([]apiv1.LoadBalancerIngress{apiv1.LoadBalancerIngress{}}, c.resourceStore.Ingresses)
 
-	// shutdown statusQueue
-
-	// shutdown syncQueue
-
-	// shutdownCaddy
+	// shutdownCaddy server gracefully
+	// err := caddy2.StopAdmin()
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -92,12 +104,20 @@ func (c *CaddyController) handleErr(err error, action interface{}) {
 
 // Run method starts the ingress controller.
 func (c *CaddyController) Run(stopCh chan struct{}) {
-	klog.Info("starting caddy ingress controller")
+	j, err := json.Marshal(c.resourceStore.CaddyConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cfgReader := bytes.NewReader(j)
 
-	// TODO :- start an instance of caddy server
+	err = caddy2.Load(cfgReader)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	defer runtime.HandleCrash()
 	defer c.syncQueue.ShutDown()
+	defer c.statusQueue.ShutDown()
 
 	// start the ingress informer where we listen to new / updated ingress resources
 	go c.informer.Run(stopCh)
@@ -111,25 +131,22 @@ func (c *CaddyController) Run(stopCh chan struct{}) {
 	// start processing events for syncing ingress resources
 	go wait.Until(c.runWorker, time.Second, stopCh)
 
-	// start ingress status syncher
+	// start ingress status syncher and run every syncInterval
 	go wait.Until(c.dispatchSync, syncInterval, stopCh)
 
+	// wait for SIGTERM
 	<-stopCh
 	klog.Info("stopping ingress controller")
 
-	exitCode := 0
-	err := c.Shutdown()
+	var exitCode int
+	err = c.Shutdown()
 	if err != nil {
-		klog.Errorf("could not shutdown ingress controller properly")
+		klog.Errorf("could not shutdown ingress controller properly, %v", err.Error())
 		exitCode = 1
 	}
 
 	os.Exit(exitCode)
 }
-
-// TODO :- copy this for the status updater for ingress controllers
-// every 60 seconds attempt to update the statusIP for ingresses
-// add into the syncqueue
 
 // process items in the event queue
 func (c *CaddyController) runWorker() {

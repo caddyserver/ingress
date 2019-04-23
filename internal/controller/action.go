@@ -2,16 +2,20 @@ package controller
 
 import (
 	"fmt"
+	"io/ioutil"
 
+	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
 	"k8s.io/api/extensions/v1beta1"
 )
 
+// onResourceAdded runs when an ingress resource is added to the cluster.
 func (c *CaddyController) onResourceAdded(obj interface{}) {
 	c.syncQueue.Add(ResourceAddedAction{
 		resource: obj,
 	})
 }
 
+// onResourceUpdated is run when an ingress resource is updated in the cluster.
 func (c *CaddyController) onResourceUpdated(old interface{}, new interface{}) {
 	c.syncQueue.Add(ResourceUpdatedAction{
 		resource:    new,
@@ -19,12 +23,14 @@ func (c *CaddyController) onResourceUpdated(old interface{}, new interface{}) {
 	})
 }
 
+// onResourceDeleted is run when an ingress resource is deleted from the cluster.
 func (c *CaddyController) onResourceDeleted(obj interface{}) {
 	c.syncQueue.Add(ResourceDeletedAction{
 		resource: obj,
 	})
 }
 
+// onSyncStatus is run every sync interval to update the source address on ingresses.
 func (c *CaddyController) onSyncStatus(obj interface{}) {
 	c.syncQueue.Add(SyncStatusAction{})
 }
@@ -57,12 +63,23 @@ func (r ResourceAddedAction) handle(c *CaddyController) error {
 		return fmt.Errorf("ResourceAddedAction: incoming resource is not of type ingress")
 	}
 
-	// 1. Parse ingress resource and convert to obj to configure caddy with
-	// 2. Get current caddy config for rollback purposes
-	// 3. Update internal caddy config
-	// 4. Get ingress controller publish address
-	// 5. call syncIngress for this specific resource
-	// 6. Add this ingress to resource store
+	// get current caddy config for rollback purposes
+	oldConfig := *c.resourceStore.CaddyConfig
+	fmt.Fprint(ioutil.Discard, oldConfig)
+
+	// update internal caddy config with new ingress info
+	newConfig, err := caddy.AddIngressConfig(c.resourceStore.CaddyConfig, ing)
+	if err != nil {
+		return err
+	}
+
+	// TODO :- reload caddy2 config with newConfig
+	fmt.Fprint(ioutil.Discard, newConfig)
+
+	// TODO :- if err rollback to old config
+
+	// ensure that ingress source is updated to point to this ingress controller's ip
+	c.syncStatus([]*v1beta1.Ingress{ing})
 
 	c.resourceStore.AddIngress(ing)
 

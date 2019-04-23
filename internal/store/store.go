@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
 	"k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -9,8 +10,9 @@ import (
 
 // Store represents a collection of ingresses and secrets that we are monitoring.
 type Store struct {
-	Ingresses []*v1beta1.Ingress
-	Secrets   []interface{} // TODO :- should we store the secrets in the ingress object?
+	Ingresses   []*v1beta1.Ingress
+	Secrets     []interface{} // TODO :- should we store the secrets in the ingress object?
+	CaddyConfig *caddy.Config
 }
 
 // NewStore returns a new store that keeps track of ingresses and secrets. It will attempt to get
@@ -23,7 +25,8 @@ func NewStore(kubeClient *kubernetes.Clientset) *Store {
 	}
 
 	s := &Store{
-		Ingresses: make([]*v1beta1.Ingress, len(ingresses.Items)-1),
+		Ingresses:   []*v1beta1.Ingress{},
+		CaddyConfig: caddy.NewConfig(),
 	}
 
 	for _, i := range ingresses.Items {

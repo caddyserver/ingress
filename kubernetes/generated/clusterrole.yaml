@@ -9,6 +9,8 @@ rules:
     resources:
       - ingresses
       - routes
+      - extensions
+      - ingresses/status
     verbs:
       - list
       - get
@@ -21,6 +23,7 @@ rules:
     resources:
       - services
       - pods
+      - nodes
     verbs:
       - list
       - get

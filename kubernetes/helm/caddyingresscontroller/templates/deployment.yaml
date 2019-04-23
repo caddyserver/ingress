@@ -29,12 +29,20 @@ spec:
 {{- end }}
     spec:
       containers:
-      - env:
-      {{- if .Values.caddyingresscontroller.watchNamespace }}
-        - name: KUBERNETES_NAMESPACE
-          value: {{ .Values.caddyingresscontroller.watchNamespace | quote }}
-      {{- end }}
-        image: "{{ .Values.caddyingresscontroller.image.name }}:{{ .Values.caddyingresscontroller.image.tag }}"
+      - image: "{{ .Values.caddyingresscontroller.image.name }}:{{ .Values.caddyingresscontroller.image.tag }}"
         imagePullPolicy: {{ .Values.caddyingresscontroller.image.pullPolicy }}
         name: {{ .Values.name }}
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        {{- if .Values.caddyingresscontroller.watchNamespace }}
+          - name: KUBERNETES_NAMESPACE
+            value: {{ .Values.caddyingresscontroller.watchNamespace | quote }}
+        {{- end }}
       serviceAccountName: {{ .Values.serviceAccountName }}

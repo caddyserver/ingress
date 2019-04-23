@@ -6,6 +6,9 @@ build:
 deploy:
   kubectl:
     manifests:
+    - hack/test/example-deployment.yaml
+    - hack/test/example-ingress.yaml
+    - hack/test/example-service.yaml
     - kubernetes/generated/clusterrole.yaml
     - kubernetes/generated/clusterrolebinding.yaml
     - kubernetes/generated/deployment.yaml
