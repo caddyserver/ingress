@@ -24,7 +24,6 @@ spec:
         release: "release-name"
         heritage: "Tiller"
         version: v0.1.0
-
     spec:
       serviceAccountName: caddyingresscontroller
       containers:

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"k8s.io/klog"
 
 	// load required caddy plugins
+	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/caddylog"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/staticfiles"
 	_ "bitbucket.org/lightcodelabs/proxy"
@@ -36,7 +36,7 @@ var ResourceMap = map[string]run.Object{
 
 const (
 	// how often we should attempt to keep ingress resource's source address in sync
-	syncInterval = time.Second * 10
+	syncInterval = time.Second * 30
 )
 
 // CaddyController represents an caddy ingress controller.
@@ -87,13 +87,6 @@ func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, reso
 func (c *CaddyController) Shutdown() error {
 	// remove this ingress controller's ip from ingress resources.
 	c.updateIngStatuses([]apiv1.LoadBalancerIngress{apiv1.LoadBalancerIngress{}}, c.resourceStore.Ingresses)
-
-	// shutdownCaddy server gracefully
-	// err := caddy2.StopAdmin()
-	// if err != nil {
-	// 	return err
-	// }
-
 	return nil
 }
 
@@ -102,17 +95,26 @@ func (c *CaddyController) handleErr(err error, action interface{}) {
 	klog.Error(err)
 }
 
-// Run method starts the ingress controller.
-func (c *CaddyController) Run(stopCh chan struct{}) {
+func (c *CaddyController) reloadCaddy() error {
 	j, err := json.Marshal(c.resourceStore.CaddyConfig)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	cfgReader := bytes.NewReader(j)
 
+	cfgReader := bytes.NewReader(j)
 	err = caddy2.Load(cfgReader)
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
+// Run method starts the ingress controller.
+func (c *CaddyController) Run(stopCh chan struct{}) {
+	err := c.reloadCaddy()
+	if err != nil {
+		klog.Errorf("initial caddy config load failed, %v", err.Error())
 	}
 
 	defer runtime.HandleCrash()

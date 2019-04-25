@@ -7,6 +7,10 @@ spec:
   - host: hello-world.xyz
     http:
       paths:
+      - path: /hello2
+        backend:
+          serviceName: example2
+          servicePort: 8080
       - path: /hello
         backend:
           serviceName: example

@@ -2,10 +2,11 @@ package controller
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
+	"github.com/pkg/errors"
 	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/klog"
 )
 
 // onResourceAdded runs when an ingress resource is added to the cluster.
@@ -57,58 +58,91 @@ type ResourceDeletedAction struct {
 }
 
 func (r ResourceAddedAction) handle(c *CaddyController) error {
+	klog.Info("New ingress resource detected, updating Caddy config...")
+
 	// configure caddy to handle this resource
 	ing, ok := r.resource.(*v1beta1.Ingress)
 	if !ok {
 		return fmt.Errorf("ResourceAddedAction: incoming resource is not of type ingress")
 	}
 
-	// get current caddy config for rollback purposes
-	oldConfig := *c.resourceStore.CaddyConfig
-	fmt.Fprint(ioutil.Discard, oldConfig)
+	// add this ingress to the internal store
+	c.resourceStore.AddIngress(ing)
 
-	// update internal caddy config with new ingress info
-	newConfig, err := caddy.AddIngressConfig(c.resourceStore.CaddyConfig, ing)
+	err := updateConfig(c)
 	if err != nil {
 		return err
 	}
 
-	// TODO :- reload caddy2 config with newConfig
-	fmt.Fprint(ioutil.Discard, newConfig)
-
-	// TODO :- if err rollback to old config
-
 	// ensure that ingress source is updated to point to this ingress controller's ip
-	c.syncStatus([]*v1beta1.Ingress{ing})
+	err = c.syncStatus([]*v1beta1.Ingress{ing})
+	if err != nil {
+		return errors.Wrapf(err, "syncing ingress source address name: %v", ing.GetName())
+	}
 
-	c.resourceStore.AddIngress(ing)
-
-	// ~~~~
-	// when updating caddy config the ingress controller should bypass kube-proxy and get the ip address of
-	// the pod that the deployment we are proxying to is running on so that we can proxy to that ip address port.
-	// this is good for session affinity and increases performance (since we don't have to hit dns).
-
-	// example getting an ingress
-	// ingClient := c.kubeClient.ExtensionsV1beta1().Ingresses(c.namespace) // get a client to update the ingress
-	// ingClient.UpdateStatus(ing) // pass an ingress with the status.address field updated
-	// ~~~
-
+	klog.Info("Caddy reloaded successfully.")
 	return nil
 }
 
 func (r ResourceUpdatedAction) handle(c *CaddyController) error {
-	// find the caddy config related to the oldResource and update it
+	klog.Info("Ingress resource update detected, updating Caddy config...")
 
-	fmt.Printf("\nUpdated resource:\n +%v\n\nOld resource: \n %+v\n", r.resource, r.oldResource)
+	// update caddy config regarding this ingress
+	ing, ok := r.resource.(*v1beta1.Ingress)
+	if !ok {
+		return fmt.Errorf("ResourceAddedAction: incoming resource is not of type ingress")
+	}
 
+	// add or update this ingress in the internal store
+	c.resourceStore.AddIngress(ing)
+
+	err := updateConfig(c)
+	if err != nil {
+		return err
+	}
+
+	klog.Info("Caddy reloaded successfully.")
 	return nil
 }
 
 func (r ResourceDeletedAction) handle(c *CaddyController) error {
+	klog.Info("Ingress resource deletion detected, updating Caddy config...")
+
 	// delete all resources from caddy config that are associated with this resource
 	// reload caddy config
+	ing, ok := r.resource.(*v1beta1.Ingress)
+	if !ok {
+		return fmt.Errorf("ResourceAddedAction: incoming resource is not of type ingress")
+	}
 
-	fmt.Printf("\nDeleted resource:\n +%v\n", r.resource)
+	// add this ingress to the internal store
+	c.resourceStore.PluckIngress(ing)
+
+	err := updateConfig(c)
+	if err != nil {
+		return err
+	}
+
+	klog.Info("Caddy reloaded successfully.")
+	return nil
+}
+
+func updateConfig(c *CaddyController) error {
+	// update internal caddy config with new ingress info
+	serverRoutes, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
+	if err != nil {
+		return errors.Wrap(err, "converting ingress resources to caddy config")
+	}
+
+	if c.resourceStore.CaddyConfig != nil {
+		c.resourceStore.CaddyConfig.Modules.HTTP.Servers.Server.Routes = serverRoutes
+	}
+
+	// reload caddy2 config with newConfig
+	err = c.reloadCaddy()
+	if err != nil {
+		return errors.Wrap(err, "caddy config reload")
+	}
 
 	return nil
 }

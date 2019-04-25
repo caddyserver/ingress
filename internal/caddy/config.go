@@ -63,25 +63,6 @@ func NewConfig() *Config {
 				Servers: serverConfig{
 					Server: httpServerConfig{
 						Listen: []string{":80", ":443"},
-						Routes: routeList{
-							serverRoute{
-								Apply: []map[string]string{
-									map[string]string{
-										"_module": "log",
-										"file":    "access.log",
-									},
-								},
-								Respond: proxyConfig{
-									Module:          "reverse_proxy",
-									LoadBalanceType: "random",
-									Upstreams: []upstreamConfig{
-										upstreamConfig{
-											Host: "http://example",
-										},
-									},
-								},
-							},
-						},
 					},
 				},
 			},
