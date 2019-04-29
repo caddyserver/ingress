@@ -28,10 +28,32 @@ spec:
 {{ toYaml .Values.caddyingresscontroller.deployment.labels | indent 8 }}
 {{- end }}
     spec:
+      serviceAccountName: {{ .Values.serviceAccountName }}
       containers:
-      - image: "{{ .Values.caddyingresscontroller.image.name }}:{{ .Values.caddyingresscontroller.image.tag }}"
+      - name: {{ .Values.name }}
+        image: "{{ .Values.caddyingresscontroller.image.name }}:{{ .Values.caddyingresscontroller.image.tag }}"
         imagePullPolicy: {{ .Values.caddyingresscontroller.image.pullPolicy }}
-        name: {{ .Values.name }}
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+          # www-data -> 33
+          runAsUser: 0
+          runAsGroup: 0
+        ports:
+          - name: http
+            containerPort: 80
+            {{- if .Values.minikube }}
+            hostPort: 80 # optional, required if running in minikube
+            {{- end }}
+          - name: https
+            containerPort: 443
+            {{- if .Values.minikube }}
+            hostPort: 443 # optional, required if running in minikube
+            {{- end }}
         env:
           - name: POD_NAME
             valueFrom:
@@ -45,4 +67,3 @@ spec:
           - name: KUBERNETES_NAMESPACE
             value: {{ .Values.caddyingresscontroller.watchNamespace | quote }}
         {{- end }}
-      serviceAccountName: {{ .Values.serviceAccountName }}

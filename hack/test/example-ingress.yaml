@@ -2,9 +2,11 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: example
+  annotations:
+    kubernetes.io/ingress.class: caddy
 spec:
   rules:
-  - host: hello-world.xyz
+  - host: caddy2.kubed.co
     http:
       paths:
       - path: /hello2

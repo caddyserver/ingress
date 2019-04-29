@@ -1,10 +1,10 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: caddyingresscontroller
+  name: caddy-ingress-controller
   labels:
-    app: caddyIngressController
-    chart: "caddyingresscontroller-v0.1.0"
+    app: caddy-ingress-controller
+    chart: "caddy-ingress-controller-v0.1.0"
     release: "release-name"
     heritage: "Tiller"
     version: v0.1.0
@@ -14,21 +14,22 @@ spec:
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: caddyIngressController
+      app: caddy-ingress-controller
       release: "release-name"
   template:
     metadata:
       labels:
-        app: caddyIngressController
-        chart: "caddyingresscontroller-v0.1.0"
+        app: caddy-ingress-controller
+        chart: "caddy-ingress-controller-v0.1.0"
         release: "release-name"
         heritage: "Tiller"
         version: v0.1.0
+
     spec:
-      serviceAccountName: caddyingresscontroller
+      serviceAccountName: caddy-ingress-controller
       containers:
-      - name: caddyingresscontroller
-        image: "caddy/ingresscontroller"
+      - name: caddy-ingress-controller
+        image: "gcr.io/danny-239313/ingresscontroller"
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: true
@@ -43,10 +44,8 @@ spec:
         ports:
           - name: http
             containerPort: 80
-            hostPort: 80 # optional, required if running in minikube
           - name: https
             containerPort: 443
-            hostPort: 443 # optional, required if running in minikube
         env:
           - name: POD_NAME
             valueFrom:
