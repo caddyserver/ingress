@@ -9,19 +9,17 @@ rules:
       - "extensions"
     resources:
       - ingresses
-      - routes
-    verbs:
-      - list
-      - get
-      - update
-      - patch
-      - watch
-      - delete
+      - ingresses/status
+      - secrets
+    verbs: ["*"]
   - apiGroups:
       - ""
     resources:
       - services
       - pods
+      - nodes
+      - routes
+      - extensions
     verbs:
       - list
       - get

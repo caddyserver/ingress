@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: example
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: example
   ports:

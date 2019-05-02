@@ -74,6 +74,9 @@ func (r ResourceAddedAction) handle(c *CaddyController) error {
 		return err
 	}
 
+	// js, _ := json.MarshalIndent(c.resourceStore.CaddyConfig, "", "  ")
+	// fmt.Printf("\n%v\n", string(js))
+
 	// ensure that ingress source is updated to point to this ingress controller's ip
 	err = c.syncStatus([]*v1beta1.Ingress{ing})
 	if err != nil {
@@ -129,13 +132,19 @@ func (r ResourceDeletedAction) handle(c *CaddyController) error {
 
 func updateConfig(c *CaddyController) error {
 	// update internal caddy config with new ingress info
-	serverRoutes, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
+	serverRoutes, hosts, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
 	if err != nil {
 		return errors.Wrap(err, "converting ingress resources to caddy config")
 	}
 
 	if c.resourceStore.CaddyConfig != nil {
 		c.resourceStore.CaddyConfig.Modules.HTTP.Servers.Server.Routes = serverRoutes
+
+		// set tls policies
+		p := c.resourceStore.CaddyConfig.Modules.TLS.Automation.Policies
+		for i := range p {
+			p[i].Hosts = hosts
+		}
 	}
 
 	// reload caddy2 config with newConfig

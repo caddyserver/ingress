@@ -1,29 +1,24 @@
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
-  name: caddyingresscontroller-role
+  name: caddy-ingress-controller-role
 rules:
   - apiGroups:
       - ""
       - "extensions"
     resources:
       - ingresses
-      - routes
-      - extensions
       - ingresses/status
-    verbs:
-      - list
-      - get
-      - update
-      - patch
-      - watch
-      - delete
+      - secrets
+    verbs: ["*"]
   - apiGroups:
       - ""
     resources:
       - services
       - pods
       - nodes
+      - routes
+      - extensions
     verbs:
       - list
       - get

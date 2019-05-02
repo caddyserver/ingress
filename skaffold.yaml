@@ -2,7 +2,7 @@ apiVersion: skaffold/v1beta8
 kind: Config
 build:
   artifacts:
-  - image: caddy/ingresscontroller
+  - image: gcr.io/danny-239313/ingresscontroller
 deploy:
   kubectl:
     manifests:
@@ -15,3 +15,4 @@ deploy:
     - kubernetes/generated/clusterrolebinding.yaml
     - kubernetes/generated/deployment.yaml
     - kubernetes/generated/serviceaccount.yaml
+    - kubernetes/generated/loadbalancer.yaml

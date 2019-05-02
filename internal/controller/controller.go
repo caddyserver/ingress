@@ -3,7 +3,9 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -26,6 +28,8 @@ import (
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/caddylog"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/staticfiles"
+	"bitbucket.org/lightcodelabs/ingress/pkg/storage"
+	_ "bitbucket.org/lightcodelabs/ingress/pkg/storage"
 	_ "bitbucket.org/lightcodelabs/proxy"
 )
 
@@ -53,6 +57,12 @@ type CaddyController struct {
 
 // NewCaddyController returns an instance of the caddy ingress controller.
 func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, resource string, restClient rest.Interface) *CaddyController {
+	// TODO :- we should get the namespace of the ingress we are processing to store secrets
+	// Do this in the SecretStorage package
+	if namespace == "" {
+		namespace = "default"
+	}
+
 	controller := &CaddyController{
 		kubeClient:  kubeClient,
 		namespace:   namespace,
@@ -69,7 +79,7 @@ func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, reso
 
 	controller.indexer = indexer
 	controller.informer = informer
-	controller.resourceStore = store.NewStore(controller.kubeClient)
+	controller.resourceStore = store.NewStore(controller.kubeClient, namespace)
 
 	podInfo, err := pod.GetPodDetails(kubeClient)
 	if err != nil {
@@ -79,6 +89,24 @@ func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, reso
 
 	// attempt to do initial sync with ingresses
 	controller.syncQueue.Add(SyncStatusAction{})
+
+	// Register caddy cert storage module.
+	caddy2.RegisterModule(caddy2.Module{
+		Name: "caddy.storage.secret_store",
+		New: func() (interface{}, error) {
+			ss := &storage.SecretStorage{
+				Namespace:  namespace,
+				KubeClient: kubeClient,
+			}
+
+			return ss, nil
+		},
+	})
+
+	err = caddy2.StartAdmin("127.0.0.1:1234")
+	if err != nil {
+		klog.Fatal(err)
+	}
 
 	return controller
 }
@@ -101,10 +129,14 @@ func (c *CaddyController) reloadCaddy() error {
 		return err
 	}
 
-	cfgReader := bytes.NewReader(j)
-	err = caddy2.Load(cfgReader)
+	// post to load endpoint
+	resp, err := http.Post("http://127.0.0.1:1234/load", "application/json", bytes.NewBuffer(j))
 	if err != nil {
 		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("could not reload caddy config")
 	}
 
 	return nil

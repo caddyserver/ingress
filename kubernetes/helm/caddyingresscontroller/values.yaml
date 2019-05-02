@@ -1,7 +1,4 @@
-# Default values for caddyingresscontroller.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
+# Default values for the caddy ingress controller.
 kubernetes:
   host: https://kubernetes.default
 
@@ -24,11 +21,12 @@ caddyingresscontroller:
       version: "v0.1.0"
     # The name of the ServiceAccount to use.
     # If not set and create is true, a name is generated using the fullname template
-    name: caddyIngressController
+    name: caddy-ingress-controller
   image:
-    name: caddy/ingresscontroller
+    name: "gcr.io/danny-239313/ingresscontroller"
     tag: "v0.1.0"
     pullPolicy: IfNotPresent
 
-name: "caddyingresscontroller"
-serviceAccountName: "caddyingresscontroller"
+name: "caddy-ingress-controller"
+serviceAccountName: "caddy-ingress-controller"
+minikube: false
