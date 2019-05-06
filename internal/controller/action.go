@@ -74,9 +74,6 @@ func (r ResourceAddedAction) handle(c *CaddyController) error {
 		return err
 	}
 
-	// js, _ := json.MarshalIndent(c.resourceStore.CaddyConfig, "", "  ")
-	// fmt.Printf("\n%v\n", string(js))
-
 	// ensure that ingress source is updated to point to this ingress controller's ip
 	err = c.syncStatus([]*v1beta1.Ingress{ing})
 	if err != nil {

@@ -12,7 +12,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/util/sliceutils"
 )
 
-// Info contains runtime information about the pod running the Ingres controller
+// Info contains runtime information about the pod running the Ingress controller
 type Info struct {
 	Name      string
 	Namespace string
@@ -21,6 +21,8 @@ type Info struct {
 	Labels map[string]string
 }
 
+// GetAddresses gets the ip address or name of the node in the cluster that the
+// ingress controller is running on.
 func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
 	addrs := []string{}
 

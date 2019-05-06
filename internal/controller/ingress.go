@@ -84,7 +84,7 @@ func ingressSliceEqual(lhs, rhs []apiv1.LoadBalancerIngress) bool {
 	return true
 }
 
-// lessLoadBalancerIngress is a sorting function
+// lessLoadBalancerIngress is a sorting function for ingress hostnames.
 func lessLoadBalancerIngress(addrs []apiv1.LoadBalancerIngress) func(int, int) bool {
 	return func(a, b int) bool {
 		switch strings.Compare(addrs[a].Hostname, addrs[b].Hostname) {

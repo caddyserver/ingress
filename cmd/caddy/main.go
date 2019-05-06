@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
 	"time"
 
 	"bitbucket.org/lightcodelabs/ingress/internal/controller"
@@ -48,8 +50,9 @@ func main() {
 	// start ingress controller
 	c := controller.NewCaddyController(kubeClient, restClient, cfg)
 
-	// TODO :- health metrics
 	// create http server to expose controller health metrics
+	healthPort := 9090
+	go startMetricsServer(healthPort)
 
 	klog.Info("Starting the caddy ingress controller")
 
@@ -60,6 +63,44 @@ func main() {
 	go c.Run(stopCh)
 
 	select {}
+}
+
+type healthChecker struct{}
+
+func (h *healthChecker) Name() string {
+	return "caddy-ingress-controller"
+}
+
+func (h *healthChecker) Check(_ *http.Request) error {
+	return nil
+}
+
+func startMetricsServer(port int) {
+	mux := http.NewServeMux()
+
+	// reg := prometheus.NewRegistry()
+
+	// reg.MustRegister(prometheus.NewGoCollector())
+	// reg.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{
+	// 	PidFn:        func() (int, error) { return os.Getpid(), nil },
+	// 	ReportErrors: true,
+	// }))
+
+	// // healthz.InstallHandler(mux,
+	// // 	healthz.PingHealthz,
+	// // 	healthChecker,
+	// // )
+
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%v", port),
+		Handler:           mux,
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      300 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
+	klog.Fatal(server.ListenAndServe())
 }
 
 // createApiserverClient creates a new Kubernetes REST client. We assume the
@@ -81,7 +122,7 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 
-	// The client may fail to connect to the API server in the first request
+	// The client may fail to connect to the API server on the first request
 	defaultRetry := wait.Backoff{
 		Steps:    10,
 		Duration: 1 * time.Second,

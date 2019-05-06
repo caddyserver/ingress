@@ -15,10 +15,11 @@ func (c *CaddyController) dispatchSync() {
 	c.syncQueue.Add(SyncStatusAction{})
 }
 
-// SyncStatusAction provides an implementation of the action interface
+// SyncStatusAction provides an implementation of the action interface.
 type SyncStatusAction struct {
 }
 
+// handle is run when a syncStatusAction appears in the queue.
 func (r SyncStatusAction) handle(c *CaddyController) error {
 	return c.syncStatus(c.resourceStore.Ingresses)
 }
@@ -30,7 +31,10 @@ func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
 		return err
 	}
 
+	// this happens about every 30 seconds and can pollute the logs, so we
+	// only want to log on higher verbosity levels.
 	klog.V(2).Info("Synching Ingress resource source addresses")
+
 	c.updateIngStatuses(sliceToLoadBalancerIngress(addrs), ings)
 
 	return nil

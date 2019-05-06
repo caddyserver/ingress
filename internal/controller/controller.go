@@ -29,7 +29,7 @@ import (
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/caddylog"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/staticfiles"
-	_ "bitbucket.org/lightcodelabs/proxy"
+	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/reverseproxy"
 )
 
 const (
@@ -108,30 +108,6 @@ func (c *CaddyController) Shutdown() error {
 	return nil
 }
 
-// handleErrs reports errors received from queue actions.
-func (c *CaddyController) handleErr(err error, action interface{}) {
-	klog.Error(err)
-}
-
-func (c *CaddyController) reloadCaddy() error {
-	j, err := json.Marshal(c.resourceStore.CaddyConfig)
-	if err != nil {
-		return err
-	}
-
-	// post to load endpoint
-	resp, err := http.Post("http://127.0.0.1:1234/load", "application/json", bytes.NewBuffer(j))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("could not reload caddy config")
-	}
-
-	return nil
-}
-
 // Run method starts the ingress controller.
 func (c *CaddyController) Run(stopCh chan struct{}) {
 	err := c.reloadCaddy()
@@ -172,13 +148,13 @@ func (c *CaddyController) Run(stopCh chan struct{}) {
 	os.Exit(exitCode)
 }
 
-// process items in the event queue
+// runWorker processes items in the event queue.
 func (c *CaddyController) runWorker() {
 	for c.processNextItem() {
 	}
 }
 
-// if there is an ingress item in the event queue process it
+// processNextItem determines if there is an ingress item in the event queue and processes it.
 func (c *CaddyController) processNextItem() bool {
 	// Wait until there is a new item in the working queue
 	action, quit := c.syncQueue.Get()
@@ -198,4 +174,29 @@ func (c *CaddyController) processNextItem() bool {
 	}
 
 	return true
+}
+
+// handleErrs reports errors received from queue actions.
+func (c *CaddyController) handleErr(err error, action interface{}) {
+	klog.Error(err)
+}
+
+// reloadCaddy reloads the internal caddy instance with new config.
+func (c *CaddyController) reloadCaddy() error {
+	j, err := json.Marshal(c.resourceStore.CaddyConfig)
+	if err != nil {
+		return err
+	}
+
+	// post to load endpoint
+	resp, err := http.Post("http://127.0.0.1:1234/load", "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("could not reload caddy config")
+	}
+
+	return nil
 }
