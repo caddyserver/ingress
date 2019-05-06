@@ -2,6 +2,7 @@ package caddy
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"bitbucket.org/lightcodelabs/caddy2/modules/caddytls"
 )
@@ -73,10 +74,17 @@ type Config struct {
 	Modules httpServer `json:"apps"`
 }
 
+// ControllerConfig represents ingress controller config received through cli arguments.
+type ControllerConfig struct {
+	Email          string
+	AutomaticTLS   bool
+	TLSUseStaging  bool
+	WatchNamespace string
+}
+
 // NewConfig returns a plain slate caddy2 config file.
-func NewConfig(namespace string) *Config {
-	// TODO :- get email from arguments to ingress controller
-	autoPolicyBytes := json.RawMessage(`{"module": "acme", "email": "navdgo@gmail.com"}`)
+func NewConfig(namespace string, cfg ControllerConfig) *Config {
+	autoPolicyBytes := json.RawMessage(fmt.Sprintf(`{"module": "acme", "email": "%v"}`, cfg.Email))
 
 	return &Config{
 		Storage: Storage{
@@ -100,7 +108,7 @@ func NewConfig(namespace string) *Config {
 			HTTP: servers{
 				Servers: serverConfig{
 					Server: httpServerConfig{
-						DisableAutoHTTPS: false, // TODO :- allow to be set from arguments to ingress controller
+						DisableAutoHTTPS: !cfg.AutomaticTLS,
 						ReadTimeout:      "30s",
 						Listen:           []string{":80", ":443"},
 						TLSConnPolicies: caddytls.ConnectionPolicies{

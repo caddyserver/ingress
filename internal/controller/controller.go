@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"bitbucket.org/lightcodelabs/caddy2"
+	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
 	"bitbucket.org/lightcodelabs/ingress/internal/pod"
 	"bitbucket.org/lightcodelabs/ingress/internal/store"
+	"bitbucket.org/lightcodelabs/ingress/pkg/storage"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
-	run "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -28,15 +29,8 @@ import (
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/caddylog"
 	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/staticfiles"
-	"bitbucket.org/lightcodelabs/ingress/pkg/storage"
-	_ "bitbucket.org/lightcodelabs/ingress/pkg/storage"
 	_ "bitbucket.org/lightcodelabs/proxy"
 )
-
-// ResourceMap are resources from where changes are going to be detected
-var ResourceMap = map[string]run.Object{
-	"ingresses": &v1beta1.Ingress{},
-}
 
 const (
 	// how often we should attempt to keep ingress resource's source address in sync
@@ -47,45 +41,40 @@ const (
 type CaddyController struct {
 	resourceStore *store.Store
 	kubeClient    *kubernetes.Clientset
-	namespace     string
 	indexer       cache.Indexer
 	syncQueue     workqueue.RateLimitingInterface
 	statusQueue   workqueue.RateLimitingInterface // statusQueue performs ingress status updates every 60 seconds but inserts the work into the sync queue
 	informer      cache.Controller
 	podInfo       *pod.Info
+	config        caddy.ControllerConfig
 }
 
 // NewCaddyController returns an instance of the caddy ingress controller.
-func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, resource string, restClient rest.Interface) *CaddyController {
-	// TODO :- we should get the namespace of the ingress we are processing to store secrets
-	// Do this in the SecretStorage package
-	if namespace == "" {
-		namespace = "default"
-	}
-
+func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interface, cfg caddy.ControllerConfig) *CaddyController {
+	// setup the ingress controller and start watching resources
 	controller := &CaddyController{
 		kubeClient:  kubeClient,
-		namespace:   namespace,
 		syncQueue:   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		statusQueue: workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		config:      cfg,
 	}
 
-	ingressListWatcher := cache.NewListWatchFromClient(restClient, resource, namespace, fields.Everything())
-	indexer, informer := cache.NewIndexerInformer(ingressListWatcher, ResourceMap[resource], 0, cache.ResourceEventHandlerFuncs{
+	ingressListWatcher := cache.NewListWatchFromClient(restClient, "ingresses", cfg.WatchNamespace, fields.Everything())
+	indexer, informer := cache.NewIndexerInformer(ingressListWatcher, &v1beta1.Ingress{}, 0, cache.ResourceEventHandlerFuncs{
 		AddFunc:    controller.onResourceAdded,
 		UpdateFunc: controller.onResourceUpdated,
 		DeleteFunc: controller.onResourceDeleted,
 	}, cache.Indexers{})
 
-	controller.indexer = indexer
-	controller.informer = informer
-	controller.resourceStore = store.NewStore(controller.kubeClient, namespace)
-
 	podInfo, err := pod.GetPodDetails(kubeClient)
 	if err != nil {
 		klog.Fatalf("Unexpected error obtaining pod information: %v", err)
 	}
+
 	controller.podInfo = podInfo
+	controller.indexer = indexer
+	controller.informer = informer
+	controller.resourceStore = store.NewStore(controller.kubeClient, podInfo.Namespace, cfg)
 
 	// attempt to do initial sync with ingresses
 	controller.syncQueue.Add(SyncStatusAction{})
@@ -95,7 +84,7 @@ func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, reso
 		Name: "caddy.storage.secret_store",
 		New: func() (interface{}, error) {
 			ss := &storage.SecretStorage{
-				Namespace:  namespace,
+				Namespace:  podInfo.Namespace,
 				KubeClient: kubeClient,
 			}
 
@@ -103,6 +92,7 @@ func NewCaddyController(namespace string, kubeClient *kubernetes.Clientset, reso
 		},
 	})
 
+	// start caddy2
 	err = caddy2.StartAdmin("127.0.0.1:1234")
 	if err != nil {
 		klog.Fatal(err)

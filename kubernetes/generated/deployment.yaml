@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: caddy-ingress-controller
+  namespace: caddy-system
   labels:
     app: caddy-ingress-controller
     chart: "caddy-ingress-controller-v0.1.0"
@@ -55,3 +56,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+        args:
+          - -tls
+          - -email=navdgo@gmail.com

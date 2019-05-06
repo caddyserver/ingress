@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"time"
 
 	"bitbucket.org/lightcodelabs/ingress/internal/controller"
@@ -14,50 +13,42 @@ import (
 )
 
 const (
-	// High enough QPS to fit all expected use cases. QPS=0 is not set here, because
-	// client code is overriding it.
+	// high enough QPS to fit all expected use cases.
 	defaultQPS = 1e6
 
-	// High enough Burst to fit all expected use cases. Burst=0 is not set here, because
-	// client code is overriding it.
+	// high enough Burst to fit all expected use cases.
 	defaultBurst = 1e6
 )
 
 func main() {
 	klog.InitFlags(nil)
 
-	// get the namespace to monitor ingress resources for
-	namespace := os.Getenv("KUBERNETES_NAMESPACE")
-	if len(namespace) == 0 {
-		namespace = v1.NamespaceAll
-		klog.Warning("KUBERNETES_NAMESPACE is unset, will monitor ingresses in all namespaces.")
-	}
-
-	// TODO :- implement
 	// parse any flags required to configure the caddy ingress controller
-	// cfg, err := parseFlags()
-	// if err != nil {
-	// 	klog.Fatal(err)
-	// }
+	cfg := parseFlags()
+
+	if cfg.WatchNamespace == "" {
+		cfg.WatchNamespace = v1.NamespaceAll
+		klog.Warning("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
+	}
 
 	// get client to access the kubernetes service api
 	kubeClient, err := createApiserverClient()
 	if err != nil {
 		msg := `
 		Error while initiating a connection to the Kubernetes API server.
-		This could mean the cluster is misconfigured (e.g. it has invalid API server certificates or Service Accounts configuration)
-	`
+		This could mean the cluster is misconfigured (e.g. it has invalid
+		API server certificates or Service Accounts configuration)
+		`
 
 		klog.Fatalf(msg, err)
 	}
 
-	var resource = "ingresses"
 	restClient := kubeClient.ExtensionsV1beta1().RESTClient()
 
 	// start ingress controller
-	c := controller.NewCaddyController(namespace, kubeClient, resource, restClient)
+	c := controller.NewCaddyController(kubeClient, restClient, cfg)
 
-	// TODO :-
+	// TODO :- health metrics
 	// create http server to expose controller health metrics
 
 	klog.Info("Starting the caddy ingress controller")
@@ -98,11 +89,12 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		Jitter:   0.1,
 	}
 
-	klog.V(2).Info("Trying to discover Kubernetes version")
+	klog.V(2).Info("Attempting to discover Kubernetes version")
 
 	var v *version.Info
 	var retries int
 	var lastErr error
+
 	err = wait.ExponentialBackoff(defaultRetry, func() (bool, error) {
 		v, err = client.Discovery().ServerVersion()
 		if err == nil {

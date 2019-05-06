@@ -26,7 +26,8 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) ([]serverRoute, []string, err
 			hosts = append(hosts, rule.Host)
 
 			for _, path := range rule.HTTP.Paths {
-				r := baseRoute(path.Backend.ServiceName)
+				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local", path.Backend.ServiceName, ing.Namespace)
+				r := baseRoute(clusterHostName)
 
 				// create matchers for ingress host and path
 				h := json.RawMessage(fmt.Sprintf(`["%v"]`, rule.Host))

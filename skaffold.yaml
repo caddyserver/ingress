@@ -15,4 +15,4 @@ deploy:
     - kubernetes/generated/clusterrolebinding.yaml
     - kubernetes/generated/deployment.yaml
     - kubernetes/generated/serviceaccount.yaml
-    - kubernetes/generated/loadbalancer.yaml
+    # - kubernetes/generated/loadbalancer.yaml

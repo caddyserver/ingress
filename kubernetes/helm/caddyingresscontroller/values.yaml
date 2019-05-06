@@ -4,7 +4,6 @@ kubernetes:
 
 caddyingresscontroller:
   tolerations: {}
-  watchNamespace: ""
   deployment:
     labels:
       version: "v0.1.0"
@@ -30,3 +29,8 @@ caddyingresscontroller:
 name: "caddy-ingress-controller"
 serviceAccountName: "caddy-ingress-controller"
 minikube: false
+
+# If setting autotls the following email value must be set
+# to an email address that you manage
+autotls: false
+email: ""

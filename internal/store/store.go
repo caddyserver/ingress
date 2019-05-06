@@ -17,7 +17,7 @@ type Store struct {
 
 // NewStore returns a new store that keeps track of ingresses and secrets. It will attempt to get
 // all current ingresses before returning.
-func NewStore(kubeClient *kubernetes.Clientset, namespace string) *Store {
+func NewStore(kubeClient *kubernetes.Clientset, namespace string, cfg caddy.ControllerConfig) *Store {
 	ingresses, err := kubeClient.ExtensionsV1beta1().Ingresses("").List(v1.ListOptions{})
 	if err != nil {
 		klog.Errorf("could not get existing ingresses in cluster")
@@ -26,7 +26,7 @@ func NewStore(kubeClient *kubernetes.Clientset, namespace string) *Store {
 
 	s := &Store{
 		Ingresses:   []*v1beta1.Ingress{},
-		CaddyConfig: caddy.NewConfig(namespace),
+		CaddyConfig: caddy.NewConfig(namespace, cfg),
 	}
 
 	for _, i := range ingresses.Items {

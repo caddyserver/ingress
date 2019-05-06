@@ -1,8 +1,9 @@
-{{- if and ( .Values.caddyingresscontroller.rbac.create ) (eq .Values.caddyingresscontroller.watchNamespace "") }}
+{{- if .Values.caddyingresscontroller.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
   name: {{ .Values.name }}-role
+  namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:
       - ""

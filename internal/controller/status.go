@@ -30,7 +30,7 @@ func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
 		return err
 	}
 
-	klog.Info("Synching Ingress resource source addresses")
+	klog.V(2).Info("Synching Ingress resource source addresses")
 	c.updateIngStatuses(sliceToLoadBalancerIngress(addrs), ings)
 
 	return nil
