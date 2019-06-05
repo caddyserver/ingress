@@ -4,7 +4,7 @@ import (
 	"net"
 	"sort"
 
-	"bitbucket.org/lightcodelabs/ingress/internal/pod"
+	"github.com/caddyserver/ingress/internal/pod"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/klog"

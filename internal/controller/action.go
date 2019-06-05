@@ -3,7 +3,7 @@ package controller
 import (
 	"fmt"
 
-	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
+	"github.com/caddyserver/ingress/internal/caddy"
 	"github.com/pkg/errors"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/klog"

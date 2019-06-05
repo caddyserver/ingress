@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"bitbucket.org/lightcodelabs/caddy2/modules/caddytls"
+	"github.com/caddyserver/caddy2/modules/caddytls"
 )
 
 type serverRoute struct {

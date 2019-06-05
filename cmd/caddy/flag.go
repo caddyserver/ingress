@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
+	"github.com/caddyserver/ingress/internal/caddy"
 	"k8s.io/klog"
 )
 

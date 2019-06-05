@@ -1,7 +1,7 @@
 package store
 
 import (
-	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
+	"github.com/caddyserver/ingress/internal/caddy"
 	"k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

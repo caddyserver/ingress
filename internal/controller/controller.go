@@ -9,11 +9,11 @@ import (
 	"os"
 	"time"
 
-	"bitbucket.org/lightcodelabs/caddy2"
-	"bitbucket.org/lightcodelabs/ingress/internal/caddy"
-	"bitbucket.org/lightcodelabs/ingress/internal/pod"
-	"bitbucket.org/lightcodelabs/ingress/internal/store"
-	"bitbucket.org/lightcodelabs/ingress/pkg/storage"
+	"github.com/caddyserver/caddy2"
+	"github.com/caddyserver/ingress/internal/caddy"
+	"github.com/caddyserver/ingress/internal/pod"
+	"github.com/caddyserver/ingress/internal/store"
+	"github.com/caddyserver/ingress/pkg/storage"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -26,10 +26,10 @@ import (
 	"k8s.io/klog"
 
 	// load required caddy plugins
-	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp"
-	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/caddylog"
-	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/staticfiles"
-	_ "bitbucket.org/lightcodelabs/caddy2/modules/caddyhttp/reverseproxy"
+	_ "github.com/caddyserver/caddy2/modules/caddyhttp"
+	_ "github.com/caddyserver/caddy2/modules/caddyhttp/caddylog"
+	_ "github.com/caddyserver/caddy2/modules/caddyhttp/fileserver"
+	_ "github.com/caddyserver/caddy2/modules/caddyhttp/reverseproxy"
 )
 
 const (
@@ -82,13 +82,13 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	// Register caddy cert storage module.
 	caddy2.RegisterModule(caddy2.Module{
 		Name: "caddy.storage.secret_store",
-		New: func() (interface{}, error) {
+		New: func() interface{} {
 			ss := &storage.SecretStorage{
 				Namespace:  podInfo.Namespace,
 				KubeClient: kubeClient,
 			}
 
-			return ss, nil
+			return ss
 		},
 	})
 
