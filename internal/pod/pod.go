@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/kubelet/util/sliceutils"
 )
 
@@ -53,7 +53,7 @@ func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
 func GetNodeIPOrName(kubeClient *kubernetes.Clientset, name string, useInternalIP bool) string {
 	node, err := kubeClient.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
-		klog.Errorf("Error getting node %v: %v", name, err)
+		logrus.Errorf("Error getting node %v: %v", name, err)
 		return ""
 	}
 

@@ -5,9 +5,9 @@ import (
 	"sort"
 
 	"github.com/caddyserver/ingress/internal/pod"
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	"k8s.io/klog"
 )
 
 // dispatchSync is run every syncInterval duration to sync ingress source address fields.
@@ -33,7 +33,7 @@ func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
 
 	// this happens about every 30 seconds and can pollute the logs, so we
 	// only want to log on higher verbosity levels.
-	klog.V(2).Info("Synching Ingress resource source addresses")
+	logrus.Info("Synching Ingress resource source addresses")
 
 	c.updateIngStatuses(sliceToLoadBalancerIngress(addrs), ings)
 

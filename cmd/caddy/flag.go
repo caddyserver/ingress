@@ -4,7 +4,7 @@ import (
 	"flag"
 
 	"github.com/caddyserver/ingress/internal/caddy"
-	"k8s.io/klog"
+	"github.com/sirupsen/logrus"
 )
 
 func parseFlags() caddy.ControllerConfig {
@@ -23,7 +23,7 @@ func parseFlags() caddy.ControllerConfig {
 	flag.Parse()
 
 	if email == "" && enableAutomaticTLS {
-		klog.Info("An email must be defined for automatic tls features, set flag `email` with the email address you would like to use for certificate registration.")
+		logrus.Info("An email must be defined for automatic tls features, set flag `email` with the email address you would like to use for certificate registration.")
 		enableAutomaticTLS = false
 	}
 

@@ -2,10 +2,10 @@ package store
 
 import (
 	"github.com/caddyserver/ingress/internal/caddy"
+	"github.com/sirupsen/logrus"
 	"k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
 )
 
 // Store represents a collection of ingresses and secrets that we are monitoring.
@@ -20,7 +20,7 @@ type Store struct {
 func NewStore(kubeClient *kubernetes.Clientset, namespace string, cfg caddy.ControllerConfig) *Store {
 	ingresses, err := kubeClient.ExtensionsV1beta1().Ingresses("").List(v1.ListOptions{})
 	if err != nil {
-		klog.Errorf("could not get existing ingresses in cluster")
+		logrus.Errorf("could not get existing ingresses in cluster")
 		return &Store{}
 	}
 

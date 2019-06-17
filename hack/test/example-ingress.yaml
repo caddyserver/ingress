@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example
+  annotations:
+    kubernetes.io/ingress.class: caddy
+spec:
+  rules:
+  - host: caddy2.kubed.co
+    http:
+      paths:
+      - path: /hello2
+        backend:
+          serviceName: example2
+          servicePort: 8080
+      - path: /hello
+        backend:
+          serviceName: example
+          servicePort: 8080

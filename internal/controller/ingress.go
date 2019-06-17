@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	pool "gopkg.in/go-playground/pool.v3"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
 )
 
 // updateIngStatuses starts a queue and adds all monitored ingresses to update their status source address to the on
@@ -29,7 +29,7 @@ func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBala
 
 		// check to see if ingresses source address does not match the ingress controller's.
 		if ingressSliceEqual(curIPs, controllerAddresses) {
-			klog.V(3).Infof("skipping update of Ingress %v/%v (no change)", ing.Namespace, ing.Name)
+			logrus.Infof("skipping update of Ingress %v/%v (no change)", ing.Namespace, ing.Name)
 			continue
 		}
 
@@ -54,12 +54,12 @@ func runUpdate(ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client 
 			return nil, errors.Wrap(err, fmt.Sprintf("unexpected error searching Ingress %v/%v", ing.Namespace, ing.Name))
 		}
 
-		klog.Infof("updating Ingress %v/%v status from %v to %v", currIng.Namespace, currIng.Name, currIng.Status.LoadBalancer.Ingress, status)
+		logrus.Infof("updating Ingress %v/%v status from %v to %v", currIng.Namespace, currIng.Name, currIng.Status.LoadBalancer.Ingress, status)
 		currIng.Status.LoadBalancer.Ingress = status
 
 		_, err = ingClient.UpdateStatus(currIng)
 		if err != nil {
-			klog.Warningf("error updating ingress rule: %v", err)
+			logrus.Warningf("error updating ingress rule: %v", err)
 		}
 
 		return true, nil

@@ -1,0 +1,67 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: caddy-ingress-controller
+  namespace: caddy-system
+  labels:
+    app: caddy-ingress-controller
+    chart: "caddy-ingress-controller-v0.1.0"
+    release: "release-name"
+    heritage: "Tiller"
+    version: v0.1.0
+
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: caddy-ingress-controller
+      release: "release-name"
+  template:
+    metadata:
+      labels:
+        app: caddy-ingress-controller
+        chart: "caddy-ingress-controller-v0.1.2"
+        release: "release-name"
+        heritage: "Tiller"
+        version: v0.1.0
+
+    spec:
+      serviceAccountName: caddy-ingress-controller
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      containers:
+      - name: caddy-ingress-controller
+        image: "gcr.io/danny-239313/ingresscontroller:v0.1.2"
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+          # www-data -> 33
+          runAsUser: 0
+          runAsGroup: 0
+        ports:
+          - name: http
+            containerPort: 80
+          - name: https
+            containerPort: 443
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        args:
+          - -tls
+          - -email=navdgo@gmail.com

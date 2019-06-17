@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/mholt/certmagic"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
 )
 
 // matchLabels are attached to each resource so that they can be found in the future.
@@ -46,7 +46,7 @@ func (s *SecretStorage) Exists(key string) bool {
 	})
 
 	if err != nil {
-		klog.Error(err)
+		logrus.Error(err)
 		return false
 	}
 

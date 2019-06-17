@@ -5,8 +5,8 @@ import (
 
 	"github.com/caddyserver/ingress/internal/caddy"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/api/extensions/v1beta1"
-	"k8s.io/klog"
 )
 
 // onResourceAdded runs when an ingress resource is added to the cluster.
@@ -58,7 +58,7 @@ type ResourceDeletedAction struct {
 }
 
 func (r ResourceAddedAction) handle(c *CaddyController) error {
-	klog.Info("New ingress resource detected, updating Caddy config...")
+	logrus.Info("New ingress resource detected, updating Caddy config...")
 
 	// configure caddy to handle this resource
 	ing, ok := r.resource.(*v1beta1.Ingress)
@@ -80,12 +80,12 @@ func (r ResourceAddedAction) handle(c *CaddyController) error {
 		return errors.Wrapf(err, "syncing ingress source address name: %v", ing.GetName())
 	}
 
-	klog.Info("Caddy reloaded successfully.")
+	logrus.Info("Caddy reloaded successfully.")
 	return nil
 }
 
 func (r ResourceUpdatedAction) handle(c *CaddyController) error {
-	klog.Info("Ingress resource update detected, updating Caddy config...")
+	logrus.Info("Ingress resource update detected, updating Caddy config...")
 
 	// update caddy config regarding this ingress
 	ing, ok := r.resource.(*v1beta1.Ingress)
@@ -101,12 +101,12 @@ func (r ResourceUpdatedAction) handle(c *CaddyController) error {
 		return err
 	}
 
-	klog.Info("Caddy reloaded successfully.")
+	logrus.Info("Caddy reloaded successfully.")
 	return nil
 }
 
 func (r ResourceDeletedAction) handle(c *CaddyController) error {
-	klog.Info("Ingress resource deletion detected, updating Caddy config...")
+	logrus.Info("Ingress resource deletion detected, updating Caddy config...")
 
 	// delete all resources from caddy config that are associated with this resource
 	// reload caddy config
@@ -123,7 +123,7 @@ func (r ResourceDeletedAction) handle(c *CaddyController) error {
 		return err
 	}
 
-	klog.Info("Caddy reloaded successfully.")
+	logrus.Info("Caddy reloaded successfully.")
 	return nil
 }
 

@@ -9,6 +9,7 @@ require (
 	github.com/mholt/certmagic v0.5.1
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/sirupsen/logrus v1.2.0
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/grpc v1.20.1 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
@@ -18,7 +19,6 @@ require (
 	k8s.io/apimachinery v0.0.0-20190602125621-c0632ccbde11
 	k8s.io/client-go v0.0.0-20190602130007-e65ca70987a6
 	k8s.io/cloud-provider v0.0.0-20190503112208-4f570a5e5694 // indirect
-	k8s.io/klog v0.3.2
 	k8s.io/kubernetes v1.14.1
 	k8s.io/utils v0.0.0-20190506122338-8fab8cb257d5 // indirect
 )

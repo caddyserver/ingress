@@ -14,6 +14,7 @@ import (
 	"github.com/caddyserver/ingress/internal/pod"
 	"github.com/caddyserver/ingress/internal/store"
 	"github.com/caddyserver/ingress/pkg/storage"
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -23,7 +24,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/klog"
 
 	// load required caddy plugins
 	_ "github.com/caddyserver/caddy2/modules/caddyhttp"
@@ -68,7 +68,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 
 	podInfo, err := pod.GetPodDetails(kubeClient)
 	if err != nil {
-		klog.Fatalf("Unexpected error obtaining pod information: %v", err)
+		logrus.Fatalf("Unexpected error obtaining pod information: %v", err)
 	}
 
 	controller.podInfo = podInfo
@@ -95,7 +95,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	// start caddy2
 	err = caddy2.StartAdmin("127.0.0.1:1234")
 	if err != nil {
-		klog.Fatal(err)
+		logrus.Fatal(err)
 	}
 
 	return controller
@@ -112,7 +112,7 @@ func (c *CaddyController) Shutdown() error {
 func (c *CaddyController) Run(stopCh chan struct{}) {
 	err := c.reloadCaddy()
 	if err != nil {
-		klog.Errorf("initial caddy config load failed, %v", err.Error())
+		logrus.Errorf("initial caddy config load failed, %v", err.Error())
 	}
 
 	defer runtime.HandleCrash()
@@ -136,12 +136,12 @@ func (c *CaddyController) Run(stopCh chan struct{}) {
 
 	// wait for SIGTERM
 	<-stopCh
-	klog.Info("stopping ingress controller")
+	logrus.Info("stopping ingress controller")
 
 	var exitCode int
 	err = c.Shutdown()
 	if err != nil {
-		klog.Errorf("could not shutdown ingress controller properly, %v", err.Error())
+		logrus.Errorf("could not shutdown ingress controller properly, %v", err.Error())
 		exitCode = 1
 	}
 
@@ -178,7 +178,7 @@ func (c *CaddyController) processNextItem() bool {
 
 // handleErrs reports errors received from queue actions.
 func (c *CaddyController) handleErr(err error, action interface{}) {
-	klog.Error(err)
+	logrus.Error(err)
 }
 
 // reloadCaddy reloads the internal caddy instance with new config.
@@ -187,6 +187,8 @@ func (c *CaddyController) reloadCaddy() error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(string(j))
 
 	// post to load endpoint
 	resp, err := http.Post("http://127.0.0.1:1234/load", "application/json", bytes.NewBuffer(j))

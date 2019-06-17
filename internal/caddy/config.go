@@ -99,8 +99,8 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 				Automation: caddytls.AutomationConfig{
 					Policies: []caddytls.AutomationPolicy{
 						caddytls.AutomationPolicy{
-							Hosts:      nil,
-							Management: autoPolicyBytes,
+							Hosts:         nil,
+							ManagementRaw: autoPolicyBytes,
 						},
 					},
 				},

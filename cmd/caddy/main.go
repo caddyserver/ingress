@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/caddyserver/ingress/internal/controller"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog"
 )
 
 const (
@@ -23,14 +23,12 @@ const (
 )
 
 func main() {
-	klog.InitFlags(nil)
-
 	// parse any flags required to configure the caddy ingress controller
 	cfg := parseFlags()
 
 	if cfg.WatchNamespace == "" {
 		cfg.WatchNamespace = v1.NamespaceAll
-		klog.Warning("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
+		logrus.Warning("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
 	}
 
 	// get client to access the kubernetes service api
@@ -42,7 +40,7 @@ func main() {
 		API server certificates or Service Accounts configuration)
 		`
 
-		klog.Fatalf(msg, err)
+		logrus.Fatalf(msg, err)
 	}
 
 	restClient := kubeClient.ExtensionsV1beta1().RESTClient()
@@ -54,7 +52,7 @@ func main() {
 	healthPort := 9090
 	go startMetricsServer(healthPort)
 
-	klog.Info("Starting the caddy ingress controller")
+	logrus.Info("Starting the caddy ingress controller")
 
 	// start the ingress controller
 	stopCh := make(chan struct{}, 1)
@@ -100,7 +98,7 @@ func startMetricsServer(port int) {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	klog.Fatal(server.ListenAndServe())
+	logrus.Fatal(server.ListenAndServe())
 }
 
 // createApiserverClient creates a new Kubernetes REST client. We assume the
@@ -115,7 +113,7 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 	cfg.Burst = defaultBurst
 	cfg.ContentType = "application/vnd.kubernetes.protobuf"
 
-	klog.Infof("Creating API client for %s", cfg.Host)
+	logrus.Infof("Creating API client for %s", cfg.Host)
 
 	client, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
@@ -130,8 +128,6 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		Jitter:   0.1,
 	}
 
-	klog.V(2).Info("Attempting to discover Kubernetes version")
-
 	var v *version.Info
 	var retries int
 	var lastErr error
@@ -143,7 +139,7 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		}
 
 		lastErr = err
-		klog.V(2).Infof("Unexpected error discovering Kubernetes version (attempt %v): %v", retries, err)
+		logrus.Infof("Unexpected error discovering Kubernetes version (attempt %v): %v", retries, err)
 		retries++
 		return false, nil
 	})
@@ -155,11 +151,11 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 
 	// this should not happen, warn the user
 	if retries > 0 {
-		klog.Warningf("Initial connection to the Kubernetes API server was retried %d times.", retries)
+		logrus.Warningf("Initial connection to the Kubernetes API server was retried %d times.", retries)
 	}
 
 	msg := "Running in Kubernetes cluster version v%v.%v (%v) - git (%v) commit %v - platform %v"
-	klog.Infof(msg, v.Major, v.Minor, v.GitVersion, v.GitTreeState, v.GitCommit, v.Platform)
+	logrus.Infof(msg, v.Major, v.Minor, v.GitVersion, v.GitTreeState, v.GitCommit, v.Platform)
 
 	return client, nil
 }
