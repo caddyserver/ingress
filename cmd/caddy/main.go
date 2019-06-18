@@ -76,19 +76,6 @@ func (h *healthChecker) Check(_ *http.Request) error {
 func startMetricsServer(port int) {
 	mux := http.NewServeMux()
 
-	// reg := prometheus.NewRegistry()
-
-	// reg.MustRegister(prometheus.NewGoCollector())
-	// reg.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{
-	// 	PidFn:        func() (int, error) { return os.Getpid(), nil },
-	// 	ReportErrors: true,
-	// }))
-
-	// // healthz.InstallHandler(mux,
-	// // 	healthz.PingHealthz,
-	// // 	healthChecker,
-	// // )
-
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%v", port),
 		Handler:           mux,

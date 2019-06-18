@@ -3,9 +3,9 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net/http"
+	"io"
+	"log"
 	"os"
 	"time"
 
@@ -29,7 +29,12 @@ import (
 	_ "github.com/caddyserver/caddy2/modules/caddyhttp"
 	_ "github.com/caddyserver/caddy2/modules/caddyhttp/caddylog"
 	_ "github.com/caddyserver/caddy2/modules/caddyhttp/fileserver"
+	_ "github.com/caddyserver/caddy2/modules/caddyhttp/headers"
+	_ "github.com/caddyserver/caddy2/modules/caddyhttp/requestbody"
 	_ "github.com/caddyserver/caddy2/modules/caddyhttp/reverseproxy"
+	_ "github.com/caddyserver/caddy2/modules/caddyhttp/rewrite"
+	_ "github.com/caddyserver/caddy2/modules/caddytls"
+	_ "github.com/caddyserver/caddy2/modules/caddytls/standardstek"
 )
 
 const (
@@ -39,19 +44,19 @@ const (
 
 // CaddyController represents an caddy ingress controller.
 type CaddyController struct {
-	resourceStore *store.Store
-	kubeClient    *kubernetes.Clientset
-	indexer       cache.Indexer
-	syncQueue     workqueue.RateLimitingInterface
-	statusQueue   workqueue.RateLimitingInterface // statusQueue performs ingress status updates every 60 seconds but inserts the work into the sync queue
-	informer      cache.Controller
-	podInfo       *pod.Info
-	config        caddy.ControllerConfig
+	resourceStore  *store.Store
+	kubeClient     *kubernetes.Clientset
+	indexer        cache.Indexer
+	syncQueue      workqueue.RateLimitingInterface
+	statusQueue    workqueue.RateLimitingInterface // statusQueue performs ingress status updates every 60 seconds but inserts the work into the sync queue
+	informer       cache.Controller
+	podInfo        *pod.Info
+	config         caddy.ControllerConfig
+	usingConfigMap bool
 }
 
 // NewCaddyController returns an instance of the caddy ingress controller.
 func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interface, cfg caddy.ControllerConfig) *CaddyController {
-	// setup the ingress controller and start watching resources
 	controller := &CaddyController{
 		kubeClient:  kubeClient,
 		syncQueue:   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
@@ -59,27 +64,42 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 		config:      cfg,
 	}
 
+	podInfo, err := pod.GetPodDetails(kubeClient)
+	if err != nil {
+		logrus.Fatalf("Unexpected error obtaining pod information: %v", err)
+	}
+	controller.podInfo = podInfo
+
+	// load caddy config from file if mounted with config map
+	cfgPath := "/etc/caddy/config.json"
+	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
+		file, err := os.Open(cfgPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+
+		controller.usingConfigMap = true
+		controller.syncQueue.Add(LoadConfigAction{config: file})
+	}
+
+	// setup the ingress controller and start watching resources
 	ingressListWatcher := cache.NewListWatchFromClient(restClient, "ingresses", cfg.WatchNamespace, fields.Everything())
 	indexer, informer := cache.NewIndexerInformer(ingressListWatcher, &v1beta1.Ingress{}, 0, cache.ResourceEventHandlerFuncs{
 		AddFunc:    controller.onResourceAdded,
 		UpdateFunc: controller.onResourceUpdated,
 		DeleteFunc: controller.onResourceDeleted,
 	}, cache.Indexers{})
-
-	podInfo, err := pod.GetPodDetails(kubeClient)
-	if err != nil {
-		logrus.Fatalf("Unexpected error obtaining pod information: %v", err)
-	}
-
-	controller.podInfo = podInfo
 	controller.indexer = indexer
 	controller.informer = informer
+
+	// setup store to keep track of resources
 	controller.resourceStore = store.NewStore(controller.kubeClient, podInfo.Namespace, cfg)
 
-	// attempt to do initial sync with ingresses
-	controller.syncQueue.Add(SyncStatusAction{})
+	// attempt to do initial sync of status addresses with ingresses
+	controller.dispatchSync()
 
-	// Register caddy cert storage module.
+	// register kubernetes specific cert-magic storage module
 	caddy2.RegisterModule(caddy2.Module{
 		Name: "caddy.storage.secret_store",
 		New: func() interface{} {
@@ -91,12 +111,6 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 			return ss
 		},
 	})
-
-	// start caddy2
-	err = caddy2.StartAdmin("127.0.0.1:1234")
-	if err != nil {
-		logrus.Fatal(err)
-	}
 
 	return controller
 }
@@ -181,23 +195,33 @@ func (c *CaddyController) handleErr(err error, action interface{}) {
 	logrus.Error(err)
 }
 
-// reloadCaddy reloads the internal caddy instance with new config.
+// loadConfigFromFile loads caddy with a config defined by an io.Reader.
+func (c *CaddyController) loadConfigFromFile(cfg io.Reader) error {
+	err := caddy2.Load(cfg)
+	if err != nil {
+		return fmt.Errorf("could not load caddy config %v", err.Error())
+	}
+
+	return nil
+}
+
+// reloadCaddy reloads the internal caddy instance with config from the internal store.
 func (c *CaddyController) reloadCaddy() error {
 	j, err := json.Marshal(c.resourceStore.CaddyConfig)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(string(j))
+	// DEBUG ONLY
+	// PRETTY PRINT CADDY CONFIG ON UPDATE
+	js, _ := json.MarshalIndent(c.resourceStore.CaddyConfig, "", "\t")
+	fmt.Println(string(js))
+	//
 
-	// post to load endpoint
-	resp, err := http.Post("http://127.0.0.1:1234/load", "application/json", bytes.NewBuffer(j))
+	r := bytes.NewReader(j)
+	err = caddy2.Load(r)
 	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("could not reload caddy config")
+		return fmt.Errorf("could not reload caddy config %v", err.Error())
 	}
 
 	return nil
