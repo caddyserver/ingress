@@ -4,58 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/caddyserver/caddy2/modules/caddyhttp"
 	"github.com/caddyserver/caddy2/modules/caddytls"
 )
-
-type serverRoute struct {
-	Matchers map[string]json.RawMessage `json:"match"`
-	Apply    []map[string]string        `json:"apply"`
-	Respond  proxyConfig                `json:"respond"`
-}
-
-type routeList []serverRoute
-
-type proxyConfig struct {
-	Module          string           `json:"responder"`
-	LoadBalanceType string           `json:"load_balance_type"`
-	Upstreams       []upstreamConfig `json:"upstreams"`
-}
-
-type upstreamConfig struct {
-	Host string `json:"host"`
-}
-
-type httpServerConfig struct {
-	Listen           []string `json:"listen"`
-	ReadTimeout      string   `json:"read_timeout"`
-	DisableAutoHTTPS bool     `json:"disable_auto_https"`
-	// ReadHeaderTimeout caddy2.Duration `json:"read_header_timeout"`
-	// HiddenFiles []string  `json:"hidden_files"` // TODO:... experimenting with shared/common state
-	TLSConnPolicies caddytls.ConnectionPolicies `json:"tls_connection_policies"`
-	Routes          routeList                   `json:"routes"`
-}
-
-type httpErrorConfig struct {
-	Routes routeList `json:"routes"`
-}
-
-type serverConfig struct {
-	Server httpServerConfig `json:"ingress_server"`
-}
-
-type servers struct {
-	Servers serverConfig `json:"servers"`
-}
-
-type TLSConfig struct {
-	Module     string                    `json:"module"`
-	Automation caddytls.AutomationConfig `json:"automation"`
-}
-
-type httpServer struct {
-	TLS  TLSConfig `json:"tls"`
-	HTTP servers   `json:"http"`
-}
 
 // StorageValues represents the config for certmagic storage providers.
 type StorageValues struct {
@@ -70,8 +21,8 @@ type Storage struct {
 
 // Config represents a caddy2 config file.
 type Config struct {
-	Storage Storage    `json:"storage"`
-	Modules httpServer `json:"apps"`
+	Storage Storage                `json:"storage"`
+	Apps    map[string]interface{} `json:"apps"`
 }
 
 // ControllerConfig represents ingress controller config received through cli arguments.
@@ -93,9 +44,8 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 				Namespace: namespace,
 			},
 		},
-		Modules: httpServer{
-			TLS: TLSConfig{
-				Module: "acme",
+		Apps: map[string]interface{}{
+			"tls": caddytls.TLS{
 				Automation: caddytls.AutomationConfig{
 					Policies: []caddytls.AutomationPolicy{
 						caddytls.AutomationPolicy{
@@ -105,15 +55,11 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 					},
 				},
 			},
-			HTTP: servers{
-				Servers: serverConfig{
-					Server: httpServerConfig{
+			"http": caddyhttp.App{
+				Servers: map[string]*caddyhttp.Server{
+					"ingress_server": &caddyhttp.Server{
 						DisableAutoHTTPS: !cfg.AutomaticTLS,
-						ReadTimeout:      "30s",
 						Listen:           []string{":80", ":443"},
-						TLSConnPolicies: caddytls.ConnectionPolicies{
-							&caddytls.ConnectionPolicy{},
-						},
 					},
 				},
 			},

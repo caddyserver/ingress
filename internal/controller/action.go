@@ -2,12 +2,21 @@ package controller
 
 import (
 	"fmt"
+	"io"
 
+	"github.com/caddyserver/caddy2/modules/caddyhttp"
 	"github.com/caddyserver/ingress/internal/caddy"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/extensions/v1beta1"
 )
+
+// loadConfigMap runs when a config map with caddy config is loaded on app start.
+func (c *CaddyController) onLoadConfig(obj io.Reader) {
+	c.syncQueue.Add(LoadConfigAction{
+		config: obj,
+	})
+}
 
 // onResourceAdded runs when an ingress resource is added to the cluster.
 func (c *CaddyController) onResourceAdded(obj interface{}) {
@@ -36,25 +45,35 @@ func (c *CaddyController) onSyncStatus(obj interface{}) {
 	c.syncQueue.Add(SyncStatusAction{})
 }
 
-// Action is an interface for ingress actions
+// Action is an interface for ingress actions.
 type Action interface {
 	handle(c *CaddyController) error
 }
 
-// ResourceAddedAction provides an implementation of the action interface
+// LoadConfigAction provides an implementation of the action interface.
+type LoadConfigAction struct {
+	config io.Reader
+}
+
+// ResourceAddedAction provides an implementation of the action interface.
 type ResourceAddedAction struct {
 	resource interface{}
 }
 
-// ResourceUpdatedAction provides an implementation of the action interface
+// ResourceUpdatedAction provides an implementation of the action interface.
 type ResourceUpdatedAction struct {
 	resource    interface{}
 	oldResource interface{}
 }
 
-// ResourceDeletedAction provides an implementation of the action interface
+// ResourceDeletedAction provides an implementation of the action interface.
 type ResourceDeletedAction struct {
 	resource interface{}
+}
+
+func (r LoadConfigAction) handle(c *CaddyController) error {
+	logrus.Info("Config file detected, updating Caddy config...")
+	return c.loadConfigFromFile(r.config)
 }
 
 func (r ResourceAddedAction) handle(c *CaddyController) error {
@@ -129,19 +148,15 @@ func (r ResourceDeletedAction) handle(c *CaddyController) error {
 
 func updateConfig(c *CaddyController) error {
 	// update internal caddy config with new ingress info
-	serverRoutes, hosts, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
+	// serverRoutes, hosts, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
+	serverRoutes, _, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
 	if err != nil {
 		return errors.Wrap(err, "converting ingress resources to caddy config")
 	}
 
+	// set the http server routes
 	if c.resourceStore.CaddyConfig != nil {
-		c.resourceStore.CaddyConfig.Modules.HTTP.Servers.Server.Routes = serverRoutes
-
-		// set tls policies
-		p := c.resourceStore.CaddyConfig.Modules.TLS.Automation.Policies
-		for i := range p {
-			p[i].Hosts = hosts
-		}
+		c.resourceStore.CaddyConfig.Apps["http"].(caddyhttp.App).Servers["ingress_server"].Routes = serverRoutes
 	}
 
 	// reload caddy2 config with newConfig
