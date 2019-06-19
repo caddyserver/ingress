@@ -148,21 +148,22 @@ func (r ResourceDeletedAction) handle(c *CaddyController) error {
 
 func updateConfig(c *CaddyController) error {
 	// update internal caddy config with new ingress info
-	// serverRoutes, hosts, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
-	serverRoutes, _, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
-	if err != nil {
-		return errors.Wrap(err, "converting ingress resources to caddy config")
-	}
+	if !c.usingConfigMap {
+		serverRoutes, err := caddy.ConvertToCaddyConfig(c.resourceStore.Ingresses)
+		if err != nil {
+			return errors.Wrap(err, "converting ingress resources to caddy config")
+		}
 
-	// set the http server routes
-	if c.resourceStore.CaddyConfig != nil {
-		c.resourceStore.CaddyConfig.Apps["http"].(caddyhttp.App).Servers["ingress_server"].Routes = serverRoutes
-	}
+		// set the http server routes
+		if c.resourceStore.CaddyConfig != nil {
+			c.resourceStore.CaddyConfig.Apps["http"].(caddyhttp.App).Servers["ingress_server"].Routes = serverRoutes
+		}
 
-	// reload caddy2 config with newConfig
-	err = c.reloadCaddy()
-	if err != nil {
-		return errors.Wrap(err, "caddy config reload")
+		// reload caddy2 config with newConfig
+		err = c.reloadCaddy()
+		if err != nil {
+			return errors.Wrap(err, "caddy config reload")
+		}
 	}
 
 	return nil
