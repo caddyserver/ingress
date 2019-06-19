@@ -63,6 +63,8 @@ spec:
             containerPort: 80
           - name: https
             containerPort: 443
+          - name: metrics
+            containerPort: 9090
         env:
           - name: POD_NAME
             valueFrom:

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics
+  namespace: caddy-system
+  labels:
+    app: caddy-ingress-controller
+spec:
+  ports:
+    - name: metrics
+      port: 80
+      protocol: TCP
+      targetPort: metrics
+  type: "ClusterIP"

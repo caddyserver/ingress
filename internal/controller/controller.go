@@ -72,7 +72,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.podInfo = podInfo
 
 	// load caddy config from file if mounted with config map
-	var caddyCfgMap caddy.Config
+	var caddyCfgMap *caddy.Config
 	cfgPath := "/etc/caddy/config.json"
 	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
 		controller.usingConfigMap = true
@@ -104,7 +104,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.informer = informer
 
 	// setup store to keep track of resources
-	controller.resourceStore = store.NewStore(controller.kubeClient, podInfo.Namespace, cfg, &caddyCfgMap)
+	controller.resourceStore = store.NewStore(controller.kubeClient, podInfo.Namespace, cfg, caddyCfgMap)
 
 	// attempt to do initial sync of status addresses with ingresses
 	controller.dispatchSync()
