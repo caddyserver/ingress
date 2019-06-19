@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -71,16 +72,25 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.podInfo = podInfo
 
 	// load caddy config from file if mounted with config map
+	var caddyCfgMap caddy.Config
 	cfgPath := "/etc/caddy/config.json"
 	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
+		controller.usingConfigMap = true
+
 		file, err := os.Open(cfgPath)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer file.Close()
 
-		controller.usingConfigMap = true
-		controller.syncQueue.Add(LoadConfigAction{config: file})
+		b, err := ioutil.ReadAll(file)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// load config file into caddy
+		controller.syncQueue.Add(LoadConfigAction{config: bytes.NewReader(b)})
+		json.Unmarshal(b, &caddyCfgMap)
 	}
 
 	// setup the ingress controller and start watching resources
@@ -94,7 +104,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.informer = informer
 
 	// setup store to keep track of resources
-	controller.resourceStore = store.NewStore(controller.kubeClient, podInfo.Namespace, cfg)
+	controller.resourceStore = store.NewStore(controller.kubeClient, podInfo.Namespace, cfg, &caddyCfgMap)
 
 	// attempt to do initial sync of status addresses with ingresses
 	controller.dispatchSync()

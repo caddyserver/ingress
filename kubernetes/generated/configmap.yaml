@@ -1,0 +1,96 @@
+# this is an example config map for the caddy ingress controller
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+  namespace: caddy-system
+data:
+  config.json: '
+    {
+    "storage": {
+      "system": "secret_store",
+      "namespace": "caddy-system"
+    },
+    "apps": {
+      "http": {
+        "servers": {
+          "ingress_server": {
+            "listen": [
+              ":80",
+              ":443"
+            ],
+            "routes": [
+              {
+                "match": [
+                  {
+                    "host": [
+                      "danny2.kubed.co"
+                    ],
+                    "path": [
+                      "/hello2"
+                    ]
+                  }
+                ],
+                "apply": [
+                  {
+                    "middleware": "log",
+                    "filename": "/etc/caddy/access.log"
+                  }
+                ],
+                "respond": {
+                  "responder": "reverse_proxy",
+                  "load_balance_type": "random",
+                  "upstreams": [
+                    {
+                      "host": "http://example2.default.svc.cluster.local"
+                    }
+                  ]
+                }
+              },
+              {
+                "match": [
+                  {
+                    "host": [
+                      "danny2.kubed.co"
+                    ],
+                    "path": [
+                      ""
+                    ]
+                  }
+                ],
+                "apply": [
+                  {
+                    "middleware": "log",
+                    "filename": "/etc/caddy/access.log"
+                  }
+                ],
+                "respond": {
+                  "responder": "reverse_proxy",
+                  "load_balance_type": "random",
+                  "upstreams": [
+                    {
+                      "host": "http://example.default.svc.cluster.local"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "tls": {
+        "automation": {
+          "policies": [
+            {
+              "management": {
+                "module": "acme",
+                "email": "test@test.com"
+              }
+            }
+          ]
+        },
+        "session_tickets": {}
+      }
+    }
+  }
+  '

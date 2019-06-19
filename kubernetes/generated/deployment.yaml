@@ -1,3 +1,7 @@
+# uncomment the config map below
+# if configuring caddy with a config map
+# ensure that you update ./configmap.yaml
+
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -31,13 +35,19 @@ spec:
       volumes:
       - name: tmp
         emptyDir: {}
+      # - name: config-volume
+      #   configMap:
+      #     name: caddy-config
       containers:
       - name: caddy-ingress-controller
-        image: "gcr.io/danny-239313/ingresscontroller:v0.1.2"
+        image: gcr.io/danny-239313/ingresscontroller
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: tmp
           mountPath: /tmp
+        # - name: config-volume
+        #   mountPath: /etc/caddy/config.json
+        #   subPath: config.json
         securityContext:
           allowPrivilegeEscalation: true
           capabilities:
@@ -64,4 +74,4 @@ spec:
                 fieldPath: metadata.namespace
         args:
           - -tls
-          - -email=navdgo@gmail.com
+          - -email=test@test.com
