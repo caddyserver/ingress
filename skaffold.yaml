@@ -15,4 +15,6 @@ deploy:
     - kubernetes/generated/clusterrolebinding.yaml
     - kubernetes/generated/deployment.yaml
     - kubernetes/generated/serviceaccount.yaml
+    - kubernetes/generated/metricsservice.yaml
+    # - kubernetes/generated/configmap.yaml
     # - kubernetes/generated/loadbalancer.yaml
