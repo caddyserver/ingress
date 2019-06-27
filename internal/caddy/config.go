@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/caddyserver/caddy2/modules/caddyhttp"
-	"github.com/caddyserver/caddy2/modules/caddytls"
+	"github.com/caddyserver/caddy/modules/caddyhttp"
+	"github.com/caddyserver/caddy/modules/caddytls"
 )
 
 // StorageValues represents the config for certmagic storage providers.
@@ -54,12 +54,16 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 						},
 					},
 				},
+				Certificates: make(map[string]json.RawMessage, 0),
 			},
 			"http": caddyhttp.App{
 				Servers: map[string]*caddyhttp.Server{
 					"ingress_server": &caddyhttp.Server{
-						DisableAutoHTTPS: !cfg.AutomaticTLS,
-						Listen:           []string{":80", ":443"},
+						AutoHTTPS: &caddyhttp.AutoHTTPSConfig{
+							Disabled: !cfg.AutomaticTLS,
+							Skip:     make([]string, 0),
+						},
+						Listen: []string{":80", ":443"},
 					},
 				},
 			},
