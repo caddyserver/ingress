@@ -17,3 +17,18 @@ spec:
         backend:
           serviceName: example
           servicePort: 8080
+  - host: danny2.kubed.co
+    http:
+      paths:
+      - path: /hello2
+        backend:
+          serviceName: example2
+          servicePort: 8080
+      - path: /hello
+        backend:
+          serviceName: example
+          servicePort: 8080
+  # tls:
+  # - hosts:
+  #   - danny2.kubed.co
+  #   secretName: danny2own

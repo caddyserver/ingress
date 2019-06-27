@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/caddyserver/caddy2"
-	"github.com/caddyserver/ingress/internal/caddy"
+	"github.com/caddyserver/caddy"
+	c "github.com/caddyserver/ingress/internal/caddy"
 	"github.com/caddyserver/ingress/internal/pod"
 	"github.com/caddyserver/ingress/internal/store"
 	"github.com/caddyserver/ingress/pkg/storage"
@@ -27,37 +27,37 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	// load required caddy plugins
-	_ "github.com/caddyserver/caddy2/modules/caddyhttp"
-	_ "github.com/caddyserver/caddy2/modules/caddyhttp/caddylog"
-	_ "github.com/caddyserver/caddy2/modules/caddyhttp/fileserver"
-	_ "github.com/caddyserver/caddy2/modules/caddyhttp/headers"
-	_ "github.com/caddyserver/caddy2/modules/caddyhttp/requestbody"
-	_ "github.com/caddyserver/caddy2/modules/caddyhttp/reverseproxy"
-	_ "github.com/caddyserver/caddy2/modules/caddyhttp/rewrite"
-	_ "github.com/caddyserver/caddy2/modules/caddytls"
-	_ "github.com/caddyserver/caddy2/modules/caddytls/standardstek"
+	_ "github.com/caddyserver/caddy/modules/caddyhttp/reverseproxy"
+	_ "github.com/caddyserver/caddy/modules/caddytls"
+	_ "github.com/caddyserver/caddy/modules/caddytls/standardstek"
 )
 
 const (
 	// how often we should attempt to keep ingress resource's source address in sync
 	syncInterval = time.Second * 30
+
+	// we can sync secrets every hour since we still have events listening on updated, deletes, etc
+	secretSyncInterval = time.Hour * 1
 )
 
 // CaddyController represents an caddy ingress controller.
 type CaddyController struct {
 	resourceStore  *store.Store
 	kubeClient     *kubernetes.Clientset
+	restClient     rest.Interface
 	indexer        cache.Indexer
 	syncQueue      workqueue.RateLimitingInterface
 	statusQueue    workqueue.RateLimitingInterface // statusQueue performs ingress status updates every 60 seconds but inserts the work into the sync queue
 	informer       cache.Controller
+	certManager    *CertManager
 	podInfo        *pod.Info
-	config         caddy.ControllerConfig
+	config         c.ControllerConfig
 	usingConfigMap bool
+	stopChan       chan struct{}
 }
 
 // NewCaddyController returns an instance of the caddy ingress controller.
-func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interface, cfg caddy.ControllerConfig) *CaddyController {
+func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interface, cfg c.ControllerConfig) *CaddyController {
 	controller := &CaddyController{
 		kubeClient:  kubeClient,
 		syncQueue:   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
@@ -72,7 +72,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.podInfo = podInfo
 
 	// load caddy config from file if mounted with config map
-	var caddyCfgMap *caddy.Config
+	var caddyCfgMap *c.Config
 	cfgPath := "/etc/caddy/config.json"
 	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
 		controller.usingConfigMap = true
@@ -110,7 +110,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.dispatchSync()
 
 	// register kubernetes specific cert-magic storage module
-	caddy2.RegisterModule(caddy2.Module{
+	caddy.RegisterModule(caddy.Module{
 		Name: "caddy.storage.secret_store",
 		New: func() interface{} {
 			ss := &storage.SecretStorage{
@@ -207,7 +207,7 @@ func (c *CaddyController) handleErr(err error, action interface{}) {
 
 // loadConfigFromFile loads caddy with a config defined by an io.Reader.
 func (c *CaddyController) loadConfigFromFile(cfg io.Reader) error {
-	err := caddy2.Load(cfg)
+	err := caddy.Load(cfg)
 	if err != nil {
 		return fmt.Errorf("could not load caddy config %v", err.Error())
 	}
@@ -229,7 +229,7 @@ func (c *CaddyController) reloadCaddy() error {
 	//
 
 	r := bytes.NewReader(j)
-	err = caddy2.Load(r)
+	err = caddy.Load(r)
 	if err != nil {
 		return fmt.Errorf("could not reload caddy config %v", err.Error())
 	}
