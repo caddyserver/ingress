@@ -37,22 +37,14 @@ func main() {
 	// get client to access the kubernetes service api
 	kubeClient, err := createApiserverClient()
 	if err != nil {
-		msg := `
-		Error while initiating a connection to the Kubernetes API server.
-		This could mean the cluster is misconfigured (e.g. it has invalid
-		API server certificates or Service Accounts configuration)
-		`
-
+		msg := "Could not establish a connection to the Kubernetes API Server."
 		logrus.Fatalf(msg, err)
 	}
 
 	restClient := kubeClient.ExtensionsV1beta1().RESTClient()
-
-	// start ingress controller
 	c := controller.NewCaddyController(kubeClient, restClient, cfg)
 
 	reg := prometheus.NewRegistry()
-
 	reg.MustRegister(prometheus.NewGoCollector())
 	reg.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{
 		PidFn:        func() (int, error) { return os.Getpid(), nil },
@@ -69,6 +61,7 @@ func main() {
 	logrus.Info("Starting the caddy ingress controller")
 	go c.Run(stopCh)
 
+	// TODO :- listen to sigterm
 	select {}
 }
 
@@ -103,12 +96,11 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 
+	logrus.Infof("Creating API client for %s", cfg.Host)
+
 	cfg.QPS = defaultQPS
 	cfg.Burst = defaultBurst
 	cfg.ContentType = "application/vnd.kubernetes.protobuf"
-
-	logrus.Infof("Creating API client for %s", cfg.Host)
-
 	client, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -143,13 +135,9 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		return nil, lastErr
 	}
 
-	// this should not happen, warn the user
 	if retries > 0 {
 		logrus.Warningf("Initial connection to the Kubernetes API server was retried %d times.", retries)
 	}
-
-	msg := "Running in Kubernetes cluster version v%v.%v (%v) - git (%v) commit %v - platform %v"
-	logrus.Infof(msg, v.Major, v.Minor, v.GitVersion, v.GitTreeState, v.GitCommit, v.Platform)
 
 	return client, nil
 }

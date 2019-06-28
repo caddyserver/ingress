@@ -28,23 +28,25 @@ func NewStore(kubeClient *kubernetes.Clientset, namespace string, cfg c.Controll
 		Ingresses: []*v1beta1.Ingress{},
 	}
 
-	if cfgMapConfig == nil {
-		s.CaddyConfig = c.NewConfig(namespace, cfg)
-	} else {
-		// set cert-magic storage provider
-		cfgMapConfig.Storage = c.Storage{
-			System: "secret_store",
-			StorageValues: c.StorageValues{
-				Namespace: namespace,
-			},
-		}
-
-		s.CaddyConfig = cfgMapConfig
-	}
-
 	for _, i := range ingresses.Items {
 		s.Ingresses = append(s.Ingresses, &i)
 	}
+
+	// not using cfg map to configure the ingress controller
+	if cfgMapConfig == nil {
+		s.CaddyConfig = c.NewConfig(namespace, cfg)
+		return s
+	}
+
+	// set cert-magic storage provider
+	cfgMapConfig.Storage = c.Storage{
+		System: "secret_store",
+		StorageValues: c.StorageValues{
+			Namespace: namespace,
+		},
+	}
+
+	s.CaddyConfig = cfgMapConfig
 
 	return s
 }

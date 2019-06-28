@@ -31,10 +31,7 @@ func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
 		return err
 	}
 
-	// this happens about every 30 seconds and can pollute the logs, so we
-	// only want to log on higher verbosity levels.
 	logrus.Info("Synching Ingress resource source addresses")
-
 	c.updateIngStatuses(sliceToLoadBalancerIngress(addrs), ings)
 
 	return nil

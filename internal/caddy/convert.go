@@ -12,12 +12,10 @@ import (
 // This is not used when this ingress controller is configured with a config map, so that we don't
 // override user defined routes.
 func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) {
-	// ~~~~
 	// TODO :-
 	// when setting the upstream url we should should bypass kube-dns and get the ip address of
 	// the pod for the deployment we are proxying to so that we can proxy to that ip address port.
 	// this is good for session affinity and increases performance.
-	// ~~~~
 
 	// create a server route for each ingress route
 	var routes caddyhttp.RouteList
@@ -46,6 +44,7 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 	return routes, nil
 }
 
+// TODO :- configure log middleware for all routes
 func baseRoute(upstream string) caddyhttp.ServerRoute {
 	return caddyhttp.ServerRoute{
 		// Apply: []json.RawMessage{

@@ -47,3 +47,54 @@ View the pod logs:
 ```sh
 kubectl logs <pod-name> -n caddy-system
 ```
+
+## Automatic HTTPS
+
+By default, any hosts defined in an ingress resource will configure caddy to automatically get certificates from let's encrypt and
+will serve your side over HTTPS.
+
+To disable automattic https you can set the argument `tls` on the caddy ingress controller to `false`.
+
+Example:
+
+Add args `tls=false` to the deployment.
+
+```
+  args:
+    - -tls=false
+```
+
+## Bringing Your Own Certificates
+
+If you would like to disable automatic HTTPS for a specific host and use your own certificates you can create a new TLS secret in Kubernetes and define
+what certificates to use when serving your application on the ingress resource.
+
+Example:
+
+Create TLS secret `mycerts`, where `./tls.key` and `./tls.crt` are valid certificates for `test.com`.
+
+```
+kubectl create secret tls mycerts --key ./tls.key --cert ./tls.crt
+```
+
+```
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example
+  annotations:
+    kubernetes.io/ingress.class: caddy
+spec:
+  rules:
+  - host: test.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: test
+          servicePort: 8080
+  tls:
+  - hosts:
+    - test.com
+    secretName: mycerts # use mycerts for host test.com
+```

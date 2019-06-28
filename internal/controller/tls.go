@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -72,8 +71,6 @@ func (c *CaddyController) HandleOwnCertManagement(ings []*v1beta1.Ingress) (map[
 		// start the informer to listen to secrets
 		go informer.Run(c.stopChan)
 	}
-
-	fmt.Printf("\nCERTS: %+v - %+v\n", len(certs), certs)
 
 	if len(certs) > 0 {
 		return getTLSConfig(hosts), nil

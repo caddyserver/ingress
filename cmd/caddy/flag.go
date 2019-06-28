@@ -12,7 +12,7 @@ func parseFlags() caddy.ControllerConfig {
 	flag.StringVar(&email, "email", "", "the email address to use for requesting tls certificates if automatic https is enabled.")
 
 	var namespace string
-	flag.StringVar(&namespace, "observe-namespace", "", "the namespace that you would like to observe kubernetes ingress resources in.")
+	flag.StringVar(&namespace, "namespace", "", "the namespace that you would like to observe kubernetes ingress resources in.")
 
 	var enableAutomaticTLS bool
 	flag.BoolVar(&enableAutomaticTLS, "tls", false, "defines if automatic tls should be enabled for hostnames defined in ingress resources.")
