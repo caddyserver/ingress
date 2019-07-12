@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/caddyserver/caddy/modules/caddyhttp"
-	"github.com/caddyserver/caddy/modules/caddytls"
+	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/caddyserver/caddy/v2/modules/caddytls"
 )
 
 // StorageValues represents the config for certmagic storage providers.
@@ -15,7 +15,7 @@ type StorageValues struct {
 
 // Storage represents the certmagic storage configuration.
 type Storage struct {
-	System string `json:"system"`
+	System string `json:"module"`
 	StorageValues
 }
 

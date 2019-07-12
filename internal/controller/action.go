@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/caddyserver/caddy/modules/caddyhttp"
-	"github.com/caddyserver/caddy/modules/caddytls"
+	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/caddyserver/caddy/v2/modules/caddytls"
 	"github.com/caddyserver/ingress/internal/caddy"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

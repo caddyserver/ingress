@@ -3,7 +3,8 @@ module github.com/caddyserver/ingress
 go 1.12
 
 require (
-	github.com/caddyserver/caddy v0.0.0-20190626165718-a524bcfe78e8
+	github.com/caddyserver/caddy v1.0.1
+	github.com/caddyserver/caddy/v2 v2.0.0-20190626165718-a524bcfe78e8
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/mholt/certmagic v0.6.2-0.20190624175158-6a42ef9fe8c2
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
@@ -22,7 +23,7 @@ require (
 	k8s.io/utils v0.0.0-20190506122338-8fab8cb257d5 // indirect
 )
 
-replace github.com/caddyserver/caddy => ../caddy
+replace github.com/caddyserver/caddy/v2 => ../caddy
 
 replace gopkg.in/russross/blackfriday.v2 v2.0.1 => github.com/russross/blackfriday/v2 v2.0.1
 

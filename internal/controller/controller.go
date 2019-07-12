@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/caddyserver/caddy"
+	"github.com/caddyserver/caddy/v2"
 	c "github.com/caddyserver/ingress/internal/caddy"
 	"github.com/caddyserver/ingress/internal/pod"
 	"github.com/caddyserver/ingress/internal/store"
@@ -27,9 +27,9 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	// load required caddy plugins
-	_ "github.com/caddyserver/caddy/modules/caddyhttp/reverseproxy"
-	_ "github.com/caddyserver/caddy/modules/caddytls"
-	_ "github.com/caddyserver/caddy/modules/caddytls/standardstek"
+	_ "github.com/caddyserver/caddy/v2/modules/caddyhttp/reverseproxy"
+	_ "github.com/caddyserver/caddy/v2/modules/caddytls"
+	_ "github.com/caddyserver/caddy/v2/modules/caddytls/standardstek"
 )
 
 const (
@@ -113,12 +113,10 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	caddy.RegisterModule(caddy.Module{
 		Name: "caddy.storage.secret_store",
 		New: func() interface{} {
-			ss := &storage.SecretStorage{
+			return &storage.SecretStorage{
 				Namespace:  podInfo.Namespace,
 				KubeClient: kubeClient,
 			}
-
-			return ss
 		},
 	})
 

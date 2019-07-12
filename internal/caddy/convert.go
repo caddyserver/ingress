@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/caddyserver/caddy/modules/caddyhttp"
+	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"k8s.io/api/extensions/v1beta1"
 )
 
@@ -50,14 +50,15 @@ func baseRoute(upstream string) caddyhttp.ServerRoute {
 		// Apply: []json.RawMessage{
 		// 	json.RawMessage(`
 		// 		{
-		// 			"middleware": "log",
+		// 			"handler": "log",
 		// 			"filename":   "/etc/caddy/access.log"
 		// 		}
 		// 	`),
 		// },
-		Respond: json.RawMessage(`
+		Handle: []json.RawMessage{
+			json.RawMessage(`
 			{
-				"responder": "reverse_proxy",
+				"handler": "reverse_proxy",
 				"load_balance_type": "random",
 				"upstreams": [
 						{
@@ -66,5 +67,6 @@ func baseRoute(upstream string) caddyhttp.ServerRoute {
 				]
 			}
 		`),
+		},
 	}
 }

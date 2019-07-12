@@ -31,48 +31,21 @@ data:
                     ]
                   }
                 ],
-                "apply": [
+                "handle": [
                   {
-                    "middleware": "log",
+                    "handler": "log",
                     "filename": "/etc/caddy/access.log"
-                  }
-                ],
-                "respond": {
-                  "responder": "reverse_proxy",
-                  "load_balance_type": "random",
-                  "upstreams": [
-                    {
-                      "host": "http://example2.default.svc.cluster.local"
-                    }
-                  ]
-                }
-              },
-              {
-                "match": [
+                  },
                   {
-                    "host": [
-                      "danny2.kubed.co"
-                    ],
-                    "path": [
-                      ""
+                    "handler": "reverse_proxy",
+                    "load_balance_type": "random",
+                    "upstreams": [
+                      {
+                        "host": "http://example2.default.svc.cluster.local"
+                      }
                     ]
                   }
                 ],
-                "apply": [
-                  {
-                    "middleware": "log",
-                    "filename": "/etc/caddy/access.log"
-                  }
-                ],
-                "respond": {
-                  "responder": "reverse_proxy",
-                  "load_balance_type": "random",
-                  "upstreams": [
-                    {
-                      "host": "http://example.default.svc.cluster.local"
-                    }
-                  ]
-                }
               }
             ]
           }
