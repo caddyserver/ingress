@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/caddyserver/caddy/v2"
 	"github.com/mholt/certmagic"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -32,6 +33,13 @@ func cleanKey(key string) string {
 type SecretStorage struct {
 	Namespace  string
 	KubeClient *kubernetes.Clientset
+}
+
+func (SecretStorage) CaddyModule() caddy.ModuleInfo {
+	return caddy.ModuleInfo{
+		Name: "caddy.storage.secret_store",
+		New:  func() caddy.Module { return new(SecretStorage) },
+	}
 }
 
 // CertMagicStorage returns a certmagic storage type to be used by caddy.

@@ -110,15 +110,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.dispatchSync()
 
 	// register kubernetes specific cert-magic storage module
-	caddy.RegisterModule(caddy.Module{
-		Name: "caddy.storage.secret_store",
-		New: func() interface{} {
-			return &storage.SecretStorage{
-				Namespace:  podInfo.Namespace,
-				KubeClient: kubeClient,
-			}
-		},
-	})
+	caddy.RegisterModule(storage.SecretStorage{})
 
 	return controller
 }

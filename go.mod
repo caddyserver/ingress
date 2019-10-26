@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/caddyserver/caddy/v2 v2.0.0-beta6
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/mholt/certmagic v0.8.3
+	github.com/mholt/certmagic v0.7.5
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0
