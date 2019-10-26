@@ -25,14 +25,10 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local", path.Backend.ServiceName, ing.Namespace)
 				r := baseRoute(clusterHostName)
 
-				// create matchers for ingress host and path
-				h := json.RawMessage(fmt.Sprintf(`["%v"]`, rule.Host))
-				p := json.RawMessage(fmt.Sprintf(`["%v"]`, path.Path))
-
-				r.MatcherSets = []map[string]json.RawMessage{
+				r.MatcherSets = caddyhttp.MatcherSets{
 					{
-						"host": h,
-						"path": p,
+						caddyhttp.MatchHost{rule.Host},
+						caddyhttp.MatchPath{path.Path},
 					},
 				}
 
@@ -45,24 +41,15 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 }
 
 // TODO :- configure log middleware for all routes
-func baseRoute(upstream string) caddyhttp.ServerRoute {
-	return caddyhttp.ServerRoute{
-		// Apply: []json.RawMessage{
-		// 	json.RawMessage(`
-		// 		{
-		// 			"handler": "log",
-		// 			"filename":   "/etc/caddy/access.log"
-		// 		}
-		// 	`),
-		// },
-		Handle: []json.RawMessage{
+func baseRoute(upstream string) caddyhttp.Route {
+	return caddyhttp.Route{
+		HandlersRaw: []json.RawMessage{
 			json.RawMessage(`
 			{
 				"handler": "reverse_proxy",
-				"load_balance_type": "random",
 				"upstreams": [
 						{
-								"host": "` + fmt.Sprintf("http://%v", upstream) + `"
+								"dial": "` + fmt.Sprintf("%s", upstream) + `"
 						}
 				]
 			}

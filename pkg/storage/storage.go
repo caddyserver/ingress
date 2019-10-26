@@ -136,12 +136,12 @@ func (s *SecretStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	}, nil
 }
 
-// Lock is a noop since the kubernetes client is thread safe.
 func (s *SecretStorage) Lock(key string) error {
+	// TODO: implement
 	return nil
 }
 
-// Unlock is a noop since the kubernetes client is thread safe.
 func (s *SecretStorage) Unlock(key string) error {
+	// TODO: implement
 	return nil
 }

@@ -46,7 +46,7 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 		},
 		Apps: map[string]interface{}{
 			"tls": caddytls.TLS{
-				Automation: caddytls.AutomationConfig{
+				Automation: &caddytls.AutomationConfig{
 					Policies: []caddytls.AutomationPolicy{
 						caddytls.AutomationPolicy{
 							Hosts:         nil,
