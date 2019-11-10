@@ -22,7 +22,7 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 	for _, ing := range ings {
 		for _, rule := range ing.Spec.Rules {
 			for _, path := range rule.HTTP.Paths {
-				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local", path.Backend.ServiceName, ing.Namespace)
+				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.ServiceName, ing.Namespace, path.Backend.ServicePort.IntVal)
 				r := baseRoute(clusterHostName)
 
 				r.MatcherSets = caddyhttp.MatcherSets{
