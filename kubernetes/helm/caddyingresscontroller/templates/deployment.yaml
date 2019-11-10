@@ -64,8 +64,14 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         args:
           {{- if .Values.autotls }}
           - -tls
           - -email={{ .Values.email }}
           {{- end }}
+      volumes:
+      - name: tmp
+        emptyDir: {}
