@@ -197,7 +197,10 @@ func (c *CaddyController) handleErr(err error, action interface{}) {
 
 // loadConfigFromFile loads caddy with a config defined by an io.Reader.
 func (c *CaddyController) loadConfigFromFile(cfg io.Reader) error {
-	err := caddy.Load(cfg)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(cfg)
+
+	err := caddy.Load(buf.Bytes(), true)
 	if err != nil {
 		return fmt.Errorf("could not load caddy config %v", err.Error())
 	}
@@ -212,14 +215,7 @@ func (c *CaddyController) reloadCaddy() error {
 		return err
 	}
 
-	// DEBUG ONLY
-	// PRETTY PRINT CADDY CONFIG ON UPDATE
-	js, _ := json.MarshalIndent(c.resourceStore.CaddyConfig, "", "\t")
-	fmt.Println(string(js))
-	//
-
-	r := bytes.NewReader(j)
-	err = caddy.Load(r)
+	err = caddy.Load(j, true)
 	if err != nil {
 		return fmt.Errorf("could not reload caddy config %v", err.Error())
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 )
@@ -54,7 +55,7 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 						},
 					},
 				},
-				Certificates: make(map[string]json.RawMessage, 0),
+				CertificatesRaw: caddy.ModuleMap{},
 			},
 			"http": caddyhttp.App{
 				Servers: map[string]*caddyhttp.Server{

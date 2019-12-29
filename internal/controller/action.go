@@ -160,10 +160,10 @@ func updateConfig(c *CaddyController) error {
 
 	// after TLS secrets are synched we should load them in the cert pool.
 	if tlsCfg != nil {
-		apps["tls"].(caddytls.TLS).Certificates["load_folders"] = tlsCfg["load_folders"].(json.RawMessage)
+		apps["tls"].(caddytls.TLS).CertificatesRaw["load_folders"] = tlsCfg["load_folders"].(json.RawMessage)
 	} else {
 		// reset cert loading
-		apps["tls"].(caddytls.TLS).Certificates["load_folders"] = json.RawMessage(`[]`)
+		apps["tls"].(caddytls.TLS).CertificatesRaw["load_folders"] = json.RawMessage(`[]`)
 	}
 
 	// skip auto https for hosts with certs provided
