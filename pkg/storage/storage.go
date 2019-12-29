@@ -37,8 +37,8 @@ type SecretStorage struct {
 
 func (SecretStorage) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
-		Name: "caddy.storage.secret_store",
-		New:  func() caddy.Module { return new(SecretStorage) },
+		ID:  "caddy.storage.secret_store",
+		New: func() caddy.Module { return new(SecretStorage) },
 	}
 }
 
