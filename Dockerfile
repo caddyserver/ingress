@@ -9,7 +9,9 @@ ENV GOARCH=amd64
 RUN mkdir -p ./bin
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+COPY ./cmd ./cmd
+COPY ./pkg ./pkg
+COPY ./internal ./internal
 RUN go build -o ./bin/ingress-controller ./cmd/caddy
 
 FROM scratch
