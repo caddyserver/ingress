@@ -2,7 +2,7 @@
 # if configuring caddy with a config map
 # ensure that you update ./configmap.yaml
 
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: caddy-ingress-controller
@@ -40,7 +40,7 @@ spec:
       #     name: caddy-config
       containers:
       - name: caddy-ingress-controller
-        image: gcr.io/danny-239313/ingresscontroller
+        image: docker.io/MYACCOUNT/caddy-ingress-controller
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: tmp
@@ -74,6 +74,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-        args:
-          - -tls
-          - -email=test@test.com
+        # args:
+        #   - -tls
+        #   - -tls-use-staging
+        #   - -email=test@test.com

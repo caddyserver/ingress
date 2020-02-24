@@ -1,11 +1,13 @@
-apiVersion: skaffold/v1beta8
+apiVersion: skaffold/v2alpha1
 kind: Config
 build:
   artifacts:
-  - image: gcr.io/danny-239313/ingresscontroller
+  - image: docker.io/MYACCOUNT/caddy-ingress-controller
 deploy:
   kubectl:
     manifests:
+    - kubernetes/deploy/00_namespace.yaml
+    - kubernetes/deploy/01_metallb.yaml
     - hack/test/example-deployment.yaml
     - hack/test/example-ingress.yaml
     - hack/test/example-deployment2.yaml
@@ -15,6 +17,17 @@ deploy:
     - kubernetes/generated/clusterrolebinding.yaml
     - kubernetes/generated/deployment.yaml
     - kubernetes/generated/serviceaccount.yaml
-    - kubernetes/generated/metricsservice.yaml
-    # - kubernetes/generated/configmap.yaml
-    # - kubernetes/generated/loadbalancer.yaml
+    - kubernetes/generated/loadbalancer.yaml
+portForward:
+- resourceType: service
+  resourceName: caddy-ingress-controller
+  namespace: caddy-system
+  address: 0.0.0.0
+  port: 80
+  localPort: 80
+- resourceType: service
+  resourceName: caddy-ingress-controller
+  namespace: caddy-system
+  address: 0.0.0.0
+  port: 443
+  localPort: 443

@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/ingress.class: caddy
 spec:
   rules:
-  - host: caddy2.kubed.co
+  - host: example1.MYDOMAIN.TDL
     http:
       paths:
       - path: /hello2
@@ -17,7 +17,7 @@ spec:
         backend:
           serviceName: example
           servicePort: 8080
-  - host: danny2.kubed.co
+  - host: example2.MYDOMAIN.TDL
     http:
       paths:
       - path: /hello2
@@ -28,7 +28,7 @@ spec:
         backend:
           serviceName: example
           servicePort: 8080
-  # tls:
-  # - hosts:
-  #   - danny2.kubed.co
-  #   secretName: danny2own
+#   tls:
+#   - secretName: ssl-example2.MYDOMAIN.TDL
+#     hosts:
+#     - example2.caddy.dev
