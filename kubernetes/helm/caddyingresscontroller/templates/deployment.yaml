@@ -30,6 +30,10 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ .Values.serviceAccountName }}
+{{- if .Values.caddyingresscontroller.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.caddyingresscontroller.pullSecrets | indent 6 }}
+{{- end }}
       containers:
       - name: {{ .Values.name }}
         image: "{{ .Values.caddyingresscontroller.image.name }}:{{ .Values.caddyingresscontroller.image.tag }}"
@@ -72,6 +76,9 @@ spec:
           - -tls
           - -email={{ .Values.email }}
           {{- end }}
+{{- if .Values.caddyingresscontroller.image.extraArgs }}
+{{ toYaml .Values.caddyingresscontroller.image.extraArgs | indent 10 }}
+{{- end }}
       volumes:
       - name: tmp
         emptyDir: {}
