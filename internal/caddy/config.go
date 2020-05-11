@@ -1,9 +1,6 @@
 package caddy
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
@@ -36,8 +33,6 @@ type ControllerConfig struct {
 
 // NewConfig returns a plain slate caddy2 config file.
 func NewConfig(namespace string, cfg ControllerConfig) *Config {
-	autoPolicyBytes := json.RawMessage(fmt.Sprintf(`{"module": "acme", "email": "%v"}`, cfg.Email))
-
 	return &Config{
 		Storage: Storage{
 			System: "secret_store",
@@ -48,10 +43,11 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 		Apps: map[string]interface{}{
 			"tls": caddytls.TLS{
 				Automation: &caddytls.AutomationConfig{
-					Policies: []caddytls.AutomationPolicy{
-						caddytls.AutomationPolicy{
-							Hosts:         nil,
-							ManagementRaw: autoPolicyBytes,
+					Policies: []*caddytls.AutomationPolicy{
+						{
+							Issuer: &caddytls.ACMEIssuer{
+								Email: cfg.Email,
+							},
 						},
 					},
 				},
