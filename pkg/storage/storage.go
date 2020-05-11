@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // matchLabels are attached to each resource so that they can be found in the future.
@@ -40,6 +41,16 @@ func (SecretStorage) CaddyModule() caddy.ModuleInfo {
 		ID:  "caddy.storage.secret_store",
 		New: func() caddy.Module { return new(SecretStorage) },
 	}
+}
+
+// Provisions the SecretStorage instance.
+func (s *SecretStorage) Provision(ctx caddy.Context) error {
+	config, _ := clientcmd.BuildConfigFromFlags("", "")
+	// creates the clientset
+	clientset, _ := kubernetes.NewForConfig(config)
+
+	s.KubeClient = clientset
+	return nil
 }
 
 // CertMagicStorage returns a certmagic storage type to be used by caddy.

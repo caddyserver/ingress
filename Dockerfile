@@ -1,6 +1,11 @@
-FROM golang:1.13.8-alpine AS builder
+FROM golang:1.14.2-alpine AS builder
 WORKDIR /app
-COPY . /app
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/ingress-controller ./cmd/caddy
 
 FROM alpine:latest as certs

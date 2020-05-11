@@ -1,6 +1,6 @@
 module github.com/caddyserver/ingress
 
-go 1.13
+go 1.14
 
 require (
 	github.com/caddyserver/caddy/v2 v2.0.0
