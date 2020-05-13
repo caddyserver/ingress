@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 )
 
 // ConvertToCaddyConfig returns a new caddy routelist based off of ingresses managed by this controller.

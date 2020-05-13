@@ -10,7 +10,7 @@ import (
 	"github.com/caddyserver/ingress/internal/caddy"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 )
 
 // loadConfigMap runs when a config map with caddy config is loaded on app start.
