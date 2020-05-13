@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"k8s.io/api/networking/v1beta1"
 )
@@ -28,21 +29,11 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 				match := caddy.ModuleMap{}
 
 				if rule.Host != "" {
-					hostRule, err := json.Marshal(caddyhttp.MatchHost{rule.Host})
-					if err != nil {
-						return nil, err
-					}
-
-					match["host"] = hostRule
+					match["host"] = caddyconfig.JSON(caddyhttp.MatchHost{rule.Host}, nil)
 				}
 
 				if path.Path != "" {
-					pathRule, err := json.Marshal(caddyhttp.MatchPath{path.Path})
-					if err != nil {
-						return nil, err
-					}
-
-					match["path"] = pathRule
+					match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{path.Path}, nil)
 				}
 
 				r.MatcherSetsRaw = []caddy.ModuleMap{match}

@@ -2,6 +2,7 @@ package caddy
 
 import (
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 )
@@ -33,6 +34,8 @@ type ControllerConfig struct {
 
 // NewConfig returns a plain slate caddy2 config file.
 func NewConfig(namespace string, cfg ControllerConfig) *Config {
+	issuer := caddytls.ACMEIssuer{}
+
 	return &Config{
 		Storage: Storage{
 			System: "secret_store",
@@ -45,9 +48,10 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 				Automation: &caddytls.AutomationConfig{
 					Policies: []*caddytls.AutomationPolicy{
 						{
-							Issuer: &caddytls.ACMEIssuer{
-								Email: cfg.Email,
-							},
+							IssuerRaw: caddyconfig.JSON(caddytls.ACMEIssuer{
+								CA:    getCAEndpoint(cfg.TLSUseStaging),
+								Email: cfg.Email},
+								nil),
 						},
 					},
 				},
@@ -66,4 +70,11 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 			},
 		},
 	}
+}
+
+func getCAEndpoint(useStaging bool) string {
+	if useStaging {
+		return "https://acme-staging-v02.api.letsencrypt.org/directory"
+	}
+	return ""
 }
