@@ -34,7 +34,9 @@ type ControllerConfig struct {
 
 // NewConfig returns a plain slate caddy2 config file.
 func NewConfig(namespace string, cfg ControllerConfig) *Config {
-	issuer := caddytls.ACMEIssuer{}
+	acmeIssuer := caddytls.ACMEIssuer{
+		CA:    getCAEndpoint(cfg.TLSUseStaging),
+		Email: cfg.Email}
 
 	return &Config{
 		Storage: Storage{
@@ -48,10 +50,7 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 				Automation: &caddytls.AutomationConfig{
 					Policies: []*caddytls.AutomationPolicy{
 						{
-							IssuerRaw: caddyconfig.JSON(caddytls.ACMEIssuer{
-								CA:    getCAEndpoint(cfg.TLSUseStaging),
-								Email: cfg.Email},
-								nil),
+							IssuerRaw: caddyconfig.JSONModuleObject(acmeIssuer, "module", "acme", nil),
 						},
 					},
 				},
