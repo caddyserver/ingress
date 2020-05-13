@@ -3,7 +3,7 @@ package caddy
 import (
 	"encoding/json"
 	"fmt"
-
+	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"k8s.io/api/networking/v1beta1"
 )
@@ -25,10 +25,10 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.ServiceName, ing.Namespace, path.Backend.ServicePort.IntVal)
 				r := baseRoute(clusterHostName)
 
-				r.MatcherSets = caddyhttp.MatcherSets{
+				r.MatcherSetsRaw = []caddy.ModuleMap{
 					{
-						caddyhttp.MatchHost{rule.Host},
-						caddyhttp.MatchPath{path.Path},
+						"host": json.RawMessage(`["` + fmt.Sprintf("%s", rule.Host) + `"]`),
+						"path": json.RawMessage(`["` + fmt.Sprintf("%s", path.Path) + `"]`),
 					},
 				}
 
