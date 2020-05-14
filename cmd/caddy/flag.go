@@ -20,6 +20,9 @@ func parseFlags() caddy.ControllerConfig {
 	var tlsUseStaging bool
 	flag.BoolVar(&tlsUseStaging, "tls-use-staging", false, "defines if the lets-encrypt staging server should be used for testing the provisioning of tls certificates.")
 
+	var automaticRedirects bool
+	flag.BoolVar(&automaticRedirects, "automatic-redirects", true, "defines if automatic HTTP -> HTTPS redirects should be enabled.")
+
 	flag.Parse()
 
 	if email == "" && enableAutomaticTLS {
@@ -28,9 +31,10 @@ func parseFlags() caddy.ControllerConfig {
 	}
 
 	return caddy.ControllerConfig{
-		Email:          email,
-		AutomaticTLS:   enableAutomaticTLS,
-		TLSUseStaging:  tlsUseStaging,
-		WatchNamespace: namespace,
+		Email:              email,
+		AutomaticTLS:       enableAutomaticTLS,
+		AutomaticRedirects: automaticRedirects,
+		TLSUseStaging:      tlsUseStaging,
+		WatchNamespace:     namespace,
 	}
 }

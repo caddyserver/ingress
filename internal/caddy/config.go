@@ -26,10 +26,11 @@ type Config struct {
 
 // ControllerConfig represents ingress controller config received through cli arguments.
 type ControllerConfig struct {
-	Email          string
-	AutomaticTLS   bool
-	TLSUseStaging  bool
-	WatchNamespace string
+	Email              string
+	AutomaticTLS       bool
+	AutomaticRedirects bool
+	TLSUseStaging      bool
+	WatchNamespace     string
 }
 
 // NewConfig returns a plain slate caddy2 config file.
@@ -37,6 +38,12 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 	acmeIssuer := caddytls.ACMEIssuer{
 		CA:    getCAEndpoint(cfg.TLSUseStaging),
 		Email: cfg.Email}
+
+	listenPorts := []string{":443"}
+
+	if !cfg.AutomaticRedirects {
+		listenPorts = append(listenPorts, ":80")
+	}
 
 	return &Config{
 		Storage: Storage{
@@ -58,12 +65,12 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 			},
 			"http": caddyhttp.App{
 				Servers: map[string]*caddyhttp.Server{
-					"ingress_server": &caddyhttp.Server{
+					"ingress_server": {
 						AutoHTTPS: &caddyhttp.AutoHTTPSConfig{
 							Disabled: !cfg.AutomaticTLS,
 							Skip:     make([]string, 0),
 						},
-						Listen: []string{":80", ":443"},
+						Listen: listenPorts,
 					},
 				},
 			},
