@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	pool "gopkg.in/go-playground/pool.v3"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -47,7 +47,7 @@ func runUpdate(ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client 
 			return nil, nil
 		}
 
-		ingClient := client.ExtensionsV1beta1().Ingresses(ing.Namespace)
+		ingClient := client.NetworkingV1beta1().Ingresses(ing.Namespace)
 
 		currIng, err := ingClient.Get(ing.Name, metav1.GetOptions{})
 		if err != nil {

@@ -1,10 +1,8 @@
 package caddy
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 )
@@ -36,7 +34,9 @@ type ControllerConfig struct {
 
 // NewConfig returns a plain slate caddy2 config file.
 func NewConfig(namespace string, cfg ControllerConfig) *Config {
-	autoPolicyBytes := json.RawMessage(fmt.Sprintf(`{"module": "acme", "email": "%v"}`, cfg.Email))
+	acmeIssuer := caddytls.ACMEIssuer{
+		CA:    getCAEndpoint(cfg.TLSUseStaging),
+		Email: cfg.Email}
 
 	return &Config{
 		Storage: Storage{
@@ -48,10 +48,9 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 		Apps: map[string]interface{}{
 			"tls": caddytls.TLS{
 				Automation: &caddytls.AutomationConfig{
-					Policies: []caddytls.AutomationPolicy{
-						caddytls.AutomationPolicy{
-							Hosts:         nil,
-							ManagementRaw: autoPolicyBytes,
+					Policies: []*caddytls.AutomationPolicy{
+						{
+							IssuerRaw: caddyconfig.JSONModuleObject(acmeIssuer, "module", "acme", nil),
 						},
 					},
 				},
@@ -70,4 +69,11 @@ func NewConfig(namespace string, cfg ControllerConfig) *Config {
 			},
 		},
 	}
+}
+
+func getCAEndpoint(useStaging bool) string {
+	if useStaging {
+		return "https://acme-staging-v02.api.letsencrypt.org/directory"
+	}
+	return ""
 }
