@@ -2,14 +2,14 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ .Values.name }}-role-binding
+  name: {{ include "caddyingresscontroller.name" . }}-role-binding
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ .Values.name }}-role
+  name: {{ include "caddyingresscontroller.name" . }}-role
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.serviceAccountName }}
+  name: {{ include "caddyingresscontroller.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- end }}

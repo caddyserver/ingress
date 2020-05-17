@@ -1,0 +1,6 @@
+apiVersion: v2
+name: caddy-ingress-controller
+description: A helm chart for the Caddy Kubernetes ingress controller
+type: application
+version: 0.1.1
+appVersion: v0.1.0
