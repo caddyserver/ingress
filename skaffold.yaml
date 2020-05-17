@@ -2,22 +2,16 @@ apiVersion: skaffold/v2alpha1
 kind: Config
 build:
   artifacts:
-  - image: docker.io/MYACCOUNT/caddy-ingress-controller
+  - image: docker.io/mavimo/caddy-ingress-controller
 deploy:
-  kubectl:
-    manifests:
-    - kubernetes/deploy/00_namespace.yaml
-    - kubernetes/deploy/01_metallb.yaml
-    - hack/test/example-deployment.yaml
-    - hack/test/example-ingress.yaml
-    - hack/test/example-deployment2.yaml
-    - hack/test/example-service2.yaml
-    - hack/test/example-service.yaml
-    - kubernetes/generated/clusterrole.yaml
-    - kubernetes/generated/clusterrolebinding.yaml
-    - kubernetes/generated/deployment.yaml
-    - kubernetes/generated/serviceaccount.yaml
-    - kubernetes/generated/loadbalancer.yaml
+  helm:
+    releases:
+    - name: caddy-ingress-development
+      namespace: caddy-system
+      chartPath: kubernetes/charts/caddyingresscontroller
+      recreatePods: true
+      values:
+        image: docker.io/mavimo/caddy-ingress-controller
 portForward:
 - resourceType: service
   resourceName: caddy-ingress-controller
