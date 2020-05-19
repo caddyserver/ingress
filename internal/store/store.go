@@ -3,6 +3,7 @@ package store
 import (
 	c "github.com/caddyserver/ingress/internal/caddy"
 	"github.com/sirupsen/logrus"
+	k "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -12,42 +13,34 @@ import (
 type Store struct {
 	Ingresses   []*v1beta1.Ingress
 	Secrets     []interface{} // TODO :- should we store the secrets in the ingress object?
+	ConfigMap   *k.ConfigMap
 	CaddyConfig *c.Config
 }
 
 // NewStore returns a new store that keeps track of ingresses and secrets. It will attempt to get
 // all current ingresses before returning.
 func NewStore(kubeClient *kubernetes.Clientset, namespace string, cfg c.ControllerConfig, cfgMapConfig *c.Config) *Store {
-	ingresses, err := kubeClient.NetworkingV1beta1().Ingresses("").List(v1.ListOptions{})
-	if err != nil {
-		logrus.Errorf("could not get existing ingresses in cluster")
-		return &Store{}
-	}
-
 	s := &Store{
 		Ingresses: []*v1beta1.Ingress{},
 	}
 
-	for _, i := range ingresses.Items {
-		s.Ingresses = append(s.Ingresses, &i)
+	ingresses, err := kubeClient.NetworkingV1beta1().Ingresses(cfg.WatchNamespace).List(v1.ListOptions{})
+	if err != nil {
+		logrus.Errorf("could not get existing ingresses in cluster", err)
+	} else {
+		for _, i := range ingresses.Items {
+			s.Ingresses = append(s.Ingresses, &i)
+		}
 	}
 
-	// not using cfg map to configure the ingress controller
-	if cfgMapConfig == nil {
-		s.CaddyConfig = c.NewConfig(namespace, cfg)
-		return s
-	}
-
-	// set cert-magic storage provider
-	cfgMapConfig.Storage = c.Storage{
-		System: "secret_store",
-		StorageValues: c.StorageValues{
-			Namespace: namespace,
-		},
+	cfgMap, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(cfg.ConfigMapName, v1.GetOptions{})
+	if err != nil {
+		logrus.Warn("could not get option configmap", err)
+	} else {
+		s.ConfigMap = cfgMap
 	}
 
 	s.CaddyConfig = cfgMapConfig
-
 	return s
 }
 

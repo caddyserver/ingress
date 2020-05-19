@@ -41,8 +41,7 @@ func main() {
 		logrus.Fatalf(msg, err)
 	}
 
-	restClient := kubeClient.NetworkingV1beta1().RESTClient()
-	c := controller.NewCaddyController(kubeClient, restClient, cfg)
+	c := controller.NewCaddyController(kubeClient, cfg)
 
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(prometheus.NewGoCollector())
