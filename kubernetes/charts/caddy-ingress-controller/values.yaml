@@ -4,7 +4,7 @@
 replicaCount: 1
 
 # Use to test in minikube context
-minikube: true
+minikube: false
 
 image:
   repository: caddy/ingress
