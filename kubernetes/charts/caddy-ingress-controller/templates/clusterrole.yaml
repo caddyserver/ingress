@@ -1,8 +1,8 @@
-{{- if .Values.caddyingresscontroller.rbac.create }}
+{{- if .Values.ingressController.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "caddyingresscontroller.name" . }}-role
+  name: {{ include "caddy-ingress-controller.name" . }}-role
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:

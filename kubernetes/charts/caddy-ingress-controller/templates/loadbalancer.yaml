@@ -4,10 +4,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "caddyingresscontroller.fullname" . }}
+  name: {{ include "caddy-ingress-controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "caddyingresscontroller.labels" . | nindent 4 }}
+    {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
 spec:
   type: "LoadBalancer"
   ports:
@@ -20,5 +20,5 @@ spec:
       protocol: TCP
       targetPort: https
   selector:
-    {{- include "caddyingresscontroller.selectorLabels" . | nindent 4 }}
+    {{- include "caddy-ingress-controller.selectorLabels" . | nindent 4 }}
 {{- end }}

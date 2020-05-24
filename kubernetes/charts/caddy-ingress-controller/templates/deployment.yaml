@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "caddyingresscontroller.fullname" . }}
+  name: {{ include "caddy-ingress-controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "caddyingresscontroller.labels" . | nindent 4 }}
+    {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "caddyingresscontroller.selectorLabels" . | nindent 6 }}
+      {{- include "caddy-ingress-controller.selectorLabels" . | nindent 6 }}
   template:
     metadata:
     {{- with .Values.podAnnotations }}
@@ -17,13 +17,13 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       labels:
-        {{- include "caddyingresscontroller.labels" . | nindent 8 }}
+        {{- include "caddy-ingress-controller.labels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "caddyingresscontroller.serviceAccountName" . }}
+      serviceAccountName: {{ include "caddy-ingress-controller.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -60,9 +60,9 @@ spec:
           - name: tmp
             mountPath: /tmp
           args:
-            {{- if .Values.caddyingresscontroller.autotls }}
+            {{- if .Values.ingressController.autotls }}
             - -tls
-            - -email={{ .Values.caddyingresscontroller.email }}
+            - -email={{ .Values.ingressController.email }}
             {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
