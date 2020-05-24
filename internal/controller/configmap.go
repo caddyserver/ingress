@@ -12,23 +12,14 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type OnDemandTLS struct {
-	Ask      string          `json:"ask"`
-	Interval caddy2.Duration `json:"interval"`
-	Burst    int             `json:"burst"`
-}
-
 type ConfigMapOptions struct {
 	Debug  bool   `json:"debug"`
 	AcmeCA string `json:"acme-ca"`
 	Email  string `json:"email"`
 	Admin  bool   `json:"admin"`
-	//OnDemandTLS `json:",squash"`
 }
 
 // onConfigMapAdded is run when a config map is added to the cluster.
-// TODO It would be nice to filter configmaps by namespace directly
-//		on the informer
 func (c *CaddyController) onConfigMapAdded(obj interface{}) {
 	c.syncQueue.Add(ConfigMapAddedAction{
 		resource: obj,

@@ -75,7 +75,7 @@ type ResourceDeletedAction struct {
 func (r LoadConfigAction) handle(c *CaddyController) error {
 	logrus.Info("Config file detected, updating Caddy config...")
 
-	c.resourceStore.CaddyConfig = r.config.(*caddy.Config)
+	c.resourceStore.CaddyConfig = r.config.(*config.Config)
 
 	err := regenerateConfig(c)
 	if err != nil {
