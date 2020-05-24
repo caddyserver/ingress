@@ -20,7 +20,9 @@ jobs:
           command: lint
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.0.0-alpha.3
+        uses: helm/kind-action@v1.0.0-rc.1
+        with:
+          version: "v0.8.1"
         # Only build a kind cluster if there are chart changes to test.
         if: steps.lint.outputs.changed == 'true'
 
