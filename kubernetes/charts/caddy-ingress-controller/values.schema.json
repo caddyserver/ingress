@@ -1,0 +1,154 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "replicaCount",
+        "minikube",
+        "image",
+        "imagePullSecrets",
+        "nameOverride",
+        "fullnameOverride",
+        "ingressController",
+        "serviceAccount",
+        "podAnnotations",
+        "podSecurityContext",
+        "securityContext",
+        "resources",
+        "nodeSelector",
+        "tolerations",
+        "affinity"
+    ],
+    "properties": {
+        "replicaCount": {
+            "$id": "#/properties/replicaCount",
+            "type": "number"
+        },
+        "minikube": {
+            "$id": "#/properties/minikube",
+            "type": "boolean"
+        },
+        "image": {
+            "$id": "#/properties/image",
+            "type": "object",
+            "required": [
+                "repository",
+                "tag",
+                "pullPolicy"
+            ],
+            "properties": {
+                "repository": {
+                    "$id": "#/properties/image/properties/repository",
+                    "type": "string"
+                },
+                "tag": {
+                    "$id": "#/properties/image/properties/tag",
+                    "type": "string"
+                },
+                "pullPolicy": {
+                    "$id": "#/properties/image/properties/pullPolicy",
+                    "type": "string",
+                    "enum": [
+                        "Always",
+                        "IfNotPresent",
+                        "Never"
+                    ]
+                }
+            }
+        },
+        "imagePullSecrets": {
+            "$id": "#/properties/imagePullSecrets",
+            "type": "array"
+        },
+        "nameOverride": {
+            "$id": "#/properties/nameOverride",
+            "type": "string"
+        },
+        "fullnameOverride": {
+            "$id": "#/properties/fullnameOverride",
+            "type": "string"
+        },
+        "ingressController": {
+            "$id": "#/properties/ingressController",
+            "type": "object",
+            "required": [
+                "rbac",
+                "autotls",
+                "email"
+            ],
+            "properties": {
+                "rbac": {
+                    "$id": "#/properties/ingressController/properties/rbac",
+                    "type": "object",
+                    "required": [
+                        "create"
+                    ],
+                    "properties": {
+                        "create": {
+                            "$id": "#/properties/ingressController/properties/rbac/properties/create",
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "autotls": {
+                    "$id": "#/properties/ingressController/properties/autotls",
+                    "type": "boolean"
+                },
+                "email": {
+                    "$id": "#/properties/ingressController/properties/email",
+                    "type": "string"
+                }
+            }
+        },
+        "serviceAccount": {
+            "$id": "#/properties/serviceAccount",
+            "type": "object",
+            "required": [
+                "create",
+                "name"
+            ],
+            "properties": {
+                "create": {
+                    "$id": "#/properties/serviceAccount/properties/create",
+                    "type": "boolean"
+                },
+                "name": {
+                    "$id": "#/properties/serviceAccount/properties/name",
+                    "type": "string"
+                },
+                "annotations": {
+                    "$id": "#/properties/serviceAccount/properties/annotations",
+                    "type": "object"
+                }
+            }
+        },
+        "podAnnotations": {
+            "$id": "#/properties/podAnnotations",
+            "type": "object"
+        },
+        "podSecurityContext": {
+            "$id": "#/properties/podSecurityContext",
+            "type": "object"
+        },
+        "securityContext": {
+            "$id": "#/properties/securityContext",
+            "type": "object"
+        },
+        "resources": {
+            "$id": "#/properties/resources",
+            "type": "object"
+        },
+        "nodeSelector": {
+            "$id": "#/properties/nodeSelector",
+            "type": "object"
+        },
+        "tolerations": {
+            "$id": "#/properties/tolerations",
+            "type": "array"
+        },
+        "affinity": {
+            "$id": "#/properties/affinity",
+            "type": "object"
+        }
+    }
+}
