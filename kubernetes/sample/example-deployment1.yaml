@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example
+  name: example1
   labels:
-    app: example
+    app: example1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: example
+      app: example1
   template:
     metadata:
       labels:
-        app: example
+        app: example1
     spec:
       containers:
       - name: httpecho
         image: hashicorp/http-echo
         args:
         - "-listen=:8080"
-        - "-text=hello world"
+        - "-text=hello world 1"
         ports:
         - containerPort: 8080

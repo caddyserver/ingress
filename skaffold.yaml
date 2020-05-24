@@ -10,19 +10,20 @@ deploy:
     releases:
     - name: caddy-ingress-development
       namespace: caddy-system
-      chartPath: kubernetes/charts/caddyingresscontroller
+      chartPath: kubernetes/charts/caddy-ingress-controller
       recreatePods: true
-      setValues:
-        minikube: true
+  kubectl:
+    manifests:
+      - kubernetes/sample/*.yaml
 portForward:
 - resourceType: service
-  resourceName: caddy-ingress-controller
+  resourceName: caddy-ingress-development-caddy-ingress-controller
   namespace: caddy-system
   address: 0.0.0.0
   port: 80
   localPort: 8080
 - resourceType: service
-  resourceName: caddy-ingress-controller
+  resourceName: caddy-ingress-development-caddy-ingress-controller
   namespace: caddy-system
   address: 0.0.0.0
   port: 443
