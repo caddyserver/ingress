@@ -104,13 +104,13 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, cfg c.ControllerConfig
 	}
 
 	// create 2 types of informers: one for the caddy NS and another one for ingress resources
-	ingInfFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, syncInterval, informers.WithNamespace(cfg.WatchNamespace))
-	caddyInfFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, syncInterval, informers.WithNamespace(podInfo.Namespace))
+	ingressInformerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, syncInterval, informers.WithNamespace(cfg.WatchNamespace))
+	caddyInformerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, syncInterval, informers.WithNamespace(podInfo.Namespace))
 
-	controller.informers.Ingress = ingInfFactory.Networking().V1beta1().Ingresses().Informer()
+	controller.informers.Ingress = ingressInformerFactory.Networking().V1beta1().Ingresses().Informer()
 	controller.listers.Ingress = controller.informers.Ingress.GetStore()
 
-	controller.informers.ConfigMap = caddyInfFactory.Core().V1().ConfigMaps().Informer()
+	controller.informers.ConfigMap = caddyInformerFactory.Core().V1().ConfigMaps().Informer()
 	controller.listers.ConfigMap = controller.informers.ConfigMap.GetStore()
 
 	// add event handlers
