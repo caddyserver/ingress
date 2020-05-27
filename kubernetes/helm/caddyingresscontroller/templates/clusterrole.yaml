@@ -20,7 +20,7 @@ rules:
       - pods
       - nodes
       - routes
-      - extensions
+      - apps
     verbs:
       - list
       - get
