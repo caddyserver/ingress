@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/caddyserver/caddy/v2"
-	"github.com/mholt/certmagic"
+	"github.com/caddyserver/certmagic"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,8 +46,8 @@ func (SecretStorage) CaddyModule() caddy.ModuleInfo {
 // Provisions the SecretStorage instance.
 func (s *SecretStorage) Provision(ctx caddy.Context) error {
 	config, _ := clientcmd.BuildConfigFromFlags("", "")
-  // creates the clientset
-  clientset, _ := kubernetes.NewForConfig(config)
+	// creates the clientset
+	clientset, _ := kubernetes.NewForConfig(config)
 
 	s.KubeClient = clientset
 	return nil

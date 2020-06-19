@@ -3,9 +3,10 @@ package caddy
 import (
 	"encoding/json"
 	"fmt"
-
+	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 )
 
 // ConvertToCaddyConfig returns a new caddy routelist based off of ingresses managed by this controller.
@@ -25,18 +26,22 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.ServiceName, ing.Namespace, path.Backend.ServicePort.IntVal)
 				r := baseRoute(clusterHostName)
 
-				r.MatcherSets = caddyhttp.MatcherSets{
-					{
-						caddyhttp.MatchHost{rule.Host},
-						caddyhttp.MatchPath{path.Path},
-					},
+				match := caddy.ModuleMap{}
+
+				if rule.Host != "" {
+					match["host"] = caddyconfig.JSON(caddyhttp.MatchHost{rule.Host}, nil)
 				}
+
+				if path.Path != "" {
+					match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{path.Path}, nil)
+				}
+
+				r.MatcherSetsRaw = []caddy.ModuleMap{match}
 
 				routes = append(routes, r)
 			}
 		}
 	}
-
 	return routes, nil
 }
 
