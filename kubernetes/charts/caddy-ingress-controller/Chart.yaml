@@ -3,7 +3,7 @@ name: caddy-ingress-controller
 home: https://github.com/caddyserver/ingress
 description: A helm chart for the Caddy Kubernetes ingress controller
 type: application
-version: 0.0.1
+version: 0.0.1-test
 appVersion: v0.1.0
 keywords:
   - ingress-controller

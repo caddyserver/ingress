@@ -1,9 +1,6 @@
 name: Release Charts
 
-on:
-  push:
-    branches:
-      - master
+on: pull_request
 
 jobs:
   release:
@@ -18,8 +15,8 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.0.0-rc.2
+        uses: helm/chart-releaser-action@master
         with:
-          charts_dir: kubernetes/charts
+          charts_dir: kubernetes/charts/caddy-ingress-controller
         env:
-          CR_TOKEN: "${{ secrets.CR_TOKEN }}"
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
