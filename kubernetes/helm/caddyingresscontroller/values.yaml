@@ -6,10 +6,10 @@ caddyingresscontroller:
   tolerations: {}
   deployment:
     labels:
-      version: "v0.1.0"
+      version: "sha-2e6dc79"
   config:
     labels:
-      version: "v0.1.0"
+      version: "sha-2e6dc79"
   rbac:
     create: true
   # Service account config for the agent pods
@@ -17,13 +17,13 @@ caddyingresscontroller:
     # Specifies whether a ServiceAccount should be created
     create: true
     labels:
-      version: "v0.1.0"
+      version: "sha-2e6dc79"
     # The name of the ServiceAccount to use.
     # If not set and create is true, a name is generated using the fullname template
     name: caddy-ingress-controller
   image:
-    name: "gcr.io/danny-239313/ingresscontroller"
-    tag: "v0.1.0"
+    name: "caddy/ingress"
+    tag: "sha-2e6dc79"
     pullPolicy: IfNotPresent
 
 name: "caddy-ingress-controller"
