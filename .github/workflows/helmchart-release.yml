@@ -17,6 +17,6 @@ jobs:
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@master
         with:
-          charts_dir: kubernetes/charts/caddy-ingress-controller
+          charts_dir: charts
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

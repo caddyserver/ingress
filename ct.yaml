@@ -6,5 +6,5 @@ validate-yaml: true
 check-version-increment: true
 all: true
 chart-dirs:
-  - kubernetes/charts
+  - charts
 helm-extra-args: --timeout 600s
