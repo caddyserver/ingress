@@ -1,0 +1,23 @@
+apiVersion: v1
+entries:
+  caddy-ingress-controller:
+  - apiVersion: v2
+    appVersion: v0.1.0
+    created: "2020-06-20T19:38:07.954381371Z"
+    description: A helm chart for the Caddy Kubernetes ingress controller
+    digest: e6d262d2a0203b2133b5d0773315b7fc90f3373e99329f7f33d2114f412ffde8
+    home: https://github.com/caddyserver/ingress
+    keywords:
+    - ingress-controller
+    - caddyserver
+    maintainers:
+    - name: mavimo
+      url: https://github.com/mavimo
+    name: caddy-ingress-controller
+    sources:
+    - https://github.com/caddyserver/ingress
+    type: application
+    urls:
+    - https://github.com/caddyserver/ingress/releases/download/caddy-ingress-controller-0.0.1-rc1/caddy-ingress-controller-0.0.1-rc1.tgz
+    version: 0.0.1-rc1
+generated: "2020-06-20T19:38:07.801703957Z"
