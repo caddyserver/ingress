@@ -1,0 +1,54 @@
+name: Lint and Test Charts
+
+on: pull_request
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Fetch history
+        run: git fetch --prune --unshallow
+
+      - name: Run chart-testing (lint)
+        id: lint
+        uses: helm/chart-testing-action@v1.0.0-rc.1
+        with:
+          image: quay.io/helmpack/chart-testing:v3.0.0-rc.1
+          command: lint
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.0.0-rc.1
+        with:
+          version: "v0.8.1"
+        # Only build a kind cluster if there are chart changes to test.
+        if: steps.lint.outputs.changed == 'true'
+
+      - name: Install MetalLB to allow LoadBalancer services
+        run: |
+          kubectl create ns metallb-system
+          kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.9.3/manifests/metallb.yaml
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: config
+            namespace: metallb-system
+          data:
+            config: |
+              address-pools:
+              - name: default
+                protocol: layer2
+                addresses:
+                - 172.17.255.1-172.17.255.200
+          EOF
+
+        if: steps.lint.outputs.changed == 'true'
+
+      - name: Run chart-testing (install)
+        uses: helm/chart-testing-action@v1.0.0-rc.1
+        with:
+          image: quay.io/helmpack/chart-testing:v3.0.0-rc.1
+          command: install

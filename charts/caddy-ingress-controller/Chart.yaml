@@ -1,0 +1,15 @@
+apiVersion: v2
+name: caddy-ingress-controller
+home: https://github.com/caddyserver/ingress
+description: A helm chart for the Caddy Kubernetes ingress controller
+type: application
+version: 0.0.1-rc1
+appVersion: v0.1.0
+keywords:
+  - ingress-controller
+  - caddyserver
+sources:
+  - https://github.com/caddyserver/ingress
+maintainers:
+  - name: mavimo
+    url: https://github.com/mavimo

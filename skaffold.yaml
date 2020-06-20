@@ -1,33 +1,30 @@
-apiVersion: skaffold/v2alpha1
+apiVersion: skaffold/v2beta3
 kind: Config
+metadata:
+  name: caddy-ingress-controller
 build:
   artifacts:
-  - image: docker.io/MYACCOUNT/caddy-ingress-controller
+    - image: caddy/ingress
 deploy:
+  helm:
+    releases:
+      - name: caddy-ingress-development
+        namespace: caddy-system
+        chartPath: charts/caddy-ingress-controller
+        recreatePods: true
   kubectl:
     manifests:
-    - kubernetes/deploy/00_namespace.yaml
-    - kubernetes/deploy/01_metallb.yaml
-    - hack/test/example-deployment.yaml
-    - hack/test/example-ingress.yaml
-    - hack/test/example-deployment2.yaml
-    - hack/test/example-service2.yaml
-    - hack/test/example-service.yaml
-    - kubernetes/generated/clusterrole.yaml
-    - kubernetes/generated/clusterrolebinding.yaml
-    - kubernetes/generated/deployment.yaml
-    - kubernetes/generated/serviceaccount.yaml
-    - kubernetes/generated/loadbalancer.yaml
+      - kubernetes/sample/*.yaml
 portForward:
-- resourceType: service
-  resourceName: caddy-ingress-controller
-  namespace: caddy-system
-  address: 0.0.0.0
-  port: 80
-  localPort: 80
-- resourceType: service
-  resourceName: caddy-ingress-controller
-  namespace: caddy-system
-  address: 0.0.0.0
-  port: 443
-  localPort: 443
+  - resourceType: service
+    resourceName: caddy-ingress-development-caddy-ingress-controller
+    namespace: caddy-system
+    address: 0.0.0.0
+    port: 80
+    localPort: 8080
+  - resourceType: service
+    resourceName: caddy-ingress-development-caddy-ingress-controller
+    namespace: caddy-system
+    address: 0.0.0.0
+    port: 443
+    localPort: 8443
