@@ -4,27 +4,27 @@ metadata:
   name: caddy-ingress-controller
 build:
   artifacts:
-  - image: caddy/ingress
+    - image: caddy/ingress
 deploy:
   helm:
     releases:
-    - name: caddy-ingress-development
-      namespace: caddy-system
-      chartPath: kubernetes/charts/caddy-ingress-controller
-      recreatePods: true
+      - name: caddy-ingress-development
+        namespace: caddy-system
+        chartPath: charts/caddy-ingress-controller
+        recreatePods: true
   kubectl:
     manifests:
       - kubernetes/sample/*.yaml
 portForward:
-- resourceType: service
-  resourceName: caddy-ingress-development-caddy-ingress-controller
-  namespace: caddy-system
-  address: 0.0.0.0
-  port: 80
-  localPort: 8080
-- resourceType: service
-  resourceName: caddy-ingress-development-caddy-ingress-controller
-  namespace: caddy-system
-  address: 0.0.0.0
-  port: 443
-  localPort: 8443
+  - resourceType: service
+    resourceName: caddy-ingress-development-caddy-ingress-controller
+    namespace: caddy-system
+    address: 0.0.0.0
+    port: 80
+    localPort: 8080
+  - resourceType: service
+    resourceName: caddy-ingress-development-caddy-ingress-controller
+    namespace: caddy-system
+    address: 0.0.0.0
+    port: 443
+    localPort: 8443
