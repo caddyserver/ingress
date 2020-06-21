@@ -16,7 +16,6 @@ type ConfigMapOptions struct {
 	Debug  bool   `json:"debug"`
 	AcmeCA string `json:"acme-ca"`
 	Email  string `json:"email"`
-	Admin  bool   `json:"admin"`
 }
 
 // onConfigMapAdded is run when a config map is added to the cluster.

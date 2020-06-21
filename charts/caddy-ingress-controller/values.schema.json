@@ -73,8 +73,7 @@
             "type": "object",
             "required": [
                 "rbac",
-                "autotls",
-                "email"
+                "config"
             ],
             "properties": {
                 "rbac": {
@@ -90,13 +89,27 @@
                         }
                     }
                 },
-                "autotls": {
-                    "$id": "#/properties/ingressController/properties/autotls",
-                    "type": "boolean"
-                },
-                "email": {
-                    "$id": "#/properties/ingressController/properties/email",
-                    "type": "string"
+                "config": {
+                    "$id": "#/properties/ingressController/properties/config",
+                    "type": "object",
+                    "properties": {
+                        "acme-ca": {
+                            "$id": "#/properties/ingressController/properties/config/properties/acme-ca",
+                            "type": "string"
+                        },
+                        "email": {
+                            "$id": "#/properties/ingressController/properties/config/properties/email",
+                            "type": "string"
+                        },
+                        "debug": {
+                            "$id": "#/properties/ingressController/properties/config/properties/debug",
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    }
                 }
             }
         },

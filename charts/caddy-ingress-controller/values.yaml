@@ -20,10 +20,10 @@ ingressController:
   rbac:
     create: true
 
-  # If setting autotls the following email value must be set
-  # to an email address that you manage
-  autotls: false
-  email: ""
+  config:
+    acme-ca: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: embraser01@gmail.com
+    debug: "false"
 
 serviceAccount:
   # Specifies whether a service account should be created
