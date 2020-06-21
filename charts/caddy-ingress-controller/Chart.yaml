@@ -2,8 +2,9 @@ apiVersion: v2
 name: caddy-ingress-controller
 home: https://github.com/caddyserver/ingress
 description: A helm chart for the Caddy Kubernetes ingress controller
+icon: https://caddyserver.com/resources/images/caddy-circle-lock.svg
 type: application
-version: 0.0.1-rc1
+version: 0.0.1-rc2
 appVersion: v0.1.0
 keywords:
   - ingress-controller
