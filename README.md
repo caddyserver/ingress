@@ -24,7 +24,7 @@ Caddy Ingress Controller adhere to the following steps:
     --namespace=caddy-system \
     --repo https://caddyserver.github.io/ingress/ \
     --atomic \
-    --set image.tag=latest
+    --set image.tag=latest \
     mycaddy \
     caddy-ingress-controller
 ```
