@@ -29,7 +29,27 @@ Caddy Ingress Controller adhere to the following steps:
     caddy-ingress-controller
 ```
 
-The helm chart create a service of type `LoadBalancer` in the `caddy-system`
+Or 
+
+2. Generate kubernetes yaml file.
+```sh
+    # clone this repo
+    git clone git@github.com:caddyserver/ingress.git;
+    
+    # cd to the repository folder
+    cd ingress;
+    
+    # generate the yaml file
+    helm template mycaddy ./charts/caddy-ingress-controller \
+      --namespace=caddy-system \
+      --set image.tag=latest \
+      > mycaddy.yaml;
+    
+    # apply the file
+    kubectl apply -f mycaddy.yaml
+```
+
+This will create a service of type `LoadBalancer` in the `caddy-system`
 namespace on your cluster. You'll want to set any DNS records for accessing this
 cluster to the external IP address of this `LoadBalancer` when the external IP
 is provisioned by your cloud provider.
