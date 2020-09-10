@@ -21,8 +21,8 @@ ingressController:
     create: true
 
   config:
-    acme-ca: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: embraser01@gmail.com
+    acme-ca: ""
+    email: ""
     debug: "false"
 
 serviceAccount:
