@@ -95,19 +95,17 @@
                     "properties": {
                         "acme-ca": {
                             "$id": "#/properties/ingressController/properties/config/properties/acme-ca",
-                            "type": "string"
+                            "type": "string",
+                            "format": "uri"
                         },
                         "email": {
                             "$id": "#/properties/ingressController/properties/config/properties/email",
-                            "type": "string"
+                            "type": "string",
+                            "format": "email"
                         },
                         "debug": {
                             "$id": "#/properties/ingressController/properties/config/properties/debug",
-                            "type": "string",
-                            "enum": [
-                                "true",
-                                "false"
-                            ]
+                            "type": "boolean"
                         }
                     }
                 }

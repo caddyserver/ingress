@@ -23,7 +23,7 @@ ingressController:
   config:
     acme-ca: ""
     email: ""
-    debug: "false"
+    debug: false
 
 serviceAccount:
   # Specifies whether a service account should be created
