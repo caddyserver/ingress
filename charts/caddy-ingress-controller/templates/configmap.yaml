@@ -4,7 +4,7 @@ metadata:
   name: {{ include "caddy-ingress-controller.name" . }}-configmap
   namespace: {{ .Release.Namespace }}
 data:
-  acme-ca: { { .Values.ingressController.config.acme-ca } }
-  email: { { .Values.ingressController.config.email } }
-  debug: { { .Values.ingressController.config.debug | quote } }
+{{- range keys .Values.ingressController.config | sortAlpha }}
+  {{ . }}: {{ get $.Values.ingressController.config . | quote }}
+{{- end }}
 

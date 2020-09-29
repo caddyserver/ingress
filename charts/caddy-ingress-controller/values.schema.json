@@ -93,15 +93,29 @@
                     "$id": "#/properties/ingressController/properties/config",
                     "type": "object",
                     "properties": {
-                        "acme-ca": {
-                            "$id": "#/properties/ingressController/properties/config/properties/acme-ca",
+                        "acmeCA": {
+                            "$id": "#/properties/ingressController/properties/config/properties/acmeCA",
                             "type": "string",
-                            "format": "uri"
+                            "oneOf": [
+                                {
+                                    "format": "uri"
+                                },
+                                {
+                                    "maxLength": 0
+                                }
+                            ]
                         },
                         "email": {
                             "$id": "#/properties/ingressController/properties/config/properties/email",
                             "type": "string",
-                            "format": "email"
+                            "oneOf": [
+                                {
+                                    "format": "email"
+                                },
+                                {
+                                    "maxLength": 0
+                                }
+                            ]
                         },
                         "debug": {
                             "$id": "#/properties/ingressController/properties/config/properties/debug",

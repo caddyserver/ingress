@@ -14,7 +14,7 @@ import (
 
 type ConfigMapOptions struct {
 	Debug  bool   `json:"debug"`
-	AcmeCA string `json:"acme-ca"`
+	AcmeCA string `json:"acmeCA"`
 	Email  string `json:"email"`
 }
 
