@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -93,9 +94,11 @@ func (s *SecretStorage) Store(key string, value []byte) error {
 	}
 
 	var err error
-	if s.Exists(cleanKey(key)) {
+	if s.Exists(key) {
+		logrus.Infof("Updating k8s secret '%s'", cleanKey(key))
 		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Update(&se)
 	} else {
+		logrus.Infof("Creating k8s secret '%s'", cleanKey(key))
 		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Create(&se)
 	}
 
@@ -161,7 +164,7 @@ func (s *SecretStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	}, nil
 }
 
-func (s *SecretStorage) Lock(key string) error {
+func (s *SecretStorage) Lock(ctx context.Context, key string) error {
 	// TODO: implement
 	return nil
 }

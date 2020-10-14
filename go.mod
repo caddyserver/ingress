@@ -3,11 +3,11 @@ module github.com/caddyserver/ingress
 go 1.14
 
 require (
-	github.com/caddyserver/caddy/v2 v2.0.0
-	github.com/caddyserver/certmagic v0.10.12
+	github.com/caddyserver/caddy/v2 v2.2.1
+	github.com/caddyserver/certmagic v0.12.0
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.6.0
+	github.com/prometheus/client_golang v1.7.1
 	github.com/sirupsen/logrus v1.6.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/pool.v3 v3.1.1
