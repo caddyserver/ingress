@@ -33,6 +33,10 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 				}
 
 				if path.Path != "" {
+					if *path.PathType != v1beta1.PathTypeExact {
+						path.Path += "*"
+					}
+
 					match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{path.Path}, nil)
 				}
 
