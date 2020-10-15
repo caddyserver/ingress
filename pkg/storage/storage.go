@@ -94,7 +94,7 @@ func (s *SecretStorage) Store(key string, value []byte) error {
 	}
 
 	var err error
-	if s.Exists(cleanKey(key)) {
+	if s.Exists(key) {
 		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Update(context.TODO(), &se, metav1.UpdateOptions{})
 	} else {
 		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Create(context.TODO(), &se, metav1.CreateOptions{})
