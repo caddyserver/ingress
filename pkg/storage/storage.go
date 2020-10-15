@@ -162,7 +162,7 @@ func (s *SecretStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	}, nil
 }
 
-func (s *SecretStorage) Lock(key string) error {
+func (s *SecretStorage) Lock(ctx context.Context, key string) error {
 	// TODO: implement
 	return nil
 }
