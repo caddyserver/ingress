@@ -1,6 +1,7 @@
 package pod
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -27,7 +28,7 @@ func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
 	addrs := []string{}
 
 	// get information about all the pods running the ingress controller
-	pods, err := kubeClient.CoreV1().Pods(p.Namespace).List(metav1.ListOptions{
+	pods, err := kubeClient.CoreV1().Pods(p.Namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(p.Labels).String(),
 	})
 	if err != nil {
@@ -51,7 +52,7 @@ func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
 
 // GetNodeIPOrName returns the IP address or the name of a node in the cluster
 func GetNodeIPOrName(kubeClient *kubernetes.Clientset, name string, useInternalIP bool) string {
-	node, err := kubeClient.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	node, err := kubeClient.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("Error getting node %v: %v", name, err)
 		return ""
@@ -88,7 +89,7 @@ func GetPodDetails(kubeClient *kubernetes.Clientset) (*Info, error) {
 		return nil, fmt.Errorf("unable to get POD information (missing POD_NAME or POD_NAMESPACE environment variable")
 	}
 
-	pod, _ := kubeClient.CoreV1().Pods(podNs).Get(podName, metav1.GetOptions{})
+	pod, _ := kubeClient.CoreV1().Pods(podNs).Get(context.TODO(), podName, metav1.GetOptions{})
 	if pod == nil {
 		return nil, fmt.Errorf("unable to get POD information")
 	}

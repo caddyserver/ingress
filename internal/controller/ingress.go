@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -49,7 +50,7 @@ func runUpdate(ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client 
 
 		ingClient := client.NetworkingV1beta1().Ingresses(ing.Namespace)
 
-		currIng, err := ingClient.Get(ing.Name, metav1.GetOptions{})
+		currIng, err := ingClient.Get(context.TODO(), ing.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("unexpected error searching Ingress %v/%v", ing.Namespace, ing.Name))
 		}
@@ -57,7 +58,7 @@ func runUpdate(ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client 
 		logrus.Infof("updating Ingress %v/%v status from %v to %v", currIng.Namespace, currIng.Name, currIng.Status.LoadBalancer.Ingress, status)
 		currIng.Status.LoadBalancer.Ingress = status
 
-		_, err = ingClient.UpdateStatus(currIng)
+		_, err = ingClient.UpdateStatus(context.TODO(), currIng, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Warningf("error updating ingress rule: %v", err)
 		}

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -106,7 +107,7 @@ func syncCertificates(certs []certificate, kubeClient *kubernetes.Clientset) err
 
 	certData := make(map[string]map[string][]byte, len(certs))
 	for _, cert := range certs {
-		s, err := kubeClient.CoreV1().Secrets(cert.namespace).Get(cert.name, metav1.GetOptions{})
+		s, err := kubeClient.CoreV1().Secrets(cert.namespace).Get(context.TODO(), cert.name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
