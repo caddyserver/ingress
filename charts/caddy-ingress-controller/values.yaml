@@ -21,7 +21,7 @@ ingressController:
     create: true
 
   config:
-    acme-ca: ""
+    acmeCA: ""
     email: ""
     debug: false
 
