@@ -3,18 +3,17 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 	"github.com/caddyserver/ingress/internal/caddy"
+	config "github.com/caddyserver/ingress/internal/caddy"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/networking/v1beta1"
 )
 
 // loadConfigMap runs when a config map with caddy config is loaded on app start.
-func (c *CaddyController) onLoadConfig(obj io.Reader) {
+func (c *CaddyController) onLoadConfig(obj interface{}) {
 	c.syncQueue.Add(LoadConfigAction{
 		config: obj,
 	})
@@ -54,7 +53,7 @@ type Action interface {
 
 // LoadConfigAction provides an implementation of the action interface.
 type LoadConfigAction struct {
-	config io.Reader
+	config interface{}
 }
 
 // ResourceAddedAction provides an implementation of the action interface.
@@ -75,7 +74,15 @@ type ResourceDeletedAction struct {
 
 func (r LoadConfigAction) handle(c *CaddyController) error {
 	logrus.Info("Config file detected, updating Caddy config...")
-	return c.loadConfigFromFile(r.config)
+
+	c.resourceStore.CaddyConfig = r.config.(*config.Config)
+
+	err := regenerateConfig(c)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r ResourceAddedAction) handle(c *CaddyController) error {
@@ -90,7 +97,7 @@ func (r ResourceAddedAction) handle(c *CaddyController) error {
 	// add this ingress to the internal store
 	c.resourceStore.AddIngress(ing)
 
-	err := updateConfig(c)
+	err := regenerateConfig(c)
 	if err != nil {
 		return err
 	}
@@ -117,7 +124,7 @@ func (r ResourceUpdatedAction) handle(c *CaddyController) error {
 	// add or update this ingress in the internal store
 	c.resourceStore.AddIngress(ing)
 
-	err := updateConfig(c)
+	err := regenerateConfig(c)
 	if err != nil {
 		return err
 	}
@@ -139,7 +146,7 @@ func (r ResourceDeletedAction) handle(c *CaddyController) error {
 	// add this ingress to the internal store
 	c.resourceStore.PluckIngress(ing)
 
-	err := updateConfig(c)
+	err := regenerateConfig(c)
 	if err != nil {
 		return err
 	}
@@ -148,9 +155,32 @@ func (r ResourceDeletedAction) handle(c *CaddyController) error {
 	return nil
 }
 
-// updateConfig updates internal caddy config with new ingress info.
-func updateConfig(c *CaddyController) error {
-	apps := c.resourceStore.CaddyConfig.Apps
+// regenerateConfig regenerate caddy config with updated resources.
+func regenerateConfig(c *CaddyController) error {
+	logrus.Info("Updating caddy config")
+
+	var cfg *config.Config
+	var cfgFile *config.Config = nil
+	var err error
+
+	if c.usingConfigMap {
+		cfgFile, err = loadCaddyConfigFile("/etc/caddy/config.json")
+		if err != nil {
+			logrus.Warn("Unable to load config file: %v", err)
+		}
+	}
+
+	cfg = config.NewConfig(c.podInfo.Namespace, cfgFile)
+
+	tlsApp := cfg.Apps["tls"].(*caddytls.TLS)
+	httpApp := cfg.Apps["http"].(*caddyhttp.App)
+
+	if c.resourceStore.ConfigMap != nil {
+		err := setConfigMapOptions(c, cfg)
+		if err != nil {
+			return errors.Wrap(err, "caddy config reload")
+		}
+	}
 
 	// if certs are defined on an ingress resource we need to handle them.
 	tlsCfg, err := c.HandleOwnCertManagement(c.resourceStore.Ingresses)
@@ -158,22 +188,14 @@ func updateConfig(c *CaddyController) error {
 		return errors.Wrap(err, "caddy config reload")
 	}
 
-	// after TLS secrets are synched we should load them in the cert pool.
+	// after TLS secrets are synched we should load them in the cert pool
+	// and skip auto https for hosts with certs provided
 	if tlsCfg != nil {
-		apps["tls"].(caddytls.TLS).CertificatesRaw["load_folders"] = tlsCfg["load_folders"].(json.RawMessage)
-	} else {
-		// reset cert loading
-		apps["tls"].(caddytls.TLS).CertificatesRaw["load_folders"] = json.RawMessage(`[]`)
-	}
+		tlsApp.CertificatesRaw["load_folders"] = tlsCfg["load_folders"].(json.RawMessage)
 
-	// skip auto https for hosts with certs provided
-	if tlsCfg != nil {
 		if hosts, ok := tlsCfg["hosts"].([]string); ok {
-			apps["http"].(caddyhttp.App).Servers["ingress_server"].AutoHTTPS.Skip = hosts
+			httpApp.Servers["ingress_server"].AutoHTTPS.Skip = hosts
 		}
-	} else {
-		// reset any skipped hosts set
-		apps["http"].(caddyhttp.App).Servers["ingress_server"].AutoHTTPS.Skip = make([]string, 0)
 	}
 
 	if !c.usingConfigMap {
@@ -183,11 +205,11 @@ func updateConfig(c *CaddyController) error {
 		}
 
 		// set the http server routes
-		apps["http"].(caddyhttp.App).Servers["ingress_server"].Routes = serverRoutes
+		httpApp.Servers["ingress_server"].Routes = serverRoutes
 	}
 
 	// reload caddy with new config
-	err = c.reloadCaddy()
+	err = c.reloadCaddy(cfg)
 	if err != nil {
 		return errors.Wrap(err, "caddy config reload")
 	}

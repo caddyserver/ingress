@@ -60,9 +60,9 @@ spec:
           - name: tmp
             mountPath: /tmp
           args:
-            {{- if .Values.ingressController.autotls }}
-            - -tls
-            - -email={{ .Values.ingressController.email }}
+            - -config-map={{ include "caddy-ingress-controller.name" . }}-configmap
+            {{- if .Values.ingressController.watchNamespace }}
+            - -namespace={{ .Values.ingressController.watchNamespace }}
             {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

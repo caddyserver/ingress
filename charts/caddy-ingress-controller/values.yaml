@@ -20,10 +20,10 @@ ingressController:
   rbac:
     create: true
 
-  # If setting autotls the following email value must be set
-  # to an email address that you manage
-  autotls: false
-  email: ""
+  config:
+    acmeCA: ""
+    email: ""
+    debug: false
 
 serviceAccount:
   # Specifies whether a service account should be created

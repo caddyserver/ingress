@@ -2,7 +2,6 @@ package caddy
 
 import (
 	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 )
@@ -22,58 +21,47 @@ type Storage struct {
 type Config struct {
 	Storage Storage                `json:"storage"`
 	Apps    map[string]interface{} `json:"apps"`
+	Logging caddy.Logging          `json:"logging"`
 }
 
 // ControllerConfig represents ingress controller config received through cli arguments.
 type ControllerConfig struct {
-	Email          string
-	AutomaticTLS   bool
-	TLSUseStaging  bool
 	WatchNamespace string
+	ConfigMapName  string
 }
 
-// NewConfig returns a plain slate caddy2 config file.
-func NewConfig(namespace string, cfg ControllerConfig) *Config {
-	acmeIssuer := caddytls.ACMEIssuer{
-		CA:    getCAEndpoint(cfg.TLSUseStaging),
-		Email: cfg.Email}
+// NewConfig returns a base plain slate caddy2 config file.
+func NewConfig(namespace string, cfgMapConfig *Config) *Config {
+	var cfg *Config
 
-	return &Config{
-		Storage: Storage{
-			System: "secret_store",
-			StorageValues: StorageValues{
-				Namespace: namespace,
-			},
-		},
-		Apps: map[string]interface{}{
-			"tls": caddytls.TLS{
-				Automation: &caddytls.AutomationConfig{
-					Policies: []*caddytls.AutomationPolicy{
-						{
-							IssuerRaw: caddyconfig.JSONModuleObject(acmeIssuer, "module", "acme", nil),
+	if cfgMapConfig != nil {
+		cfg = cfgMapConfig
+	} else {
+		cfg = &Config{
+			Logging: caddy.Logging{},
+			Apps: map[string]interface{}{
+				"tls": &caddytls.TLS{
+					CertificatesRaw: caddy.ModuleMap{},
+				},
+				"http": &caddyhttp.App{
+					Servers: map[string]*caddyhttp.Server{
+						"ingress_server": {
+							AutoHTTPS: &caddyhttp.AutoHTTPSConfig{},
+							Listen:    []string{":443"},
 						},
 					},
 				},
-				CertificatesRaw: caddy.ModuleMap{},
 			},
-			"http": caddyhttp.App{
-				Servers: map[string]*caddyhttp.Server{
-					"ingress_server": &caddyhttp.Server{
-						AutoHTTPS: &caddyhttp.AutoHTTPSConfig{
-							Disabled: !cfg.AutomaticTLS,
-							Skip:     make([]string, 0),
-						},
-						Listen: []string{":80", ":443"},
-					},
-				},
-			},
+		}
+	}
+
+	// set cert-magic storage provider
+	cfg.Storage = Storage{
+		System: "secret_store",
+		StorageValues: StorageValues{
+			Namespace: namespace,
 		},
 	}
-}
 
-func getCAEndpoint(useStaging bool) string {
-	if useStaging {
-		return "https://acme-staging-v02.api.letsencrypt.org/directory"
-	}
-	return ""
+	return cfg
 }

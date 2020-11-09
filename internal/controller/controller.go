@@ -1,12 +1,9 @@
 package controller
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"time"
 
@@ -17,12 +14,10 @@ import (
 	"github.com/caddyserver/ingress/pkg/storage"
 	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -40,29 +35,56 @@ const (
 	secretSyncInterval = time.Hour * 1
 )
 
+// Informer defines the required SharedIndexInformers that interact with the API server.
+type Informer struct {
+	Ingress   cache.SharedIndexInformer
+	ConfigMap cache.SharedIndexInformer
+}
+
+// Lister contains object listers (stores).
+type Listers struct {
+	Ingress   cache.Store
+	ConfigMap cache.Store
+}
+
 // CaddyController represents an caddy ingress controller.
 type CaddyController struct {
-	resourceStore  *store.Store
-	kubeClient     *kubernetes.Clientset
-	restClient     rest.Interface
-	indexer        cache.Indexer
-	syncQueue      workqueue.RateLimitingInterface
-	statusQueue    workqueue.RateLimitingInterface // statusQueue performs ingress status updates every 60 seconds but inserts the work into the sync queue
-	informer       cache.Controller
-	certManager    *CertManager
-	podInfo        *pod.Info
-	config         c.ControllerConfig
+	resourceStore *store.Store
+
+	kubeClient *kubernetes.Clientset
+
+	// main queue syncing ingresses, configmaps, ... with caddy
+	syncQueue workqueue.RateLimitingInterface
+
+	// informer contains the cache Informers
+	informers *Informer
+
+	// listers contains the cache.Store interfaces used in the ingress controller
+	listers *Listers
+
+	// cert manager manage user provided certs
+	certManager *CertManager
+
+	// ingress controller pod infos
+	podInfo *pod.Info
+
+	// config of the controller (flags)
+	config c.ControllerConfig
+
+	// if a /etc/caddy/config.json is detected, it will be used instead of ingresses
 	usingConfigMap bool
-	stopChan       chan struct{}
+
+	stopChan chan struct{}
 }
 
 // NewCaddyController returns an instance of the caddy ingress controller.
-func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interface, cfg c.ControllerConfig) *CaddyController {
+func NewCaddyController(kubeClient *kubernetes.Clientset, cfg c.ControllerConfig) *CaddyController {
 	controller := &CaddyController{
-		kubeClient:  kubeClient,
-		syncQueue:   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		statusQueue: workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		config:      cfg,
+		kubeClient: kubeClient,
+		syncQueue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		config:     cfg,
+		informers:  &Informer{},
+		listers:    &Listers{},
 	}
 
 	podInfo, err := pod.GetPodDetails(kubeClient)
@@ -72,39 +94,40 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, restClient rest.Interf
 	controller.podInfo = podInfo
 
 	// load caddy config from file if mounted with config map
-	var caddyCfgMap *c.Config
-	cfgPath := "/etc/caddy/config.json"
-	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
-		controller.usingConfigMap = true
-
-		file, err := os.Open(cfgPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-
-		b, err := ioutil.ReadAll(file)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// load config file into caddy
-		controller.syncQueue.Add(LoadConfigAction{config: bytes.NewReader(b)})
-		json.Unmarshal(b, &caddyCfgMap)
+	caddyCfgMap, err := loadCaddyConfigFile("/etc/caddy/config.json")
+	if err != nil {
+		logrus.Fatalf("Unexpected error reading config.json: %v", err)
 	}
 
-	// setup the ingress controller and start watching resources
-	ingressListWatcher := cache.NewListWatchFromClient(restClient, "ingresses", cfg.WatchNamespace, fields.Everything())
-	indexer, informer := cache.NewIndexerInformer(ingressListWatcher, &v1beta1.Ingress{}, 0, cache.ResourceEventHandlerFuncs{
+	if caddyCfgMap != nil {
+		controller.usingConfigMap = true
+	}
+
+	// create 2 types of informers: one for the caddy NS and another one for ingress resources
+	ingressInformerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, syncInterval, informers.WithNamespace(cfg.WatchNamespace))
+	caddyInformerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, syncInterval, informers.WithNamespace(podInfo.Namespace))
+
+	controller.informers.Ingress = ingressInformerFactory.Networking().V1beta1().Ingresses().Informer()
+	controller.listers.Ingress = controller.informers.Ingress.GetStore()
+
+	controller.informers.ConfigMap = caddyInformerFactory.Core().V1().ConfigMaps().Informer()
+	controller.listers.ConfigMap = controller.informers.ConfigMap.GetStore()
+
+	// add event handlers
+	controller.informers.Ingress.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    controller.onResourceAdded,
 		UpdateFunc: controller.onResourceUpdated,
 		DeleteFunc: controller.onResourceDeleted,
-	}, cache.Indexers{})
-	controller.indexer = indexer
-	controller.informer = informer
+	})
+
+	controller.informers.ConfigMap.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    controller.onConfigMapAdded,
+		UpdateFunc: controller.onConfigMapUpdated,
+		DeleteFunc: controller.onConfigMapDeleted,
+	})
 
 	// setup store to keep track of resources
-	controller.resourceStore = store.NewStore(controller.kubeClient, podInfo.Namespace, cfg, caddyCfgMap)
+	controller.resourceStore = store.NewStore(kubeClient, podInfo.Namespace, cfg, caddyCfgMap)
 
 	// attempt to do initial sync of status addresses with ingresses
 	controller.dispatchSync()
@@ -124,22 +147,25 @@ func (c *CaddyController) Shutdown() error {
 
 // Run method starts the ingress controller.
 func (c *CaddyController) Run(stopCh chan struct{}) {
-	err := c.reloadCaddy()
+	err := regenerateConfig(c)
 	if err != nil {
 		logrus.Errorf("initial caddy config load failed, %v", err.Error())
 	}
 
 	defer runtime.HandleCrash()
 	defer c.syncQueue.ShutDown()
-	defer c.statusQueue.ShutDown()
 
-	// start the ingress informer where we listen to new / updated ingress resources
-	go c.informer.Run(stopCh)
+	// start informers where we listen to new / updated resources
+	go c.informers.ConfigMap.Run(stopCh)
+	go c.informers.Ingress.Run(stopCh)
 
-	// wait for all involved caches to be synced, before processing items from the queue is started
-	if !cache.WaitForCacheSync(stopCh, c.informer.HasSynced) {
-		runtime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
-		return
+	// wait for all involved caches to be synced before processing items
+	// from the queue
+	if !cache.WaitForCacheSync(stopCh,
+		c.informers.ConfigMap.HasSynced,
+		c.informers.Ingress.HasSynced,
+	) {
+		runtime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 	}
 
 	// start processing events for syncing ingress resources
@@ -195,22 +221,30 @@ func (c *CaddyController) handleErr(err error, action interface{}) {
 	logrus.Error(err)
 }
 
-// loadConfigFromFile loads caddy with a config defined by an io.Reader.
-func (c *CaddyController) loadConfigFromFile(cfg io.Reader) error {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(cfg)
+func loadCaddyConfigFile(cfgPath string) (*c.Config, error) {
+	var caddyCfgMap *c.Config
+	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
+		file, err := os.Open(cfgPath)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
 
-	err := caddy.Load(buf.Bytes(), true)
-	if err != nil {
-		return fmt.Errorf("could not load caddy config %v", err.Error())
+		b, err := ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+
+		json.Unmarshal(b, &caddyCfgMap)
+	} else {
+		return nil, nil
 	}
-
-	return nil
+	return caddyCfgMap, nil
 }
 
 // reloadCaddy reloads the internal caddy instance with config from the internal store.
-func (c *CaddyController) reloadCaddy() error {
-	j, err := json.Marshal(c.resourceStore.CaddyConfig)
+func (c *CaddyController) reloadCaddy(config *c.Config) error {
+	j, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
