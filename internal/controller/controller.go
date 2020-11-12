@@ -249,7 +249,7 @@ func (c *CaddyController) reloadCaddy(config *c.Config) error {
 		return err
 	}
 
-	err = caddy.Load(j, true)
+	err = caddy.Load(j, false)
 	if err != nil {
 		return fmt.Errorf("could not reload caddy config %v", err.Error())
 	}
