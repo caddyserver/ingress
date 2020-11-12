@@ -1,7 +1,9 @@
 package caddy
 
 import (
+	"encoding/json"
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 )
@@ -45,6 +47,7 @@ func NewConfig(namespace string, cfgMapConfig *Config) *Config {
 				},
 				"http": &caddyhttp.App{
 					Servers: map[string]*caddyhttp.Server{
+						"metrics_server": metricsServer(),
 						"ingress_server": {
 							AutoHTTPS: &caddyhttp.AutoHTTPSConfig{},
 							Listen:    []string{":443"},
@@ -64,4 +67,18 @@ func NewConfig(namespace string, cfgMapConfig *Config) *Config {
 	}
 
 	return cfg
+}
+
+func metricsServer() *caddyhttp.Server {
+	return &caddyhttp.Server{
+		// TODO Make this port configurable
+		Listen:    []string{":9765"},
+		AutoHTTPS: &caddyhttp.AutoHTTPSConfig{Disabled: true},
+		Routes: []caddyhttp.Route{{
+			HandlersRaw: []json.RawMessage{json.RawMessage(`{ "handler": "metrics" }`)},
+			MatcherSetsRaw: []caddy.ModuleMap{{
+				"path": caddyconfig.JSON(caddyhttp.MatchPath{"/metrics"}, nil),
+			}},
+		}},
+	}
 }

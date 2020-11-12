@@ -1,14 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"os"
 	"time"
 
 	"github.com/caddyserver/ingress/internal/controller"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -43,16 +38,6 @@ func main() {
 
 	c := controller.NewCaddyController(kubeClient, cfg)
 
-	reg := prometheus.NewRegistry()
-	reg.MustRegister(prometheus.NewGoCollector())
-	reg.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{
-		PidFn:        func() (int, error) { return os.Getpid(), nil },
-		ReportErrors: true,
-	}))
-
-	// create http server to expose controller health metrics
-	go startMetricsServer(reg)
-
 	// start the ingress controller
 	stopCh := make(chan struct{}, 1)
 	defer close(stopCh)
@@ -62,29 +47,6 @@ func main() {
 
 	// TODO :- listen to sigterm
 	select {}
-}
-
-func startMetricsServer(reg *prometheus.Registry) {
-	mux := http.NewServeMux()
-	mux.Handle(
-		"/metrics",
-		promhttp.InstrumentMetricHandler(
-			reg,
-			promhttp.HandlerFor(reg, promhttp.HandlerOpts{}),
-		),
-	)
-
-	logrus.Info("Exporting metrics on :9090")
-	server := &http.Server{
-		Addr:              fmt.Sprintf(":%v", 9090),
-		Handler:           mux,
-		ReadTimeout:       10 * time.Second,
-		ReadHeaderTimeout: 10 * time.Second,
-		WriteTimeout:      300 * time.Second,
-		IdleTimeout:       120 * time.Second,
-	}
-
-	logrus.Fatal(server.ListenAndServe())
 }
 
 // createApiserverClient creates a new Kubernetes REST client. We assume the

@@ -25,6 +25,7 @@ import (
 	_ "github.com/caddyserver/caddy/v2/modules/caddyhttp/reverseproxy"
 	_ "github.com/caddyserver/caddy/v2/modules/caddytls"
 	_ "github.com/caddyserver/caddy/v2/modules/caddytls/standardstek"
+	_ "github.com/caddyserver/caddy/v2/modules/metrics"
 )
 
 const (
