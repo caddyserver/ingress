@@ -1,4 +1,4 @@
-package pod
+package k8s
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ type Info struct {
 // GetAddresses gets the ip address or name of the node in the cluster that the
 // ingress controller is running on.
 func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
-	addrs := []string{}
+	var addrs []string
 
 	// get information about all the pods running the ingress controller
 	pods, err := kubeClient.CoreV1().Pods(p.Namespace).List(metav1.ListOptions{

@@ -1,46 +1,48 @@
-package store
+package controller
 
 import (
-	c "github.com/caddyserver/ingress/internal/caddy"
+	"github.com/caddyserver/ingress/pkg/k8s"
 	"github.com/sirupsen/logrus"
-	k "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-// Store represents a collection of ingresses and secrets that we are monitoring.
-type Store struct {
-	Ingresses   []*v1beta1.Ingress
-	Secrets     []interface{} // TODO :- should we store the secrets in the ingress object?
-	ConfigMap   *k.ConfigMap
-	CaddyConfig *c.Config
-}
-
-// NewStore returns a new store that keeps track of ingresses and secrets. It will attempt to get
-// all current ingresses before returning.
-func NewStore(kubeClient *kubernetes.Clientset, namespace string, cfg c.ControllerConfig, cfgMapConfig *c.Config) *Store {
+// NewStore returns a new store that keeps track of K8S resources needed by the controller. It tries to get
+// the current value before returning
+func (c *CaddyController) NewStore(namespace string, opts Options) *Store {
 	s := &Store{
+		Options:   &opts,
 		Ingresses: []*v1beta1.Ingress{},
 	}
 
-	ingresses, err := kubeClient.NetworkingV1beta1().Ingresses(cfg.WatchNamespace).List(v1.ListOptions{})
+	// Load ingresses
+	ingresses, err := k8s.ListIngresses(k8s.IngressParams{
+		InformerFactory:   c.factories.WatchedNamespace,
+		ClassName:         "caddy",
+		ClassNameRequired: false,
+	})
 	if err != nil {
-		logrus.Errorf("could not get existing ingresses in cluster", err)
+		logrus.Errorf("could not get existing ingresses in cluster: %v", err)
 	} else {
-		for _, i := range ingresses.Items {
-			s.Ingresses = append(s.Ingresses, &i)
-		}
+		s.Ingresses = ingresses
 	}
 
-	cfgMap, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(cfg.ConfigMapName, v1.GetOptions{})
+	// Load ConfigMap options
+	cfgMap, err := k8s.GetConfigMapOptions(k8s.ConfigMapParams{
+		Namespace:       namespace,
+		InformerFactory: c.factories.PodNamespace,
+		ConfigMapName:   opts.ConfigMapName,
+	})
 	if err != nil {
 		logrus.Warn("could not get option configmap", err)
 	} else {
 		s.ConfigMap = cfgMap
 	}
 
-	s.CaddyConfig = cfgMapConfig
+	// Load TLS if needed
+	if err := c.watchTLSSecrets(); err != nil {
+		logrus.Warn("could not watch TLS secrets", err)
+	}
+
 	return s
 }
 
@@ -81,4 +83,13 @@ func (s *Store) PluckIngress(ing *v1beta1.Ingress) {
 		s.Ingresses[len(s.Ingresses)-1], s.Ingresses[index] = s.Ingresses[index], s.Ingresses[len(s.Ingresses)-1]
 		s.Ingresses = s.Ingresses[:len(s.Ingresses)-1]
 	}
+}
+
+func (s *Store) HasManagedTLS() bool {
+	for _, ing := range s.Ingresses {
+		if len(ing.Spec.TLS) > 0 {
+			return true
+		}
+	}
+	return false
 }

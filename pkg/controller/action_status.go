@@ -1,18 +1,43 @@
 package controller
 
 import (
-	"fmt"
-	"sort"
-	"strings"
-
-	"github.com/pkg/errors"
+	"github.com/caddyserver/ingress/pkg/k8s"
 	"github.com/sirupsen/logrus"
-	pool "gopkg.in/go-playground/pool.v3"
+	"gopkg.in/go-playground/pool.v3"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"net"
+	"sort"
+	"strings"
 )
+
+// dispatchSync is run every syncInterval duration to sync ingress source address fields.
+func (c *CaddyController) dispatchSync() {
+	c.syncQueue.Add(SyncStatusAction{})
+}
+
+// SyncStatusAction provides an implementation of the action interface.
+type SyncStatusAction struct {
+}
+
+// handle is run when a syncStatusAction appears in the queue.
+func (r SyncStatusAction) handle(c *CaddyController) error {
+	return c.syncStatus(c.resourceStore.Ingresses)
+}
+
+// syncStatus ensures that the ingress source address points to this ingress controller's IP address.
+func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
+	addrs, err := k8s.GetAddresses(c.podInfo, c.kubeClient)
+	if err != nil {
+		return err
+	}
+
+	logrus.Debug("Syncing Ingress resource source addresses")
+	c.updateIngStatuses(sliceToLoadBalancerIngress(addrs), ings)
+
+	return nil
+}
 
 // updateIngStatuses starts a queue and adds all monitored ingresses to update their status source address to the on
 // that the ingress controller is running on. This is called by the syncStatus queue.
@@ -29,7 +54,7 @@ func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBala
 
 		// check to see if ingresses source address does not match the ingress controller's.
 		if ingressSliceEqual(curIPs, controllerAddresses) {
-			logrus.Infof("skipping update of Ingress %v/%v (no change)", ing.Namespace, ing.Name)
+			logrus.Debugf("skipping update of Ingress %v/%v (no change)", ing.Namespace, ing.Name)
 			continue
 		}
 
@@ -47,17 +72,7 @@ func runUpdate(ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client 
 			return nil, nil
 		}
 
-		ingClient := client.NetworkingV1beta1().Ingresses(ing.Namespace)
-
-		currIng, err := ingClient.Get(ing.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("unexpected error searching Ingress %v/%v", ing.Namespace, ing.Name))
-		}
-
-		logrus.Infof("updating Ingress %v/%v status from %v to %v", currIng.Namespace, currIng.Name, currIng.Status.LoadBalancer.Ingress, status)
-		currIng.Status.LoadBalancer.Ingress = status
-
-		_, err = ingClient.UpdateStatus(currIng)
+		_, err := k8s.UpdateIngressStatus(client, ing, status)
 		if err != nil {
 			logrus.Warningf("error updating ingress rule: %v", err)
 		}
@@ -95,4 +110,22 @@ func lessLoadBalancerIngress(addrs []apiv1.LoadBalancerIngress) func(int, int) b
 		}
 		return addrs[a].IP < addrs[b].IP
 	}
+}
+
+// sliceToLoadBalancerIngress converts a slice of IP and/or hostnames to LoadBalancerIngress
+func sliceToLoadBalancerIngress(endpoints []string) []apiv1.LoadBalancerIngress {
+	lbi := []apiv1.LoadBalancerIngress{}
+	for _, ep := range endpoints {
+		if net.ParseIP(ep) == nil {
+			lbi = append(lbi, apiv1.LoadBalancerIngress{Hostname: ep})
+		} else {
+			lbi = append(lbi, apiv1.LoadBalancerIngress{IP: ep})
+		}
+	}
+
+	sort.SliceStable(lbi, func(a, b int) bool {
+		return lbi[a].IP < lbi[b].IP
+	})
+
+	return lbi
 }

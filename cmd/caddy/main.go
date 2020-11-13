@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"os"
-	"time"
-
-	"github.com/caddyserver/ingress/internal/controller"
+	"github.com/caddyserver/ingress/pkg/caddy"
+	"github.com/caddyserver/ingress/pkg/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -15,6 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"net/http"
+	"os"
+	"time"
 )
 
 const (
@@ -41,7 +41,7 @@ func main() {
 		logrus.Fatalf(msg, err)
 	}
 
-	c := controller.NewCaddyController(kubeClient, cfg)
+	c := controller.NewCaddyController(kubeClient, cfg, caddy.Converter{})
 
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(prometheus.NewGoCollector())

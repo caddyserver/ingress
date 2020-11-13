@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-
-	"github.com/caddyserver/ingress/internal/caddy"
+	"github.com/caddyserver/ingress/pkg/controller"
 )
 
-func parseFlags() caddy.ControllerConfig {
+func parseFlags() controller.Options {
 	var namespace string
 	flag.StringVar(&namespace, "namespace", "", "the namespace that you would like to observe kubernetes ingress resources in.")
 
@@ -15,7 +14,7 @@ func parseFlags() caddy.ControllerConfig {
 
 	flag.Parse()
 
-	return caddy.ControllerConfig{
+	return controller.Options{
 		WatchNamespace: namespace,
 		ConfigMapName:  configMapName,
 	}

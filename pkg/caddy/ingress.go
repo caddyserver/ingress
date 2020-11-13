@@ -6,13 +6,29 @@ import (
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"k8s.io/api/networking/v1beta1"
+	"github.com/caddyserver/ingress/pkg/controller"
 )
 
-// ConvertToCaddyConfig returns a new caddy routelist based off of ingresses managed by this controller.
-// This is not used when this ingress controller is configured with a config map, so that we don't
-// override user defined routes.
-func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) {
+// TODO :- configure log middleware for all routes
+func baseRoute(upstream string) caddyhttp.Route {
+	return caddyhttp.Route{
+		HandlersRaw: []json.RawMessage{
+			json.RawMessage(`
+			{
+				"handler": "reverse_proxy",
+				"upstreams": [
+						{
+								"dial": "` + fmt.Sprintf("%s", upstream) + `"
+						}
+				]
+			}
+		`),
+		},
+	}
+}
+
+// LoadIngressConfig creates a routelist based off of ingresses managed by this controller.
+func LoadIngressConfig(config *Config, store *controller.Store) error {
 	// TODO :-
 	// when setting the upstream url we should should bypass kube-dns and get the ip address of
 	// the pod for the deployment we are proxying to so that we can proxy to that ip address port.
@@ -20,7 +36,7 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 
 	// create a server route for each ingress route
 	var routes caddyhttp.RouteList
-	for _, ing := range ings {
+	for _, ing := range store.Ingresses {
 		for _, rule := range ing.Spec.Rules {
 			for _, path := range rule.HTTP.Paths {
 				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.ServiceName, ing.Namespace, path.Backend.ServicePort.IntVal)
@@ -42,23 +58,9 @@ func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) 
 			}
 		}
 	}
-	return routes, nil
-}
 
-// TODO :- configure log middleware for all routes
-func baseRoute(upstream string) caddyhttp.Route {
-	return caddyhttp.Route{
-		HandlersRaw: []json.RawMessage{
-			json.RawMessage(`
-			{
-				"handler": "reverse_proxy",
-				"upstreams": [
-						{
-								"dial": "` + fmt.Sprintf("%s", upstream) + `"
-						}
-				]
-			}
-		`),
-		},
-	}
+	httpApp := config.Apps["http"].(*caddyhttp.App)
+	httpApp.Servers[HttpServer].Routes = routes
+
+	return nil
 }
