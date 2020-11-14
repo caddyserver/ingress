@@ -96,5 +96,5 @@ func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *v1beta1.Ingress,
 	logrus.Debugf("updating Ingress %v/%v status from %v to %v", currIng.Namespace, currIng.Name, currIng.Status.LoadBalancer.Ingress, status)
 	currIng.Status.LoadBalancer.Ingress = status
 
-	return kubeClient.NetworkingV1beta1().Ingresses(ing.Namespace).UpdateStatus(ing)
+	return ingClient.UpdateStatus(currIng)
 }
