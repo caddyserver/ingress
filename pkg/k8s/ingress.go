@@ -25,10 +25,9 @@ type IngressParams struct {
 	ClassNameRequired bool
 }
 
-func WatchIngresses(options IngressParams, funcs IngressHandlers) (cache.SharedIndexInformer, cache.Store) {
+func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIndexInformer {
 	// TODO Handle new API
 	informer := options.InformerFactory.Networking().V1beta1().Ingresses().Informer()
-	store := informer.GetStore()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -55,7 +54,7 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) (cache.SharedI
 		},
 	})
 
-	return informer, store
+	return informer
 }
 
 func ListIngresses(options IngressParams) ([]*v1beta1.Ingress, error) {
@@ -66,7 +65,7 @@ func ListIngresses(options IngressParams) ([]*v1beta1.Ingress, error) {
 		return nil, err
 	}
 
-	var ings []*v1beta1.Ingress
+	ings := []*v1beta1.Ingress{}
 	for _, i := range ingresses {
 		if IsControllerIngress(options, i) {
 			ings = append(ings, i)

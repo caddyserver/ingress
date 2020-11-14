@@ -44,8 +44,7 @@ func (c *CaddyController) onIngressDeleted(obj *v1beta1.Ingress) {
 }
 
 func (r IngressAddedAction) handle(c *CaddyController) error {
-	logrus.Info("New ingress resource detected")
-
+	logrus.Infof("Ingress created (%s/%s)", r.resource.Namespace, r.resource.Name)
 	// add this ingress to the internal store
 	c.resourceStore.AddIngress(r.resource)
 
@@ -54,7 +53,7 @@ func (r IngressAddedAction) handle(c *CaddyController) error {
 }
 
 func (r IngressUpdatedAction) handle(c *CaddyController) error {
-	logrus.Info("Ingress resource update detected")
+	logrus.Infof("Ingress updated (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	// add or update this ingress in the internal store
 	c.resourceStore.AddIngress(r.resource)
@@ -64,7 +63,7 @@ func (r IngressUpdatedAction) handle(c *CaddyController) error {
 }
 
 func (r IngressDeletedAction) handle(c *CaddyController) error {
-	logrus.Info("Ingress resource deletion detected")
+	logrus.Infof("Ingress deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	// delete all resources from caddy config that are associated with this resource
 	c.resourceStore.PluckIngress(r.resource)

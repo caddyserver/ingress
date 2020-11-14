@@ -2,47 +2,16 @@ package controller
 
 import (
 	"github.com/caddyserver/ingress/pkg/k8s"
-	"github.com/sirupsen/logrus"
 	"k8s.io/api/networking/v1beta1"
 )
 
-// NewStore returns a new store that keeps track of K8S resources needed by the controller. It tries to get
-// the current value before returning
-func (c *CaddyController) NewStore(namespace string, opts Options) *Store {
+// NewStore returns a new store that keeps track of K8S resources needed by the controller.
+func NewStore(opts Options) *Store {
 	s := &Store{
 		Options:   &opts,
 		Ingresses: []*v1beta1.Ingress{},
+		ConfigMap: &k8s.ConfigMapOptions{},
 	}
-
-	// Load ingresses
-	ingresses, err := k8s.ListIngresses(k8s.IngressParams{
-		InformerFactory:   c.factories.WatchedNamespace,
-		ClassName:         "caddy",
-		ClassNameRequired: false,
-	})
-	if err != nil {
-		logrus.Errorf("could not get existing ingresses in cluster: %v", err)
-	} else {
-		s.Ingresses = ingresses
-	}
-
-	// Load ConfigMap options
-	cfgMap, err := k8s.GetConfigMapOptions(k8s.ConfigMapParams{
-		Namespace:       namespace,
-		InformerFactory: c.factories.PodNamespace,
-		ConfigMapName:   opts.ConfigMapName,
-	})
-	if err != nil {
-		logrus.Warn("could not get option configmap", err)
-	} else {
-		s.ConfigMap = cfgMap
-	}
-
-	// Load TLS if needed
-	if err := c.watchTLSSecrets(); err != nil {
-		logrus.Warn("could not watch TLS secrets", err)
-	}
-
 	return s
 }
 

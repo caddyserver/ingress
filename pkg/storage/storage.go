@@ -28,7 +28,7 @@ var specialChars = regexp.MustCompile("[^0-9a-zA-Z.-]+")
 
 // cleanKey strips all special characters that are not supported by kubernetes names and converts them to a '.'.
 func cleanKey(key string) string {
-	return "caddy.ingress--" + specialChars.ReplaceAllString(key, "")
+	return "caddy.ingress--" + specialChars.ReplaceAllString(key, ".")
 }
 
 // SecretStorage facilitates storing certificates retrieved by certmagic in kubernetes secrets.

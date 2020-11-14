@@ -45,7 +45,7 @@ func (c *CaddyController) onConfigMapDeleted(obj *v1.ConfigMap) {
 }
 
 func (r ConfigMapAddedAction) handle(c *CaddyController) error {
-	logrus.Info("New configmap detected, updating Caddy config...")
+	logrus.Infof("ConfigMap created (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	cfg, err := k8s.ParseConfigMap(r.resource)
 	if err == nil {
@@ -55,7 +55,7 @@ func (r ConfigMapAddedAction) handle(c *CaddyController) error {
 }
 
 func (r ConfigMapUpdatedAction) handle(c *CaddyController) error {
-	logrus.Info("ConfigMap resource update detected, updating Caddy config...")
+	logrus.Infof("ConfigMap updated (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	cfg, err := k8s.ParseConfigMap(r.resource)
 	if err == nil {
@@ -65,7 +65,7 @@ func (r ConfigMapUpdatedAction) handle(c *CaddyController) error {
 }
 
 func (r ConfigMapDeletedAction) handle(c *CaddyController) error {
-	logrus.Info("ConfigMap resource deletion detected, updating Caddy config...")
+	logrus.Infof("ConfigMap deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	c.resourceStore.ConfigMap = nil
 	return nil

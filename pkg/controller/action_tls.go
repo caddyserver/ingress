@@ -70,17 +70,17 @@ func writeFile(s *apiv1.Secret) error {
 }
 
 func (r SecretAddedAction) handle(c *CaddyController) error {
-	logrus.Info("New certificate resource detected")
+	logrus.Infof("TLS secret created (%s/%s)", r.resource.Namespace, r.resource.Name)
 	return writeFile(r.resource)
 }
 
 func (r SecretUpdatedAction) handle(c *CaddyController) error {
-	logrus.Info("Certificate resource update detected")
+	logrus.Infof("TLS secret updated (%s/%s)", r.resource.Namespace, r.resource.Name)
 	return writeFile(r.resource)
 }
 
 func (r SecretDeletedAction) handle(c *CaddyController) error {
-	logrus.Info("Certificate deletion detected")
+	logrus.Infof("TLS secret deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
 	return os.Remove(filepath.Join(CertFolder, r.resource.Name+".pem"))
 }
 
@@ -92,7 +92,7 @@ func (c *CaddyController) watchTLSSecrets() error {
 		params := k8s.TLSSecretParams{
 			InformerFactory: c.factories.WatchedNamespace,
 		}
-		c.informers.TLSSecret, c.listers.TLSSecret = k8s.WatchTLSSecrets(params, k8s.TLSSecretHandlers{
+		c.informers.TLSSecret = k8s.WatchTLSSecrets(params, k8s.TLSSecretHandlers{
 			AddFunc:    c.onSecretAdded,
 			UpdateFunc: c.onSecretUpdated,
 			DeleteFunc: c.onSecretDeleted,

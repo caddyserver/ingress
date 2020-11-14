@@ -31,9 +31,8 @@ func isControllerConfigMap(cm *v12.ConfigMap, name string) bool {
 	return cm.GetName() == name
 }
 
-func WatchConfigMaps(options ConfigMapParams, funcs ConfigMapHandlers) (cache.SharedIndexInformer, cache.Store) {
+func WatchConfigMaps(options ConfigMapParams, funcs ConfigMapHandlers) cache.SharedIndexInformer {
 	informer := options.InformerFactory.Core().V1().ConfigMaps().Informer()
-	store := informer.GetStore()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -60,11 +59,11 @@ func WatchConfigMaps(options ConfigMapParams, funcs ConfigMapHandlers) (cache.Sh
 		},
 	})
 
-	return informer, store
+	return informer
 }
 
 func GetConfigMapOptions(opts ConfigMapParams) (*ConfigMapOptions, error) {
-	cm, err := opts.InformerFactory.Core().V1().ConfigMaps().Lister().ConfigMaps("").Get(opts.ConfigMapName)
+	cm, err := opts.InformerFactory.Core().V1().ConfigMaps().Lister().ConfigMaps(opts.Namespace).Get(opts.ConfigMapName)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get option configmap")
@@ -87,7 +86,7 @@ func ParseConfigMap(cm *v12.ConfigMap) (*ConfigMapOptions, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unexpected error creating decoder")
 	}
-	err = decoder.Decode(cm)
+	err = decoder.Decode(cm.Data)
 	if err != nil {
 		return nil, errors.Wrap(err, "unexpected error parsing configmap")
 	}

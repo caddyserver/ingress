@@ -32,7 +32,7 @@ const (
 	HttpServer = "ingress_server"
 )
 
-func newConfig() (*Config, error) {
+func newConfig(namespace string) (*Config, error) {
 	cfg := &Config{
 		Logging: caddy.Logging{},
 		Apps: map[string]interface{}{
@@ -50,15 +50,17 @@ func newConfig() (*Config, error) {
 		},
 		Storage: Storage{
 			System:        "secret_store",
-			StorageValues: StorageValues{},
+			StorageValues: StorageValues{
+				Namespace: namespace,
+			},
 		},
 	}
 
 	return cfg, nil
 }
 
-func (c Converter) ConvertToCaddyConfig(store *controller.Store) (interface{}, error) {
-	cfg, err := newConfig()
+func (c Converter) ConvertToCaddyConfig(namespace string, store *controller.Store) (interface{}, error) {
+	cfg, err := newConfig(namespace)
 
 	err = LoadIngressConfig(cfg, store)
 	if err != nil {

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
@@ -28,8 +29,8 @@ const (
 	// how often we should attempt to keep ingress resource's source address in sync
 	syncInterval = time.Second * 30
 
-	// we can sync secrets every hour since we still have events listening on updated, deletes, etc
-	secretSyncInterval = time.Hour * 1
+	// how often we resync informers resources (besides receiving updates)
+	resourcesSyncInterval = time.Hour * 1
 )
 
 // Action is an interface for ingress actions.
@@ -57,13 +58,6 @@ type Informer struct {
 	TLSSecret cache.SharedIndexInformer
 }
 
-// Listers contains object listers (stores).
-type Listers struct {
-	Ingress   cache.Store
-	ConfigMap cache.Store
-	TLSSecret cache.Store
-}
-
 // InformerFactory contains shared informer factory
 // We need to type of factory:
 // - One used to watch resources in the Pod namespaces (caddy config, secrets...)
@@ -74,7 +68,7 @@ type InformerFactory struct {
 }
 
 type Converter interface {
-	ConvertToCaddyConfig(store *Store) (interface{}, error)
+	ConvertToCaddyConfig(namespace string, store *Store) (interface{}, error)
 }
 
 // CaddyController represents an caddy ingress controller.
@@ -92,11 +86,11 @@ type CaddyController struct {
 	// informer contains the cache Informers
 	informers *Informer
 
-	// listers contains the cache.Store interfaces used in the ingress controller
-	listers *Listers
-
 	// ingress controller pod infos
 	podInfo *k8s.Info
+
+	// save last applied caddy config
+	lastAppliedConfig []byte
 
 	converter Converter
 
@@ -109,7 +103,6 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, opts Options, converte
 		converter:  converter,
 		syncQueue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		informers:  &Informer{},
-		listers:    &Listers{},
 		factories:  &InformerFactory{},
 	}
 
@@ -122,12 +115,12 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, opts Options, converte
 	// Create informer factories
 	controller.factories.PodNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
-		syncInterval,
+		resourcesSyncInterval,
 		informers.WithNamespace(controller.podInfo.Namespace),
 	)
 	controller.factories.WatchedNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
-		syncInterval,
+		resourcesSyncInterval,
 		informers.WithNamespace(opts.WatchNamespace),
 	)
 
@@ -138,7 +131,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, opts Options, converte
 		ClassName:         "caddy",
 		ClassNameRequired: false,
 	}
-	controller.informers.Ingress, controller.listers.Ingress = k8s.WatchIngresses(ingressParams, k8s.IngressHandlers{
+	controller.informers.Ingress = k8s.WatchIngresses(ingressParams, k8s.IngressHandlers{
 		AddFunc:    controller.onIngressAdded,
 		UpdateFunc: controller.onIngressUpdated,
 		DeleteFunc: controller.onIngressDeleted,
@@ -150,20 +143,17 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, opts Options, converte
 		InformerFactory: controller.factories.PodNamespace,
 		ConfigMapName:   opts.ConfigMapName,
 	}
-	controller.informers.ConfigMap, controller.listers.ConfigMap = k8s.WatchConfigMaps(cmOptionsParams, k8s.ConfigMapHandlers{
+	controller.informers.ConfigMap = k8s.WatchConfigMaps(cmOptionsParams, k8s.ConfigMapHandlers{
 		AddFunc:    controller.onConfigMapAdded,
 		UpdateFunc: controller.onConfigMapUpdated,
 		DeleteFunc: controller.onConfigMapDeleted,
 	})
 
-	// Create and load initial data
-	controller.resourceStore = controller.NewStore(podInfo.Namespace, opts)
-
 	// register kubernetes specific cert-magic storage module
 	caddy.RegisterModule(storage.SecretStorage{})
 
-	// attempt to do initial sync of status addresses with ingresses
-	controller.dispatchSync()
+	// Create resource store
+	controller.resourceStore = NewStore(opts)
 
 	return controller
 }
@@ -177,11 +167,6 @@ func (c *CaddyController) Shutdown() error {
 
 // Run method starts the ingress controller.
 func (c *CaddyController) Run(stopCh chan struct{}) {
-	err := c.reloadCaddy()
-	if err != nil {
-		logrus.Errorf("initial caddy config load failed, %v", err.Error())
-	}
-
 	defer runtime.HandleCrash()
 	defer c.syncQueue.ShutDown()
 
@@ -209,7 +194,7 @@ func (c *CaddyController) Run(stopCh chan struct{}) {
 	logrus.Info("stopping ingress controller")
 
 	var exitCode int
-	err = c.Shutdown()
+	err := c.Shutdown()
 	if err != nil {
 		logrus.Errorf("could not shutdown ingress controller properly, %v", err.Error())
 		exitCode = 1
@@ -260,7 +245,7 @@ func (c *CaddyController) handleErr(err error, action interface{}) {
 
 // reloadCaddy generate a caddy config from controller's store
 func (c *CaddyController) reloadCaddy() error {
-	config, err := c.converter.ConvertToCaddyConfig(c.resourceStore)
+	config, err := c.converter.ConvertToCaddyConfig(c.podInfo.Namespace, c.resourceStore)
 	if err != nil {
 		return err
 	}
@@ -270,9 +255,16 @@ func (c *CaddyController) reloadCaddy() error {
 		return err
 	}
 
+	if bytes.Equal(c.lastAppliedConfig, j) {
+		logrus.Debug("caddy config did not change, skipping reload")
+		return nil
+	}
+
+	logrus.Debugf("reloading caddy with config %v", string(j))
 	err = caddy.Load(j, false)
 	if err != nil {
 		return fmt.Errorf("could not reload caddy config %v", err.Error())
 	}
+	c.lastAppliedConfig = j
 	return nil
 }

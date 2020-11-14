@@ -33,7 +33,7 @@ func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
 		return err
 	}
 
-	logrus.Debug("Syncing Ingress resource source addresses")
+	logrus.Debugf("Syncing %d Ingress resources source addresses", len(ings))
 	c.updateIngStatuses(sliceToLoadBalancerIngress(addrs), ings)
 
 	return nil

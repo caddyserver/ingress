@@ -17,9 +17,8 @@ type TLSSecretParams struct {
 	InformerFactory informers.SharedInformerFactory
 }
 
-func WatchTLSSecrets(options TLSSecretParams, funcs TLSSecretHandlers) (cache.SharedIndexInformer, cache.Store) {
+func WatchTLSSecrets(options TLSSecretParams, funcs TLSSecretHandlers) cache.SharedIndexInformer {
 	informer := options.InformerFactory.Core().V1().Secrets().Informer()
-	store := informer.GetStore()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -46,13 +45,13 @@ func WatchTLSSecrets(options TLSSecretParams, funcs TLSSecretHandlers) (cache.Sh
 		},
 	})
 
-	return informer, store
+	return informer
 }
 
 func ListTLSSecrets(options TLSSecretParams, ings []*v1beta1.Ingress) ([]*v12.Secret, error) {
 	lister := options.InformerFactory.Core().V1().Secrets().Lister()
 
-	var tlsSecrets []*v12.Secret
+	tlsSecrets := []*v12.Secret{}
 	for _, ing := range ings {
 		for _, tlsRule := range ing.Spec.TLS {
 			secret, err := lister.Secrets(ing.Namespace).Get(tlsRule.SecretName)
