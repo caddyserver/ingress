@@ -10,9 +10,10 @@ import (
 
 // ConfigMapOptions represents global options set through a configmap
 type ConfigMapOptions struct {
-	Debug  bool   `json:"debug"`
-	AcmeCA string `json:"acmeCA"`
-	Email  string `json:"email"`
+	Debug         bool   `json:"debug"`
+	AcmeCA        string `json:"acmeCA"`
+	Email         string `json:"email"`
+	ProxyProtocol bool   `json:"proxyProtocol"`
 }
 
 type ConfigMapHandlers struct {

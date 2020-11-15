@@ -23,6 +23,7 @@ import (
 	_ "github.com/caddyserver/caddy/v2/modules/caddyhttp/reverseproxy"
 	_ "github.com/caddyserver/caddy/v2/modules/caddytls"
 	_ "github.com/caddyserver/caddy/v2/modules/caddytls/standardstek"
+	_ "github.com/caddyserver/ingress/pkg/proxy"
 )
 
 const (
@@ -149,7 +150,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, opts Options, converte
 		DeleteFunc: controller.onConfigMapDeleted,
 	})
 
-	// register kubernetes specific cert-magic storage module
+	// register kubernetes specific cert-magic storage module and proxy module
 	caddy.RegisterModule(storage.SecretStorage{})
 
 	// Create resource store

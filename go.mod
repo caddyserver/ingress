@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/caddyserver/caddy/v2 v2.2.1
 	github.com/caddyserver/certmagic v0.12.0
+	github.com/pires/go-proxyproto v0.3.1
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
@@ -14,7 +15,6 @@ require (
 	k8s.io/api v0.17.0
 	k8s.io/apimachinery v0.17.0
 	k8s.io/client-go v0.17.0
-	k8s.io/kubernetes v1.17.0
 )
 
 replace (

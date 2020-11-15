@@ -29,8 +29,6 @@ func main() {
 	// parse any flags required to configure the caddy ingress controller
 	cfg := parseFlags()
 
-	logrus.SetLevel(logrus.DebugLevel)
-
 	if cfg.WatchNamespace == "" {
 		cfg.WatchNamespace = v1.NamespaceAll
 		logrus.Warning("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
