@@ -26,9 +26,11 @@ var labelSelector = "manager=caddy"
 // specialChars is a regex that matches all special characters except '.' and '-'.
 var specialChars = regexp.MustCompile("[^0-9a-zA-Z.-]+")
 
+var keyPrefix = "caddy.ingress--"
+
 // cleanKey strips all special characters that are not supported by kubernetes names and converts them to a '.'.
 func cleanKey(key string) string {
-	return "caddy.ingress--" + specialChars.ReplaceAllString(key, ".")
+	return keyPrefix + specialChars.ReplaceAllString(key, ".")
 }
 
 // SecretStorage facilitates storing certificates retrieved by certmagic in kubernetes secrets.
@@ -142,7 +144,7 @@ func (s *SecretStorage) List(prefix string, recursive bool) ([]string, error) {
 	for _, secret := range secrets.Items {
 		key := secret.ObjectMeta.Name
 		if strings.HasPrefix(key, cleanKey(prefix)) {
-			keys = append(keys, key)
+			keys = append(keys, strings.TrimPrefix(key, keyPrefix))
 		}
 	}
 
