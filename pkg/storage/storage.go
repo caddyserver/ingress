@@ -63,7 +63,7 @@ func (s *SecretStorage) CertMagicStorage() (certmagic.Storage, error) {
 
 // Exists returns true if key exists in fs.
 func (s *SecretStorage) Exists(key string) bool {
-	secrets, err := s.KubeClient.CoreV1().Secrets(s.Namespace).List(metav1.ListOptions{
+	secrets, err := s.KubeClient.CoreV1().Secrets(s.Namespace).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.name=%v", cleanKey(key)),
 	})
 
@@ -98,10 +98,10 @@ func (s *SecretStorage) Store(key string, value []byte) error {
 	var err error
 	if s.Exists(key) {
 		logrus.Infof("Updating k8s secret '%s'", cleanKey(key))
-		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Update(&se)
+		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Update(context.TODO(), &se, metav1.UpdateOptions{})
 	} else {
 		logrus.Infof("Creating k8s secret '%s'", cleanKey(key))
-		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Create(&se)
+		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Create(context.TODO(), &se, metav1.CreateOptions{})
 	}
 
 	if err != nil {
@@ -113,7 +113,7 @@ func (s *SecretStorage) Store(key string, value []byte) error {
 
 // Load retrieves the value at the given key.
 func (s *SecretStorage) Load(key string) ([]byte, error) {
-	secret, err := s.KubeClient.CoreV1().Secrets(s.Namespace).Get(cleanKey(key), metav1.GetOptions{})
+	secret, err := s.KubeClient.CoreV1().Secrets(s.Namespace).Get(context.TODO(), cleanKey(key), metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (s *SecretStorage) Load(key string) ([]byte, error) {
 
 // Delete deletes the value at the given key.
 func (s *SecretStorage) Delete(key string) error {
-	err := s.KubeClient.CoreV1().Secrets(s.Namespace).Delete(cleanKey(key), &metav1.DeleteOptions{})
+	err := s.KubeClient.CoreV1().Secrets(s.Namespace).Delete(context.TODO(), cleanKey(key), metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (s *SecretStorage) Delete(key string) error {
 func (s *SecretStorage) List(prefix string, recursive bool) ([]string, error) {
 	var keys []string
 
-	secrets, err := s.KubeClient.CoreV1().Secrets(s.Namespace).List(metav1.ListOptions{LabelSelector: labelSelector})
+	secrets, err := s.KubeClient.CoreV1().Secrets(s.Namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return keys, err
 	}
@@ -153,7 +153,7 @@ func (s *SecretStorage) List(prefix string, recursive bool) ([]string, error) {
 
 // Stat returns information about key.
 func (s *SecretStorage) Stat(key string) (certmagic.KeyInfo, error) {
-	secret, err := s.KubeClient.CoreV1().Secrets(s.Namespace).Get(cleanKey(key), metav1.GetOptions{})
+	secret, err := s.KubeClient.CoreV1().Secrets(s.Namespace).Get(context.TODO(), cleanKey(key), metav1.GetOptions{})
 	if err != nil {
 		return certmagic.KeyInfo{}, err
 	}

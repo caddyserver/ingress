@@ -14,6 +14,7 @@ type ConfigMapOptions struct {
 	AcmeCA        string `json:"acmeCA"`
 	Email         string `json:"email"`
 	ProxyProtocol bool   `json:"proxyProtocol"`
+	Metrics       bool   `json:"metrics"`
 }
 
 type ConfigMapHandlers struct {
@@ -61,16 +62,6 @@ func WatchConfigMaps(options ConfigMapParams, funcs ConfigMapHandlers) cache.Sha
 	})
 
 	return informer
-}
-
-func GetConfigMapOptions(opts ConfigMapParams) (*ConfigMapOptions, error) {
-	cm, err := opts.InformerFactory.Core().V1().ConfigMaps().Lister().ConfigMaps(opts.Namespace).Get(opts.ConfigMapName)
-
-	if err != nil {
-		return nil, errors.Wrap(err, "could not get option configmap")
-	}
-
-	return ParseConfigMap(cm)
 }
 
 func ParseConfigMap(cm *v12.ConfigMap) (*ConfigMapOptions, error) {

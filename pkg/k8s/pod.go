@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -25,7 +26,7 @@ func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
 	var addrs []string
 
 	// Get services that may select this pod
-	svcs, err := kubeClient.CoreV1().Services(p.Namespace).List(metav1.ListOptions{})
+	svcs, err := kubeClient.CoreV1().Services(p.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,7 @@ func GetPodDetails(kubeClient *kubernetes.Clientset) (*Info, error) {
 		return nil, fmt.Errorf("unable to get POD information (missing POD_NAME or POD_NAMESPACE environment variable")
 	}
 
-	pod, _ := kubeClient.CoreV1().Pods(podNs).Get(podName, metav1.GetOptions{})
+	pod, _ := kubeClient.CoreV1().Pods(podNs).Get(context.TODO(), podName, metav1.GetOptions{})
 	if pod == nil {
 		return nil, fmt.Errorf("unable to get POD information")
 	}

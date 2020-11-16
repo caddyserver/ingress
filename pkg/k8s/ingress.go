@@ -1,13 +1,13 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -57,23 +57,6 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 	return informer
 }
 
-func ListIngresses(options IngressParams) ([]*v1beta1.Ingress, error) {
-	// TODO Handle new API
-	ingresses, err := options.InformerFactory.Networking().V1beta1().Ingresses().Lister().List(labels.NewSelector())
-
-	if err != nil {
-		return nil, err
-	}
-
-	ings := []*v1beta1.Ingress{}
-	for _, i := range ingresses {
-		if IsControllerIngress(options, i) {
-			ings = append(ings, i)
-		}
-	}
-	return ings, nil
-}
-
 // IsControllerIngress check if the ingress object can be controlled by us
 // TODO Handle `ingressClassName`
 func IsControllerIngress(options IngressParams, ingress *v1beta1.Ingress) bool {
@@ -88,7 +71,7 @@ func IsControllerIngress(options IngressParams, ingress *v1beta1.Ingress) bool {
 func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress) (*v1beta1.Ingress, error) {
 	ingClient := kubeClient.NetworkingV1beta1().Ingresses(ing.Namespace)
 
-	currIng, err := ingClient.Get(ing.Name, v1.GetOptions{})
+	currIng, err := ingClient.Get(context.TODO(), ing.Name, v1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("unexpected error searching Ingress %v/%v", ing.Namespace, ing.Name))
 	}
@@ -96,5 +79,5 @@ func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *v1beta1.Ingress,
 	logrus.Debugf("updating Ingress %v/%v status from %v to %v", currIng.Namespace, currIng.Name, currIng.Status.LoadBalancer.Ingress, status)
 	currIng.Status.LoadBalancer.Ingress = status
 
-	return ingClient.UpdateStatus(currIng)
+	return ingClient.UpdateStatus(context.TODO(), currIng, v1.UpdateOptions{})
 }

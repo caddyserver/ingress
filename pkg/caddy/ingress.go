@@ -7,6 +7,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/ingress/pkg/controller"
+	"k8s.io/api/networking/v1beta1"
 )
 
 // TODO :- configure log middleware for all routes
@@ -49,7 +50,12 @@ func LoadIngressConfig(config *Config, store *controller.Store) error {
 				}
 
 				if path.Path != "" {
-					match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{path.Path}, nil)
+					p := path.Path
+
+					if *path.PathType == v1beta1.PathTypePrefix {
+						p += "*"
+					}
+					match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{p}, nil)
 				}
 
 				r.MatcherSetsRaw = []caddy.ModuleMap{match}

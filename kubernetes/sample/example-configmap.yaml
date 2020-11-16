@@ -5,5 +5,5 @@ metadata:
   namespace: caddy-system
 data:
   acmeCA: https://acme-staging-v02.api.letsencrypt.org/directory
-  email: test@example.com
+  email: embraser01@gmail.com
   debug: "false"

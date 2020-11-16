@@ -12,10 +12,13 @@ spec:
       {{- include "caddy-ingress-controller.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-    {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+        prometheus.io/scrape: {{ .Values.ingressController.config.metrics | quote }}
+        prometheus.io/path: /metrics
+        prometheus.io/port: '9765'
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "caddy-ingress-controller.labels" . | nindent 8 }}
     spec:
@@ -45,6 +48,12 @@ spec:
               {{- if .Values.minikube }}
               hostPort: 443 # optional, required if running in minikube
               {{- end }}
+            - name: metrics
+              containerPort: 9765
+              protocol: TCP
+              {{- if .Values.minikube }}
+              hostPort: 9765 # optional, required if running in minikube
+              {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
@@ -64,6 +73,12 @@ spec:
             {{- if .Values.ingressController.watchNamespace }}
             - -namespace={{ .Values.ingressController.watchNamespace }}
             {{- end }}
+          readinessProbe:
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            httpGet:
+              port: 9765
+              path: /metrics
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

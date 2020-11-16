@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/ingress.class: caddy
 spec:
   rules:
-  - host: example1.kubernetes.localhost
+  - host: test.ingress.wavy.sh
     http:
       paths:
       - path: /hello1
@@ -17,7 +17,7 @@ spec:
         backend:
           serviceName: example2
           servicePort: 8080
-  - host: example2.kubernetes.localhost
+  - host: test2.ingress.wavy.sh
     http:
       paths:
       - path: /hello1

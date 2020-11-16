@@ -21,6 +21,7 @@ rules:
       - nodes
       - routes
       - extensions
+      - configmaps
     verbs:
       - list
       - get
