@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,7 +75,6 @@ func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *v1beta1.Ingress,
 		return nil, errors.Wrap(err, fmt.Sprintf("unexpected error searching Ingress %v/%v", ing.Namespace, ing.Name))
 	}
 
-	logrus.Debugf("updating Ingress %v/%v status from %v to %v", currIng.Namespace, currIng.Name, currIng.Status.LoadBalancer.Ingress, status)
 	currIng.Status.LoadBalancer.Ingress = status
 
 	return ingClient.UpdateStatus(context.TODO(), currIng, v1.UpdateOptions{})

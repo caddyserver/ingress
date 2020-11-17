@@ -8,7 +8,6 @@ import (
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/certmagic"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -68,7 +67,6 @@ func (s *SecretStorage) Exists(key string) bool {
 	})
 
 	if err != nil {
-		logrus.Error(err)
 		return false
 	}
 
@@ -97,10 +95,8 @@ func (s *SecretStorage) Store(key string, value []byte) error {
 
 	var err error
 	if s.Exists(key) {
-		logrus.Infof("Updating k8s secret '%s'", cleanKey(key))
 		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Update(context.TODO(), &se, metav1.UpdateOptions{})
 	} else {
-		logrus.Infof("Creating k8s secret '%s'", cleanKey(key))
 		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Create(context.TODO(), &se, metav1.CreateOptions{})
 	}
 

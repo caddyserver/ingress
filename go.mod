@@ -8,8 +8,8 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pires/go-proxyproto v0.3.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.7.1
-	github.com/sirupsen/logrus v1.6.0
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.16.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/pool.v3 v3.1.1
 	k8s.io/api v0.19.4

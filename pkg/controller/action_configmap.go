@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/caddyserver/ingress/pkg/k8s"
-	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -45,7 +44,7 @@ func (c *CaddyController) onConfigMapDeleted(obj *v1.ConfigMap) {
 }
 
 func (r ConfigMapAddedAction) handle(c *CaddyController) error {
-	logrus.Infof("ConfigMap created (%s/%s)", r.resource.Namespace, r.resource.Name)
+	c.logger.Infof("ConfigMap created (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	cfg, err := k8s.ParseConfigMap(r.resource)
 	if err == nil {
@@ -55,7 +54,7 @@ func (r ConfigMapAddedAction) handle(c *CaddyController) error {
 }
 
 func (r ConfigMapUpdatedAction) handle(c *CaddyController) error {
-	logrus.Infof("ConfigMap updated (%s/%s)", r.resource.Namespace, r.resource.Name)
+	c.logger.Infof("ConfigMap updated (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	cfg, err := k8s.ParseConfigMap(r.resource)
 	if err == nil {
@@ -65,7 +64,7 @@ func (r ConfigMapUpdatedAction) handle(c *CaddyController) error {
 }
 
 func (r ConfigMapDeletedAction) handle(c *CaddyController) error {
-	logrus.Infof("ConfigMap deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
+	c.logger.Infof("ConfigMap deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
 
 	c.resourceStore.ConfigMap = nil
 	return nil

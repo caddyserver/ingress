@@ -12,10 +12,14 @@ func parseFlags() controller.Options {
 	var configMapName string
 	flag.StringVar(&configMapName, "config-map", "", "defines the config map name from where to load global options")
 
+	var verbose bool
+	flag.BoolVar(&verbose, "v", false, "set the log level to debug")
+
 	flag.Parse()
 
 	return controller.Options{
 		WatchNamespace: namespace,
 		ConfigMapName:  configMapName,
+		Verbose:        verbose,
 	}
 }

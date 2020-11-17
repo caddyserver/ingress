@@ -7,7 +7,7 @@ import (
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/ingress/pkg/k8s"
 	"github.com/caddyserver/ingress/pkg/storage"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -44,6 +44,7 @@ type Action interface {
 type Options struct {
 	WatchNamespace string
 	ConfigMapName  string
+	Verbose        bool
 }
 
 // Store contains resources used to generate Caddy config
@@ -79,6 +80,8 @@ type CaddyController struct {
 
 	kubeClient *kubernetes.Clientset
 
+	logger *zap.SugaredLogger
+
 	// main queue syncing ingresses, configmaps, ... with caddy
 	syncQueue workqueue.RateLimitingInterface
 
@@ -99,8 +102,9 @@ type CaddyController struct {
 	stopChan chan struct{}
 }
 
-func NewCaddyController(kubeClient *kubernetes.Clientset, opts Options, converter Converter) *CaddyController {
+func NewCaddyController(logger *zap.SugaredLogger, kubeClient *kubernetes.Clientset, opts Options, converter Converter) *CaddyController {
 	controller := &CaddyController{
+		logger:     logger,
 		kubeClient: kubeClient,
 		converter:  converter,
 		syncQueue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
@@ -110,7 +114,7 @@ func NewCaddyController(kubeClient *kubernetes.Clientset, opts Options, converte
 
 	podInfo, err := k8s.GetPodDetails(kubeClient)
 	if err != nil {
-		logrus.Fatalf("Unexpected error obtaining pod information: %v", err)
+		logger.Fatalf("Unexpected error obtaining pod information: %v", err)
 	}
 	controller.podInfo = podInfo
 
@@ -193,12 +197,12 @@ func (c *CaddyController) Run(stopCh chan struct{}) {
 
 	// wait for SIGTERM
 	<-stopCh
-	logrus.Info("stopping ingress controller")
+	c.logger.Info("stopping ingress controller")
 
 	var exitCode int
 	err := c.Shutdown()
 	if err != nil {
-		logrus.Errorf("could not shutdown ingress controller properly, %v", err.Error())
+		c.logger.Error("could not shutdown ingress controller properly, " + err.Error())
 		exitCode = 1
 	}
 
@@ -233,7 +237,7 @@ func (c *CaddyController) processNextItem() bool {
 
 	err = c.reloadCaddy()
 	if err != nil {
-		logrus.Errorf("could not reload caddy: %v", err.Error())
+		c.logger.Error("could not reload caddy: " + err.Error())
 		return true
 	}
 
@@ -242,7 +246,7 @@ func (c *CaddyController) processNextItem() bool {
 
 // handleErrs reports errors received from queue actions.
 func (c *CaddyController) handleErr(err error, action interface{}) {
-	logrus.Error(err)
+	c.logger.Error(err.Error())
 }
 
 // reloadCaddy generate a caddy config from controller's store
@@ -258,11 +262,11 @@ func (c *CaddyController) reloadCaddy() error {
 	}
 
 	if bytes.Equal(c.lastAppliedConfig, j) {
-		logrus.Debug("caddy config did not change, skipping reload")
+		c.logger.Debug("caddy config did not change, skipping reload")
 		return nil
 	}
 
-	logrus.Debugf("reloading caddy with config %v", string(j))
+	c.logger.Debug("reloading caddy with config %v" + string(j))
 	err = caddy.Load(j, false)
 	if err != nil {
 		return fmt.Errorf("could not reload caddy config %v", err.Error())

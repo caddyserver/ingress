@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/caddyserver/ingress/pkg/k8s"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	apiv1 "k8s.io/api/core/v1"
 	"os"
@@ -70,17 +69,17 @@ func writeFile(s *apiv1.Secret) error {
 }
 
 func (r SecretAddedAction) handle(c *CaddyController) error {
-	logrus.Infof("TLS secret created (%s/%s)", r.resource.Namespace, r.resource.Name)
+	c.logger.Infof("TLS secret created (%s/%s)", r.resource.Namespace, r.resource.Name)
 	return writeFile(r.resource)
 }
 
 func (r SecretUpdatedAction) handle(c *CaddyController) error {
-	logrus.Infof("TLS secret updated (%s/%s)", r.resource.Namespace, r.resource.Name)
+	c.logger.Infof("TLS secret updated (%s/%s)", r.resource.Namespace, r.resource.Name)
 	return writeFile(r.resource)
 }
 
 func (r SecretDeletedAction) handle(c *CaddyController) error {
-	logrus.Infof("TLS secret deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
+	c.logger.Infof("TLS secret deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
 	return os.Remove(filepath.Join(CertFolder, r.resource.Name+".pem"))
 }
 

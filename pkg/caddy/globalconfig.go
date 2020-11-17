@@ -31,9 +31,24 @@ func LoadConfigMapOptions(config *Config, store *controller.Store) error {
 			acmeIssuer.Email = cfgMap.Email
 		}
 
+		var onDemandConfig *caddytls.OnDemandConfig
+		if cfgMap.OnDemandTLS {
+			onDemandConfig = &caddytls.OnDemandConfig{
+				RateLimit: &caddytls.RateLimit{
+					Interval: cfgMap.OnDemandRateLimitInterval,
+					Burst:    cfgMap.OnDemandRateLimitBurst,
+				},
+				Ask: cfgMap.OnDemandAsk,
+			}
+		}
+
 		tlsApp.Automation = &caddytls.AutomationConfig{
+			OnDemand: onDemandConfig,
 			Policies: []*caddytls.AutomationPolicy{
-				{IssuerRaw: caddyconfig.JSONModuleObject(acmeIssuer, "module", "acme", nil)},
+				{
+					IssuerRaw: caddyconfig.JSONModuleObject(acmeIssuer, "module", "acme", nil),
+					OnDemand:  cfgMap.OnDemandTLS,
+				},
 			},
 		}
 	}

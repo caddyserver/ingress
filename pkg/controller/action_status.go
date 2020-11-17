@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/caddyserver/ingress/pkg/k8s"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"gopkg.in/go-playground/pool.v3"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
@@ -33,7 +33,7 @@ func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
 		return err
 	}
 
-	logrus.Debugf("Syncing %d Ingress resources source addresses", len(ings))
+	c.logger.Debugf("Syncing %d Ingress resources source addresses", len(ings))
 	c.updateIngStatuses(sliceToLoadBalancerIngress(addrs), ings)
 
 	return nil
@@ -54,11 +54,11 @@ func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBala
 
 		// check to see if ingresses source address does not match the ingress controller's.
 		if ingressSliceEqual(curIPs, controllerAddresses) {
-			logrus.Debugf("skipping update of Ingress %v/%v (no change)", ing.Namespace, ing.Name)
+			c.logger.Debugf("skipping update of Ingress %v/%v (no change)", ing.Namespace, ing.Name)
 			continue
 		}
 
-		batch.Queue(runUpdate(ing, controllerAddresses, c.kubeClient))
+		batch.Queue(runUpdate(c.logger, ing, controllerAddresses, c.kubeClient))
 	}
 
 	batch.QueueComplete()
@@ -66,15 +66,23 @@ func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBala
 }
 
 // runUpdate updates the ingress status field.
-func runUpdate(ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client *kubernetes.Clientset) pool.WorkFunc {
+func runUpdate(logger *zap.SugaredLogger, ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client *kubernetes.Clientset) pool.WorkFunc {
 	return func(wu pool.WorkUnit) (interface{}, error) {
 		if wu.IsCancelled() {
 			return nil, nil
 		}
 
-		_, err := k8s.UpdateIngressStatus(client, ing, status)
+		updated, err := k8s.UpdateIngressStatus(client, ing, status)
 		if err != nil {
-			logrus.Warningf("error updating ingress rule: %v", err)
+			logger.Warnf("error updating ingress rule: %v", err)
+		} else {
+			logger.Debugf(
+				"updating Ingress %v/%v status from %v to %v",
+				ing.Namespace,
+				ing.Name,
+				ing.Status.LoadBalancer.Ingress,
+				updated.Status.LoadBalancer.Ingress,
+			)
 		}
 
 		return true, nil

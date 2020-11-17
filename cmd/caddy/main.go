@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/caddyserver/ingress/pkg/caddy"
 	"github.com/caddyserver/ingress/pkg/controller"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/version"
@@ -20,29 +20,41 @@ const (
 	defaultBurst = 1e6
 )
 
+func createLogger(verbose bool) *zap.SugaredLogger {
+	prodCfg := zap.NewProductionConfig()
+
+	if verbose {
+		prodCfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	}
+	logger, _ := prodCfg.Build()
+
+	return logger.Sugar()
+}
+
 func main() {
 	// parse any flags required to configure the caddy ingress controller
 	cfg := parseFlags()
 
+	logger := createLogger(cfg.Verbose)
+
 	if cfg.WatchNamespace == "" {
 		cfg.WatchNamespace = v1.NamespaceAll
-		logrus.Warning("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
+		logger.Warn("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
 	}
 
 	// get client to access the kubernetes service api
-	kubeClient, err := createApiserverClient()
+	kubeClient, err := createApiserverClient(logger)
 	if err != nil {
-		msg := "Could not establish a connection to the Kubernetes API Server."
-		logrus.Fatalf(msg, err)
+		logger.Fatalf("Could not establish a connection to the Kubernetes API Server. %v", err)
 	}
 
-	c := controller.NewCaddyController(kubeClient, cfg, caddy.Converter{})
+	c := controller.NewCaddyController(logger, kubeClient, cfg, caddy.Converter{})
 
 	// start the ingress controller
 	stopCh := make(chan struct{}, 1)
 	defer close(stopCh)
 
-	logrus.Info("Starting the caddy ingress controller")
+	logger.Info("Starting the caddy ingress controller")
 	go c.Run(stopCh)
 
 	// TODO :- listen to sigterm
@@ -51,13 +63,13 @@ func main() {
 
 // createApiserverClient creates a new Kubernetes REST client. We assume the
 // controller runs inside Kubernetes and use the in-cluster config.
-func createApiserverClient() (*kubernetes.Clientset, error) {
+func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, error) {
 	cfg, err := clientcmd.BuildConfigFromFlags("", "")
 	if err != nil {
 		return nil, err
 	}
 
-	logrus.Infof("Creating API client for %s", cfg.Host)
+	logger.Infof("Creating API client for %s", cfg.Host)
 
 	cfg.QPS = defaultQPS
 	cfg.Burst = defaultBurst
@@ -86,7 +98,7 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		}
 
 		lastErr = err
-		logrus.Infof("Unexpected error discovering Kubernetes version (attempt %v): %v", retries, err)
+		logger.Infof("Unexpected error discovering Kubernetes version (attempt %v): %v", retries, err)
 		retries++
 		return false, nil
 	})
@@ -97,7 +109,7 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 	}
 
 	if retries > 0 {
-		logrus.Warningf("Initial connection to the Kubernetes API server was retried %d times.", retries)
+		logger.Warnf("Initial connection to the Kubernetes API server was retried %d times.", retries)
 	}
 
 	return client, nil

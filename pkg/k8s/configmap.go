@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"github.com/caddyserver/caddy/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	v12 "k8s.io/api/core/v1"
@@ -10,11 +11,15 @@ import (
 
 // ConfigMapOptions represents global options set through a configmap
 type ConfigMapOptions struct {
-	Debug         bool   `json:"debug"`
-	AcmeCA        string `json:"acmeCA"`
-	Email         string `json:"email"`
-	ProxyProtocol bool   `json:"proxyProtocol"`
-	Metrics       bool   `json:"metrics"`
+	Debug                     bool           `json:"debug,omitempty"`
+	AcmeCA                    string         `json:"acmeCA,omitempty"`
+	Email                     string         `json:"email,omitempty"`
+	ProxyProtocol             bool           `json:"proxyProtocol,omitempty"`
+	Metrics                   bool           `json:"metrics,omitempty"`
+	OnDemandTLS               bool           `json:"onDemandTLS,omitempty"`
+	OnDemandRateLimitInterval caddy.Duration `json:"onDemandTLSRateLimitInterval,omitempty"`
+	OnDemandRateLimitBurst    int            `json:"onDemandTLSRateLimitBurst,omitempty"`
+	OnDemandAsk               string         `json:"onDemandTLSAsk,omitempty"`
 }
 
 type ConfigMapHandlers struct {
