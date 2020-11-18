@@ -12,6 +12,9 @@ func parseFlags() controller.Options {
 	var configMapName string
 	flag.StringVar(&configMapName, "config-map", "", "defines the config map name from where to load global options")
 
+	var leaseId string
+	flag.StringVar(&leaseId, "lease-id", "", "defines the id of this instance for certmagic lock")
+
 	var verbose bool
 	flag.BoolVar(&verbose, "v", false, "set the log level to debug")
 
@@ -21,5 +24,6 @@ func parseFlags() controller.Options {
 		WatchNamespace: namespace,
 		ConfigMapName:  configMapName,
 		Verbose:        verbose,
+		LeaseId:        leaseId,
 	}
 }

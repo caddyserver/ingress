@@ -8,10 +8,12 @@ rules:
   - apiGroups:
       - ""
       - "networking.k8s.io"
+      - "coordination.k8s.io"
     resources:
       - ingresses
       - ingresses/status
       - secrets
+      - leases
     verbs: ["*"]
   - apiGroups:
       - ""

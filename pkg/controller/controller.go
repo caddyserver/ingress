@@ -45,6 +45,7 @@ type Options struct {
 	WatchNamespace string
 	ConfigMapName  string
 	Verbose        bool
+	LeaseId        string
 }
 
 // Store contains resources used to generate Caddy config
@@ -102,11 +103,18 @@ type CaddyController struct {
 	stopChan chan struct{}
 }
 
-func NewCaddyController(logger *zap.SugaredLogger, kubeClient *kubernetes.Clientset, opts Options, converter Converter) *CaddyController {
+func NewCaddyController(
+	logger *zap.SugaredLogger,
+	kubeClient *kubernetes.Clientset,
+	opts Options,
+	converter Converter,
+	stopChan chan struct{},
+) *CaddyController {
 	controller := &CaddyController{
 		logger:     logger,
 		kubeClient: kubeClient,
 		converter:  converter,
+		stopChan:   stopChan,
 		syncQueue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		informers:  &Informer{},
 		factories:  &InformerFactory{},
@@ -172,17 +180,17 @@ func (c *CaddyController) Shutdown() error {
 }
 
 // Run method starts the ingress controller.
-func (c *CaddyController) Run(stopCh chan struct{}) {
+func (c *CaddyController) Run() {
 	defer runtime.HandleCrash()
 	defer c.syncQueue.ShutDown()
 
 	// start informers where we listen to new / updated resources
-	go c.informers.ConfigMap.Run(stopCh)
-	go c.informers.Ingress.Run(stopCh)
+	go c.informers.ConfigMap.Run(c.stopChan)
+	go c.informers.Ingress.Run(c.stopChan)
 
 	// wait for all involved caches to be synced before processing items
 	// from the queue
-	if !cache.WaitForCacheSync(stopCh,
+	if !cache.WaitForCacheSync(c.stopChan,
 		c.informers.ConfigMap.HasSynced,
 		c.informers.Ingress.HasSynced,
 	) {
@@ -190,13 +198,13 @@ func (c *CaddyController) Run(stopCh chan struct{}) {
 	}
 
 	// start processing events for syncing ingress resources
-	go wait.Until(c.runWorker, time.Second, stopCh)
+	go wait.Until(c.runWorker, time.Second, c.stopChan)
 
 	// start ingress status syncher and run every syncInterval
-	go wait.Until(c.dispatchSync, syncInterval, stopCh)
+	go wait.Until(c.dispatchSync, syncInterval, c.stopChan)
 
 	// wait for SIGTERM
-	<-stopCh
+	<-c.stopChan
 	c.logger.Info("stopping ingress controller")
 
 	var exitCode int

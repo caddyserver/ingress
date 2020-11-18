@@ -3,8 +3,9 @@ module github.com/caddyserver/ingress
 go 1.14
 
 require (
-	github.com/caddyserver/caddy/v2 v2.2.1
-	github.com/caddyserver/certmagic v0.12.0
+	github.com/caddyserver/caddy/v2 v2.2.2-0.20201118185343-6ea6f3ebe084
+	github.com/caddyserver/certmagic v0.12.1-0.20201116175341-0f8a9f688760
+	github.com/google/uuid v1.1.1
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pires/go-proxyproto v0.3.1
 	github.com/pkg/errors v0.9.1

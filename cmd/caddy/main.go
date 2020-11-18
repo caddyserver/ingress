@@ -48,14 +48,14 @@ func main() {
 		logger.Fatalf("Could not establish a connection to the Kubernetes API Server. %v", err)
 	}
 
-	c := controller.NewCaddyController(logger, kubeClient, cfg, caddy.Converter{})
-
-	// start the ingress controller
 	stopCh := make(chan struct{}, 1)
 	defer close(stopCh)
 
+	c := controller.NewCaddyController(logger, kubeClient, cfg, caddy.Converter{}, stopCh)
+
+	// start the ingress controller
 	logger.Info("Starting the caddy ingress controller")
-	go c.Run(stopCh)
+	go c.Run()
 
 	// TODO :- listen to sigterm
 	select {}
