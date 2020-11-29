@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/caddyserver/ingress/pkg/caddy"
-	"github.com/caddyserver/ingress/pkg/controller"
+	"github.com/caddyserver/ingress/internal/caddy"
+	"github.com/caddyserver/ingress/internal/controller"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"

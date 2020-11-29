@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/caddyserver/ingress/pkg/k8s"
+	"github.com/caddyserver/ingress/internal/k8s"
 	"io/ioutil"
 	apiv1 "k8s.io/api/core/v1"
 	"os"

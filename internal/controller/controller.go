@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/ingress/pkg/k8s"
+	"github.com/caddyserver/ingress/internal/k8s"
 	"github.com/caddyserver/ingress/pkg/storage"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"

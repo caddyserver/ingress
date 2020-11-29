@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/caddyserver/ingress/pkg/controller"
+	"github.com/caddyserver/ingress/internal/controller"
 )
 
 func parseFlags() controller.Options {

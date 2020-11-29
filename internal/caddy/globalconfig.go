@@ -6,7 +6,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
-	"github.com/caddyserver/ingress/pkg/controller"
+	"github.com/caddyserver/ingress/internal/controller"
 )
 
 // LoadConfigMapOptions load options from ConfigMap
@@ -55,8 +55,8 @@ func LoadConfigMapOptions(config *Config, store *controller.Store) error {
 
 	if cfgMap.ProxyProtocol {
 		httpServer.ListenerWrappersRaw = []json.RawMessage{
-			json.RawMessage("{\"wrapper\":\"proxy_protocol\"}"),
-			json.RawMessage("{\"wrapper\":\"tls\"}"),
+			json.RawMessage(`{"wrapper":"proxy_protocol"}`),
+			json.RawMessage(`{"wrapper":"tls"}`),
 		}
 	}
 	return nil

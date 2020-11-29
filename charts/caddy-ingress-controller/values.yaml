@@ -28,6 +28,10 @@ ingressController:
     email: ""
     metrics: true
     proxyProtocol: false
+    onDemandTLS: false
+    # onDemandRateLimitInterval:
+    # onDemandRateLimitBurst:
+    # onDemandAsk:
 
 serviceAccount:
   # Specifies whether a service account should be created

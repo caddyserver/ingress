@@ -6,7 +6,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
-	"github.com/caddyserver/ingress/pkg/controller"
+	"github.com/caddyserver/ingress/internal/controller"
 )
 
 // StorageValues represents the config for certmagic storage providers.
