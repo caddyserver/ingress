@@ -102,4 +102,4 @@ jobs:
           EOF
 
       - name: Run chart-testing (install)
-        run: ct install --config ct.yaml --helm-extra-args "--set image.tag=sha-$(echo ${GITHUB_SHA} | cut -c1-8)"
+        run: ct install --config ct.yaml --helm-extra-args "--set image.tag=sha-$(echo ${GITHUB_SHA} | cut -c1-7)"
