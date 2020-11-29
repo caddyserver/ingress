@@ -1,6 +1,10 @@
 name: Lint and Test Charts
 
-on: pull_request
+on:
+  workflow_run:
+    workflows: ["Docker Image CI"]
+    types:
+      - completed
 
 jobs:
   lint-test:
@@ -8,25 +12,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - name: Fetch history
-        run: git fetch --prune --unshallow
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.0.1
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed)
+          if [[ -n "$changed" ]]; then
+            echo "::set-output name=changed::true"
+          fi
 
       - name: Run chart-testing (lint)
-        id: lint
-        uses: helm/chart-testing-action@v1.0.0-rc.1
-        with:
-          image: quay.io/helmpack/chart-testing:v3.0.0-rc.1
-          command: lint
+        run: ct lint
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.0.0-rc.1
+        uses: helm/kind-action@v1.1.0
         with:
-          version: "v0.8.1"
+          version: "v0.9.0"
         # Only build a kind cluster if there are chart changes to test.
-        if: steps.lint.outputs.changed == 'true'
+        if: steps.list-changed.outputs.changed == 'true'
 
       - name: Install MetalLB to allow LoadBalancer services
+        if: steps.list-changed.outputs.changed == 'true'
         run: |
           kubectl create ns metallb-system
           kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.9.3/manifests/metallb.yaml
@@ -45,10 +56,5 @@ jobs:
                 - 172.17.255.1-172.17.255.200
           EOF
 
-        if: steps.lint.outputs.changed == 'true'
-
       - name: Run chart-testing (install)
-        uses: helm/chart-testing-action@v1.0.0-rc.1
-        with:
-          image: quay.io/helmpack/chart-testing:v3.0.0-rc.1
-          command: install
+        run: ct install --config config.yaml --helm-extra-args "--set image.tag=sha-$(echo ${GITHUB_SHA} | cut -c1-8)"
