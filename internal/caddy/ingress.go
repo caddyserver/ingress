@@ -43,7 +43,11 @@ func LoadIngressConfig(config *Config, store *controller.Store) error {
 				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.ServiceName, ing.Namespace, path.Backend.ServicePort.IntVal)
 				r := baseRoute(clusterHostName)
 
-				match := caddy.ModuleMap{}
+				match := caddy.ModuleMap{
+					// match only on https protocol to allow HTTPS redirects
+					// TODO Let user disable this to serve HTTP requests
+					"protocol": caddyconfig.JSON(caddyhttp.MatchProtocol("https"), nil),
+				}
 
 				if rule.Host != "" {
 					match["host"] = caddyconfig.JSON(caddyhttp.MatchHost{rule.Host}, nil)
