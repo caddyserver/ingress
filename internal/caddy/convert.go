@@ -68,9 +68,7 @@ func newConfig(namespace string, store *controller.Store) (*Config, error) {
 						AutoHTTPS: &caddyhttp.AutoHTTPSConfig{},
 						// Listen to both :80 and :443 ports in order
 						// to use the same listener wrappers (PROXY protocol use it)
-						// note that order is important here because otherwise, caddy will
-						// choose the :80 port as the HTTPS port.
-						Listen: []string{":443", ":80"},
+						Listen: []string{":80", ":443"},
 					},
 				},
 			},

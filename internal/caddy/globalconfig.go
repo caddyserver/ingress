@@ -46,8 +46,10 @@ func LoadConfigMapOptions(config *Config, store *controller.Store) error {
 			OnDemand: onDemandConfig,
 			Policies: []*caddytls.AutomationPolicy{
 				{
-					IssuerRaw: caddyconfig.JSONModuleObject(acmeIssuer, "module", "acme", nil),
-					OnDemand:  cfgMap.OnDemandTLS,
+					IssuersRaw: []json.RawMessage{
+						caddyconfig.JSONModuleObject(acmeIssuer, "module", "acme", nil),
+					},
+					OnDemand: cfgMap.OnDemandTLS,
 				},
 			},
 		}
