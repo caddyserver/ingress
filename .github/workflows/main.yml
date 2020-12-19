@@ -101,5 +101,15 @@ jobs:
                 - 172.17.255.1-172.17.255.200
           EOF
 
+      - name: Get image tag
+        id: image-tag
+        run: echo "::set-output name=data::$(echo ${GITHUB_SHA} | cut -c1-7)"
+
+      - name: Set current image tag
+        working-directory: charts/caddy-ingress-controller
+        run: envsubst < ci/test-values.yaml.tpl > ci/test-values.yaml
+        env:
+          TAG: ${{ steps.image-tag.outputs.data }}
+
       - name: Run chart-testing (install)
-        run: ct install --config ct.yaml --helm-extra-args "--set image.tag=sha-$(echo ${GITHUB_SHA} | cut -c1-7)"
+        run: ct install --config ct.yaml --helm-extra-args "--set image.tag=sha-${{ steps.image-tag.outputs.data }}"

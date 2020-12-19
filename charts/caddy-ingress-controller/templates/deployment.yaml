@@ -12,13 +12,10 @@ spec:
       {{- include "caddy-ingress-controller.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+    {{- with .Values.podAnnotations }}
       annotations:
-        prometheus.io/scrape: {{ .Values.ingressController.config.metrics | quote }}
-        prometheus.io/path: /metrics
-        prometheus.io/port: '9765'
-        {{- with .Values.podAnnotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
       labels:
         {{- include "caddy-ingress-controller.labels" . | nindent 8 }}
     spec:
