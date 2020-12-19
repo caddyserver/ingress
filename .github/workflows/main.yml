@@ -112,4 +112,4 @@ jobs:
           TAG: ${{ steps.image-tag.outputs.data }}
 
       - name: Run chart-testing (install)
-        run: ct install --config ct.yaml --helm-extra-args "--set image.tag=sha-${{ steps.image-tag.outputs.data }}"
+        run: ct install --config ct.yaml
