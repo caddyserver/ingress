@@ -1,2 +1,2 @@
 image:
-  tag: ${TAG}
+  tag: sha-${TAG}
