@@ -19,6 +19,7 @@ rules:
       - services
       - pods
       - nodes
+      - configmaps
       - routes
       - extensions
     verbs:
