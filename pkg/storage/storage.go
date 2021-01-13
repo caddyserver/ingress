@@ -33,10 +33,11 @@ var matchLabels = map[string]string{
 	"manager": "caddy",
 }
 
-// specialChars is a regex that matches all special characters except '.' and '-'.
-var specialChars = regexp.MustCompile("[^0-9a-zA-Z.-]+")
+// specialChars is a regex that matches all special characters except '-'.
+var specialChars = regexp.MustCompile("[^0-9a-zA-Z-]+")
 
 // cleanKey strips all special characters that are not supported by kubernetes names and converts them to a '.'.
+// sequences like '.*.' are also converted to a single '.'.
 func cleanKey(key string, prefix string) string {
 	return prefix + specialChars.ReplaceAllString(key, ".")
 }
