@@ -2,6 +2,7 @@ package caddy
 
 import (
 	"encoding/json"
+
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 	"github.com/caddyserver/ingress/internal/controller"

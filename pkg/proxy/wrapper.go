@@ -1,9 +1,9 @@
 package proxy
 
 import (
-	"github.com/caddyserver/caddy/v2"
 	"net"
 
+	"github.com/caddyserver/caddy/v2"
 	"github.com/pires/go-proxyproto"
 )
 

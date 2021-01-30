@@ -1,15 +1,16 @@
 package controller
 
 import (
+	"net"
+	"sort"
+	"strings"
+
 	"github.com/caddyserver/ingress/internal/k8s"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/pool.v3"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/client-go/kubernetes"
-	"net"
-	"sort"
-	"strings"
 )
 
 // dispatchSync is run every syncInterval duration to sync ingress source address fields.

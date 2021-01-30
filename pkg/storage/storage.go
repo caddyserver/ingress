@@ -3,6 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/certmagic"
 	"github.com/google/uuid"
@@ -14,9 +18,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
