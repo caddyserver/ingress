@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example
@@ -10,24 +10,36 @@ spec:
     http:
       paths:
       - path: /hello1
+        pathType: Prefix
         backend:
-          serviceName: example1
-          servicePort: 8080
+          service:
+            name: example1
+            port:
+              number: 8080
       - path: /hello2
+        pathType: Prefix
         backend:
-          serviceName: example2
-          servicePort: 8080
+          service:
+            name: example2
+            port:
+              number: 8080
   - host: example2.kubernetes.localhost
     http:
       paths:
       - path: /hello1
+        pathType: Prefix
         backend:
-          serviceName: example1
-          servicePort: 8080
+          service:
+            name: example1
+            port:
+              number: 8080
       - path: /hello2
+        pathType: Prefix
         backend:
-          serviceName: example2
-          servicePort: 8080
+          service:
+            name: example2
+            port:
+              number: 8080
 #   tls:
 #   - secretName: ssl-example2.kubernetes.localhost
 #     hosts:
