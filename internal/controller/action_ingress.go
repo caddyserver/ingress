@@ -1,34 +1,34 @@
 package controller
 
 import (
-	"k8s.io/api/networking/v1beta1"
+	networkingV1 "k8s.io/api/networking/v1"
 )
 
 // IngressAddedAction provides an implementation of the action interface.
 type IngressAddedAction struct {
-	resource *v1beta1.Ingress
+	resource *networkingV1.Ingress
 }
 
 // IngressUpdatedAction provides an implementation of the action interface.
 type IngressUpdatedAction struct {
-	resource    *v1beta1.Ingress
-	oldResource *v1beta1.Ingress
+	resource    *networkingV1.Ingress
+	oldResource *networkingV1.Ingress
 }
 
 // IngressDeletedAction provides an implementation of the action interface.
 type IngressDeletedAction struct {
-	resource *v1beta1.Ingress
+	resource *networkingV1.Ingress
 }
 
 // onIngressAdded runs when an ingress resource is added to the cluster.
-func (c *CaddyController) onIngressAdded(obj *v1beta1.Ingress) {
+func (c *CaddyController) onIngressAdded(obj *networkingV1.Ingress) {
 	c.syncQueue.Add(IngressAddedAction{
 		resource: obj,
 	})
 }
 
 // onIngressUpdated is run when an ingress resource is updated in the cluster.
-func (c *CaddyController) onIngressUpdated(old *v1beta1.Ingress, new *v1beta1.Ingress) {
+func (c *CaddyController) onIngressUpdated(old *networkingV1.Ingress, new *networkingV1.Ingress) {
 	c.syncQueue.Add(IngressUpdatedAction{
 		resource:    new,
 		oldResource: old,
@@ -36,7 +36,7 @@ func (c *CaddyController) onIngressUpdated(old *v1beta1.Ingress, new *v1beta1.In
 }
 
 // onIngressDeleted is run when an ingress resource is deleted from the cluster.
-func (c *CaddyController) onIngressDeleted(obj *v1beta1.Ingress) {
+func (c *CaddyController) onIngressDeleted(obj *networkingV1.Ingress) {
 	c.syncQueue.Add(IngressDeletedAction{
 		resource: obj,
 	})

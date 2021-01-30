@@ -2,7 +2,7 @@ package k8s
 
 import (
 	v12 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networkingV1 "k8s.io/api/networking/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 )
@@ -48,7 +48,7 @@ func WatchTLSSecrets(options TLSSecretParams, funcs TLSSecretHandlers) cache.Sha
 	return informer
 }
 
-func ListTLSSecrets(options TLSSecretParams, ings []*v1beta1.Ingress) ([]*v12.Secret, error) {
+func ListTLSSecrets(options TLSSecretParams, ings []*networkingV1.Ingress) ([]*v12.Secret, error) {
 	lister := options.InformerFactory.Core().V1().Secrets().Lister()
 
 	tlsSecrets := []*v12.Secret{}
@@ -64,7 +64,7 @@ func ListTLSSecrets(options TLSSecretParams, ings []*v1beta1.Ingress) ([]*v12.Se
 	return tlsSecrets, nil
 }
 
-func IsManagedTLSSecret(secret *v12.Secret, ings []*v1beta1.Ingress) bool {
+func IsManagedTLSSecret(secret *v12.Secret, ings []*networkingV1.Ingress) bool {
 	for _, ing := range ings {
 		for _, tlsRule := range ing.Spec.TLS {
 			if tlsRule.SecretName == secret.Name && ing.Namespace == secret.Namespace {
