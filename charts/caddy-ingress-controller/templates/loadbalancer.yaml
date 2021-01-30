@@ -9,7 +9,7 @@ metadata:
   labels:
     {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
 spec:
-  type: "LoadBalancer"
+  type: LoadBalancer
   ports:
     - name: http
       port: 80
