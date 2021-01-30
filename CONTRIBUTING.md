@@ -27,7 +27,7 @@ kind export kubeconfig
 
 ## Setup development env
 
-Replace also the domain name to use in `hack/test/example-ingress.yaml` from `kubernetes.localhost` to your domain (ensure also that the subdomain `example1` and `example2` are resolved to the server public IP)
+Replace also the domain name to use in `kubernetes/sample/example-ingress.yaml` from `kubernetes.localhost` to your domain (ensure also that the subdomain `example1` and `example2` are resolved to the server public IP)
 
 Create a namespace to host the caddy ingress controller:
 ```
@@ -47,10 +47,10 @@ this will automatically:
 
 You can test that all work as expected with:
 ```
-curl -H 'Host: example1.kubernetes.localhost http://127.0.0.1:80/hello1
-curl -H 'Host: example1.kubernetes.localhost http://127.0.0.1:80/hello2
-curl -H 'Host: example2.kubernetes.localhost http://127.0.0.1:80/hello1
-curl -H 'Host: example2.kubernetes.localhost http://127.0.0.1:80/hello2
+curl -H 'Host: example1.kubernetes.localhost' http://127.0.0.1:80/hello1
+curl -H 'Host: example1.kubernetes.localhost' http://127.0.0.1:80/hello2
+curl -H 'Host: example2.kubernetes.localhost' http://127.0.0.1:80/hello1
+curl -H 'Host: example2.kubernetes.localhost' http://127.0.0.1:80/hello2
 ```
 
 ## Notes
