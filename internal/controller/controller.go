@@ -46,7 +46,7 @@ type Options struct {
 	WatchNamespace string
 	ConfigMapName  string
 	Verbose        bool
-	LeaseId        string
+	LeaseID        string
 }
 
 // Store contains resources used to generate Caddy config

@@ -47,7 +47,7 @@ func cleanKey(key string, prefix string) string {
 type SecretStorage struct {
 	Namespace  string
 	KubeClient *kubernetes.Clientset
-	LeaseId    string
+	LeaseID    string
 	logger     *zap.Logger
 }
 
@@ -66,8 +66,8 @@ func (s *SecretStorage) Provision(ctx caddy.Context) error {
 
 	s.logger = ctx.Logger(s)
 	s.KubeClient = clientset
-	if s.LeaseId == "" {
-		s.LeaseId = uuid.New().String()
+	if s.LeaseID == "" {
+		s.LeaseID = uuid.New().String()
 	}
 	return nil
 }
@@ -227,7 +227,7 @@ func (s *SecretStorage) tryAcquireOrRenew(ctx context.Context, key string, shoul
 		},
 		Client: s.KubeClient.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: s.LeaseId,
+			Identity: s.LeaseID,
 		},
 	}
 

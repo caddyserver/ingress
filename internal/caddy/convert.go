@@ -13,7 +13,7 @@ import (
 // StorageValues represents the config for certmagic storage providers.
 type StorageValues struct {
 	Namespace string `json:"namespace"`
-	LeaseId   string `json:"leaseId"`
+	LeaseID   string `json:"leaseId"`
 }
 
 // Storage represents the certmagic storage configuration.
@@ -78,7 +78,7 @@ func newConfig(namespace string, store *controller.Store) (*Config, error) {
 			System: "secret_store",
 			StorageValues: StorageValues{
 				Namespace: namespace,
-				LeaseId:   store.Options.LeaseId,
+				LeaseID:   store.Options.LeaseID,
 			},
 		},
 	}

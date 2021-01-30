@@ -8,7 +8,6 @@ import (
 	"github.com/caddyserver/ingress/internal/controller"
 )
 
-
 // LoadTLSConfig configure caddy when some ingresses have TLS certs
 func LoadTLSConfig(config *Config, store *controller.Store) error {
 	tlsApp := config.Apps["tls"].(*caddytls.TLS)
