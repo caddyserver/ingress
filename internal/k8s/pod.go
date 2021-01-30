@@ -32,7 +32,7 @@ func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
 	}
 
 	for _, svc := range svcs.Items {
-		if labels.AreLabelsInWhiteList(svc.Spec.Selector, p.Labels) {
+		if labels.Set(p.Labels).AsSelector().Matches(labels.Set(svc.Spec.Selector)) {
 			addr := GetAddressFromService(&svc)
 			if addr != "" {
 				addrs = append(addrs, addr)
