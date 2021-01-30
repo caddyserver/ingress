@@ -13,8 +13,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/ingress-controller .
 FROM alpine:latest AS certs
 RUN apk --update add ca-certificates
 
-FROM scratch
+FROM alpine:3.13.1
 COPY --from=builder /app/bin/ingress-controller .
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+RUN mkdir -p /etc/caddy/certs
+RUN mkdir -p ~/.config/caddy/
 EXPOSE 80 443
 ENTRYPOINT ["/ingress-controller"]
