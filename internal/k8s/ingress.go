@@ -13,6 +13,10 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const (
+	IngressClass = "caddy"
+)
+
 type IngressHandlers struct {
 	AddFunc    func(obj *networkingV1.Ingress)
 	UpdateFunc func(oldObj, newObj *networkingV1.Ingress)
@@ -60,12 +64,7 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 // IsControllerIngress check if the ingress object can be controlled by us
 // TODO Handle `ingressClassName`
 func IsControllerIngress(options IngressParams, ingress *networkingV1.Ingress) bool {
-	ingressClass := ingress.Annotations["kubernetes.io/ingress.class"]
-	if !options.ClassNameRequired && ingressClass == "" {
-		return true
-	}
-
-	return ingressClass == options.ClassName
+	return *ingress.Spec.IngressClassName == IngressClass
 }
 
 func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *networkingV1.Ingress, status []apiv1.LoadBalancerIngress) (*networkingV1.Ingress, error) {

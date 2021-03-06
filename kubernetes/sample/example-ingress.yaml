@@ -2,9 +2,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example
-  annotations:
-    kubernetes.io/ingress.class: caddy
 spec:
+  ingressClassName: caddy
   rules:
   - host: example1.kubernetes.localhost
     http:
