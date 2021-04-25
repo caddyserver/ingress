@@ -1,0 +1,115 @@
+name: Lint and Test Charts
+
+on:
+  push:
+    branches: [master]
+    tags:
+      - 'v*'
+  pull_request:
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    name: Building Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
+        with:
+          images: caddy/ingress
+          tag-sha: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+  lint-test:
+    name: Test and lint charts
+    needs:
+      - docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.0.1
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed)
+          if [[ -n "$changed" ]]; then
+            echo "::set-output name=changed::true"
+          fi
+
+      - name: Run chart-testing (lint)
+        run: ct lint
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.1.0
+        with:
+          version: "v0.9.0"
+        # Only build a kind cluster if there are chart changes to test.
+        if: steps.list-changed.outputs.changed == 'true'
+
+      - name: Install MetalLB to allow LoadBalancer services
+        if: steps.list-changed.outputs.changed == 'true'
+        run: |
+          kubectl create ns metallb-system
+          kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.9.3/manifests/metallb.yaml
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: config
+            namespace: metallb-system
+          data:
+            config: |
+              address-pools:
+              - name: default
+                protocol: layer2
+                addresses:
+                - 172.17.255.1-172.17.255.200
+          EOF
+
+      - name: Get image tag
+        id: image-tag
+        run: echo "::set-output name=data::$(echo ${GITHUB_SHA} | cut -c1-7)"
+
+      - name: Set current image tag
+        working-directory: charts/caddy-ingress-controller
+        run: envsubst < ci/test-values.yaml.tpl > ci/test-values.yaml
+        env:
+          TAG: ${{ steps.image-tag.outputs.data }}
+
+      - name: Run chart-testing (install)
+        run: ct install --config ct.yaml

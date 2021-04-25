@@ -1,179 +1,212 @@
 {
-    "definitions": {},
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "required": [
-        "replicaCount",
-        "minikube",
-        "image",
-        "imagePullSecrets",
-        "nameOverride",
-        "fullnameOverride",
-        "ingressController",
-        "serviceAccount",
-        "podAnnotations",
-        "podSecurityContext",
-        "securityContext",
-        "resources",
-        "nodeSelector",
-        "tolerations",
-        "affinity"
-    ],
-    "properties": {
-        "replicaCount": {
-            "$id": "#/properties/replicaCount",
-            "type": "number"
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "replicaCount",
+    "minikube",
+    "image",
+    "imagePullSecrets",
+    "nameOverride",
+    "fullnameOverride",
+    "ingressController",
+    "serviceAccount",
+    "podAnnotations",
+    "podSecurityContext",
+    "securityContext",
+    "resources",
+    "nodeSelector",
+    "tolerations",
+    "affinity"
+  ],
+  "properties": {
+    "replicaCount": {
+      "$id": "#/properties/replicaCount",
+      "type": "number"
+    },
+    "minikube": {
+      "$id": "#/properties/minikube",
+      "type": "boolean"
+    },
+    "image": {
+      "$id": "#/properties/image",
+      "type": "object",
+      "required": [
+        "repository",
+        "tag",
+        "pullPolicy"
+      ],
+      "properties": {
+        "repository": {
+          "$id": "#/properties/image/properties/repository",
+          "type": "string"
         },
-        "minikube": {
-            "$id": "#/properties/minikube",
-            "type": "boolean"
+        "tag": {
+          "$id": "#/properties/image/properties/tag",
+          "type": "string"
         },
-        "image": {
-            "$id": "#/properties/image",
-            "type": "object",
-            "required": [
-                "repository",
-                "tag",
-                "pullPolicy"
-            ],
-            "properties": {
-                "repository": {
-                    "$id": "#/properties/image/properties/repository",
-                    "type": "string"
-                },
-                "tag": {
-                    "$id": "#/properties/image/properties/tag",
-                    "type": "string"
-                },
-                "pullPolicy": {
-                    "$id": "#/properties/image/properties/pullPolicy",
-                    "type": "string",
-                    "enum": [
-                        "Always",
-                        "IfNotPresent",
-                        "Never"
-                    ]
-                }
-            }
-        },
-        "imagePullSecrets": {
-            "$id": "#/properties/imagePullSecrets",
-            "type": "array"
-        },
-        "nameOverride": {
-            "$id": "#/properties/nameOverride",
-            "type": "string"
-        },
-        "fullnameOverride": {
-            "$id": "#/properties/fullnameOverride",
-            "type": "string"
-        },
-        "ingressController": {
-            "$id": "#/properties/ingressController",
-            "type": "object",
-            "required": [
-                "rbac",
-                "config"
-            ],
-            "properties": {
-                "rbac": {
-                    "$id": "#/properties/ingressController/properties/rbac",
-                    "type": "object",
-                    "required": [
-                        "create"
-                    ],
-                    "properties": {
-                        "create": {
-                            "$id": "#/properties/ingressController/properties/rbac/properties/create",
-                            "type": "boolean"
-                        }
-                    }
-                },
-                "config": {
-                    "$id": "#/properties/ingressController/properties/config",
-                    "type": "object",
-                    "properties": {
-                        "acmeCA": {
-                            "$id": "#/properties/ingressController/properties/config/properties/acmeCA",
-                            "type": "string",
-                            "oneOf": [
-                                {
-                                    "format": "uri"
-                                },
-                                {
-                                    "maxLength": 0
-                                }
-                            ]
-                        },
-                        "email": {
-                            "$id": "#/properties/ingressController/properties/config/properties/email",
-                            "type": "string",
-                            "oneOf": [
-                                {
-                                    "format": "email"
-                                },
-                                {
-                                    "maxLength": 0
-                                }
-                            ]
-                        },
-                        "debug": {
-                            "$id": "#/properties/ingressController/properties/config/properties/debug",
-                            "type": "boolean"
-                        }
-                    }
-                }
-            }
-        },
-        "serviceAccount": {
-            "$id": "#/properties/serviceAccount",
-            "type": "object",
-            "required": [
-                "create",
-                "name"
-            ],
-            "properties": {
-                "create": {
-                    "$id": "#/properties/serviceAccount/properties/create",
-                    "type": "boolean"
-                },
-                "name": {
-                    "$id": "#/properties/serviceAccount/properties/name",
-                    "type": "string"
-                },
-                "annotations": {
-                    "$id": "#/properties/serviceAccount/properties/annotations",
-                    "type": "object"
-                }
-            }
-        },
-        "podAnnotations": {
-            "$id": "#/properties/podAnnotations",
-            "type": "object"
-        },
-        "podSecurityContext": {
-            "$id": "#/properties/podSecurityContext",
-            "type": "object"
-        },
-        "securityContext": {
-            "$id": "#/properties/securityContext",
-            "type": "object"
-        },
-        "resources": {
-            "$id": "#/properties/resources",
-            "type": "object"
-        },
-        "nodeSelector": {
-            "$id": "#/properties/nodeSelector",
-            "type": "object"
-        },
-        "tolerations": {
-            "$id": "#/properties/tolerations",
-            "type": "array"
-        },
-        "affinity": {
-            "$id": "#/properties/affinity",
-            "type": "object"
+        "pullPolicy": {
+          "$id": "#/properties/image/properties/pullPolicy",
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
         }
+      }
+    },
+    "imagePullSecrets": {
+      "$id": "#/properties/imagePullSecrets",
+      "type": "array"
+    },
+    "nameOverride": {
+      "$id": "#/properties/nameOverride",
+      "type": "string"
+    },
+    "fullnameOverride": {
+      "$id": "#/properties/fullnameOverride",
+      "type": "string"
+    },
+    "ingressController": {
+      "$id": "#/properties/ingressController",
+      "type": "object",
+      "required": [
+        "rbac",
+        "config",
+        "watchNamespace"
+      ],
+      "properties": {
+        "rbac": {
+          "$id": "#/properties/ingressController/properties/rbac",
+          "type": "object",
+          "required": [
+            "create"
+          ],
+          "properties": {
+            "create": {
+              "$id": "#/properties/ingressController/properties/rbac/properties/create",
+              "type": "boolean"
+            }
+          }
+        },
+        "config": {
+          "$id": "#/properties/ingressController/properties/config",
+          "type": "object",
+          "properties": {
+            "acmeCA": {
+              "$id": "#/properties/ingressController/properties/config/properties/acmeCA",
+              "type": "string",
+              "oneOf": [
+                {
+                  "format": "uri"
+                },
+                {
+                  "maxLength": 0
+                }
+              ]
+            },
+            "debug": {
+              "$id": "#/properties/ingressController/properties/config/properties/debug",
+              "type": "boolean"
+            },
+            "email": {
+              "$id": "#/properties/ingressController/properties/config/properties/email",
+              "type": "string",
+              "oneOf": [
+                {
+                  "format": "email"
+                },
+                {
+                  "maxLength": 0
+                }
+              ]
+            },
+            "metrics": {
+              "$id": "#/properties/ingressController/properties/config/properties/metrics",
+              "type": "boolean"
+            },
+            "proxyProtocol": {
+              "$id": "#/properties/ingressController/properties/config/properties/proxyProtocol",
+              "type": "boolean"
+            },
+            "onDemandTLS": {
+              "$id": "#/properties/ingressController/properties/config/properties/onDemandTLS",
+              "type": "boolean"
+            },
+            "onDemandRateLimitInterval": {
+              "$id": "#/properties/ingressController/properties/config/properties/onDemandRateLimitInterval",
+              "type": "string"
+            },
+            "onDemandRateLimitBurst": {
+              "$id": "#/properties/ingressController/properties/config/properties/onDemandRateLimitBurst",
+              "type": "number"
+            },
+            "onDemandAsk": {
+              "$id": "#/properties/ingressController/properties/config/properties/onDemandAsk",
+              "type": "string"
+            }
+          }
+        },
+        "verbose": {
+          "$id": "#/properties/ingressController/properties/verbose",
+          "type": "boolean"
+        },
+        "watchNamespace": {
+          "$id": "#/properties/ingressController/properties/watchNamespace",
+          "type": "string"
+        }
+      }
+    },
+    "serviceAccount": {
+      "$id": "#/properties/serviceAccount",
+      "type": "object",
+      "required": [
+        "create",
+        "name"
+      ],
+      "properties": {
+        "create": {
+          "$id": "#/properties/serviceAccount/properties/create",
+          "type": "boolean"
+        },
+        "name": {
+          "$id": "#/properties/serviceAccount/properties/name",
+          "type": "string"
+        },
+        "annotations": {
+          "$id": "#/properties/serviceAccount/properties/annotations",
+          "type": "object"
+        }
+      }
+    },
+    "podAnnotations": {
+      "$id": "#/properties/podAnnotations",
+      "type": "object"
+    },
+    "podSecurityContext": {
+      "$id": "#/properties/podSecurityContext",
+      "type": "object"
+    },
+    "securityContext": {
+      "$id": "#/properties/securityContext",
+      "type": "object"
+    },
+    "resources": {
+      "$id": "#/properties/resources",
+      "type": "object"
+    },
+    "nodeSelector": {
+      "$id": "#/properties/nodeSelector",
+      "type": "object"
+    },
+    "tolerations": {
+      "$id": "#/properties/tolerations",
+      "type": "array"
+    },
+    "affinity": {
+      "$id": "#/properties/affinity",
+      "type": "object"
     }
+  }
 }

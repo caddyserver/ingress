@@ -2,63 +2,106 @@ package caddy
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"k8s.io/api/networking/v1beta1"
+	"github.com/caddyserver/caddy/v2/modules/caddytls"
+	"github.com/caddyserver/ingress/internal/controller"
 )
 
-// ConvertToCaddyConfig returns a new caddy routelist based off of ingresses managed by this controller.
-// This is not used when this ingress controller is configured with a config map, so that we don't
-// override user defined routes.
-func ConvertToCaddyConfig(ings []*v1beta1.Ingress) (caddyhttp.RouteList, error) {
-	// TODO :-
-	// when setting the upstream url we should should bypass kube-dns and get the ip address of
-	// the pod for the deployment we are proxying to so that we can proxy to that ip address port.
-	// this is good for session affinity and increases performance.
-
-	// create a server route for each ingress route
-	var routes caddyhttp.RouteList
-	for _, ing := range ings {
-		for _, rule := range ing.Spec.Rules {
-			for _, path := range rule.HTTP.Paths {
-				clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.ServiceName, ing.Namespace, path.Backend.ServicePort.IntVal)
-				r := baseRoute(clusterHostName)
-
-				match := caddy.ModuleMap{}
-
-				if rule.Host != "" {
-					match["host"] = caddyconfig.JSON(caddyhttp.MatchHost{rule.Host}, nil)
-				}
-
-				if path.Path != "" {
-					match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{path.Path}, nil)
-				}
-
-				r.MatcherSetsRaw = []caddy.ModuleMap{match}
-
-				routes = append(routes, r)
-			}
-		}
-	}
-	return routes, nil
+// StorageValues represents the config for certmagic storage providers.
+type StorageValues struct {
+	Namespace string `json:"namespace"`
+	LeaseId   string `json:"leaseId"`
 }
 
-// TODO :- configure log middleware for all routes
-func baseRoute(upstream string) caddyhttp.Route {
-	return caddyhttp.Route{
-		HandlersRaw: []json.RawMessage{
-			json.RawMessage(`
-			{
-				"handler": "reverse_proxy",
-				"upstreams": [
-						{
-								"dial": "` + fmt.Sprintf("%s", upstream) + `"
-						}
-				]
-			}
-		`),
+// Storage represents the certmagic storage configuration.
+type Storage struct {
+	System string `json:"module"`
+	StorageValues
+}
+
+// Config represents a caddy2 config file.
+type Config struct {
+	Admin   caddy.AdminConfig      `json:"admin,omitempty"`
+	Storage Storage                `json:"storage"`
+	Apps    map[string]interface{} `json:"apps"`
+	Logging caddy.Logging          `json:"logging"`
+}
+
+type Converter struct{}
+
+const (
+	HttpServer    = "ingress_server"
+	MetricsServer = "metrics_server"
+)
+
+func metricsServer(enabled bool) *caddyhttp.Server {
+	handler := json.RawMessage(`{ "handler": "static_response" }`)
+	if enabled {
+		handler = json.RawMessage(`{ "handler": "metrics" }`)
+	}
+
+	return &caddyhttp.Server{
+		Listen:    []string{":9765"},
+		AutoHTTPS: &caddyhttp.AutoHTTPSConfig{Disabled: true},
+		Routes: []caddyhttp.Route{{
+			HandlersRaw: []json.RawMessage{handler},
+			MatcherSetsRaw: []caddy.ModuleMap{{
+				"path": caddyconfig.JSON(caddyhttp.MatchPath{"/metrics"}, nil),
+			}},
+		}},
+	}
+}
+
+func newConfig(namespace string, store *controller.Store) (*Config, error) {
+	cfg := &Config{
+		Logging: caddy.Logging{},
+		Apps: map[string]interface{}{
+			"tls": &caddytls.TLS{
+				CertificatesRaw: caddy.ModuleMap{},
+			},
+			"http": &caddyhttp.App{
+				Servers: map[string]*caddyhttp.Server{
+					MetricsServer: metricsServer(store.ConfigMap.Metrics),
+					HttpServer: {
+						AutoHTTPS: &caddyhttp.AutoHTTPSConfig{},
+						// Listen to both :80 and :443 ports in order
+						// to use the same listener wrappers (PROXY protocol use it)
+						Listen: []string{":80", ":443"},
+					},
+				},
+			},
+		},
+		Storage: Storage{
+			System: "secret_store",
+			StorageValues: StorageValues{
+				Namespace: namespace,
+				LeaseId:   store.Options.LeaseId,
+			},
 		},
 	}
+
+	return cfg, nil
+}
+
+func (c Converter) ConvertToCaddyConfig(namespace string, store *controller.Store) (interface{}, error) {
+	cfg, err := newConfig(namespace, store)
+
+	err = LoadIngressConfig(cfg, store)
+	if err != nil {
+		return cfg, err
+	}
+
+	err = LoadConfigMapOptions(cfg, store)
+	if err != nil {
+		return cfg, err
+	}
+
+	err = LoadTLSConfig(cfg, store)
+	if err != nil {
+		return cfg, err
+	}
+
+	return cfg, err
 }

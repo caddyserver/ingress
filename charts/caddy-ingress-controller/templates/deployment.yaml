@@ -45,6 +45,12 @@ spec:
               {{- if .Values.minikube }}
               hostPort: 443 # optional, required if running in minikube
               {{- end }}
+            - name: metrics
+              containerPort: 9765
+              protocol: TCP
+              {{- if .Values.minikube }}
+              hostPort: 9765 # optional, required if running in minikube
+              {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
@@ -64,6 +70,15 @@ spec:
             {{- if .Values.ingressController.watchNamespace }}
             - -namespace={{ .Values.ingressController.watchNamespace }}
             {{- end }}
+            {{- if .Values.ingressController.verbose }}
+            - -v
+            {{- end }}
+          readinessProbe:
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            httpGet:
+              port: 9765
+              path: /metrics
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

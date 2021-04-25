@@ -1,20 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"os"
-	"time"
-
+	"github.com/caddyserver/ingress/internal/caddy"
 	"github.com/caddyserver/ingress/internal/controller"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"time"
 )
 
 const (
@@ -25,77 +20,56 @@ const (
 	defaultBurst = 1e6
 )
 
+func createLogger(verbose bool) *zap.SugaredLogger {
+	prodCfg := zap.NewProductionConfig()
+
+	if verbose {
+		prodCfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	}
+	logger, _ := prodCfg.Build()
+
+	return logger.Sugar()
+}
+
 func main() {
 	// parse any flags required to configure the caddy ingress controller
 	cfg := parseFlags()
 
+	logger := createLogger(cfg.Verbose)
+
 	if cfg.WatchNamespace == "" {
 		cfg.WatchNamespace = v1.NamespaceAll
-		logrus.Warning("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
+		logger.Warn("-namespace flag is unset, caddy ingress controller will monitor ingress resources in all namespaces.")
 	}
 
 	// get client to access the kubernetes service api
-	kubeClient, err := createApiserverClient()
+	kubeClient, err := createApiserverClient(logger)
 	if err != nil {
-		msg := "Could not establish a connection to the Kubernetes API Server."
-		logrus.Fatalf(msg, err)
+		logger.Fatalf("Could not establish a connection to the Kubernetes API Server. %v", err)
 	}
 
-	c := controller.NewCaddyController(kubeClient, cfg)
-
-	reg := prometheus.NewRegistry()
-	reg.MustRegister(prometheus.NewGoCollector())
-	reg.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{
-		PidFn:        func() (int, error) { return os.Getpid(), nil },
-		ReportErrors: true,
-	}))
-
-	// create http server to expose controller health metrics
-	go startMetricsServer(reg)
-
-	// start the ingress controller
 	stopCh := make(chan struct{}, 1)
 	defer close(stopCh)
 
-	logrus.Info("Starting the caddy ingress controller")
-	go c.Run(stopCh)
+	c := controller.NewCaddyController(logger, kubeClient, cfg, caddy.Converter{}, stopCh)
+
+	// start the ingress controller
+	logger.Info("Starting the caddy ingress controller")
+	go c.Run()
 
 	// TODO :- listen to sigterm
 	select {}
 }
 
-func startMetricsServer(reg *prometheus.Registry) {
-	mux := http.NewServeMux()
-	mux.Handle(
-		"/metrics",
-		promhttp.InstrumentMetricHandler(
-			reg,
-			promhttp.HandlerFor(reg, promhttp.HandlerOpts{}),
-		),
-	)
-
-	logrus.Info("Exporting metrics on :9090")
-	server := &http.Server{
-		Addr:              fmt.Sprintf(":%v", 9090),
-		Handler:           mux,
-		ReadTimeout:       10 * time.Second,
-		ReadHeaderTimeout: 10 * time.Second,
-		WriteTimeout:      300 * time.Second,
-		IdleTimeout:       120 * time.Second,
-	}
-
-	logrus.Fatal(server.ListenAndServe())
-}
-
 // createApiserverClient creates a new Kubernetes REST client. We assume the
 // controller runs inside Kubernetes and use the in-cluster config.
-func createApiserverClient() (*kubernetes.Clientset, error) {
+func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, error) {
 	cfg, err := clientcmd.BuildConfigFromFlags("", "")
 	if err != nil {
 		return nil, err
 	}
 
-	logrus.Infof("Creating API client for %s", cfg.Host)
+	logger.Infof("Creating API client for %s", cfg.Host)
 
 	cfg.QPS = defaultQPS
 	cfg.Burst = defaultBurst
@@ -124,7 +98,7 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 		}
 
 		lastErr = err
-		logrus.Infof("Unexpected error discovering Kubernetes version (attempt %v): %v", retries, err)
+		logger.Infof("Unexpected error discovering Kubernetes version (attempt %v): %v", retries, err)
 		retries++
 		return false, nil
 	})
@@ -135,7 +109,7 @@ func createApiserverClient() (*kubernetes.Clientset, error) {
 	}
 
 	if retries > 0 {
-		logrus.Warningf("Initial connection to the Kubernetes API server was retried %d times.", retries)
+		logger.Warnf("Initial connection to the Kubernetes API server was retried %d times.", retries)
 	}
 
 	return client, nil

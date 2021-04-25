@@ -1,0 +1,19 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "caddy-ingress-controller.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
+spec:
+{{- with .Values.podDisruptionBudget }}
+  {{- if .minAvailable }}
+  minAvailable: {{ .minAvailable }}
+  {{- end }}
+  {{- if .maxUnavailable }}
+  maxUnavailable: {{ .maxUnavailable }}
+  {{- end }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "caddy-ingress-controller.selectorLabels" . | nindent 6 }}

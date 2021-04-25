@@ -1,0 +1,2 @@
+image:
+  tag: sha-${TAG}
