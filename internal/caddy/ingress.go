@@ -9,7 +9,7 @@ import (
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp/reverseproxy"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp/rewrite"
 	"github.com/caddyserver/ingress/internal/controller"
-	"k8s.io/api/networking/v1beta1"
+	"k8s.io/api/networking/v1"
 )
 
 const (
@@ -19,12 +19,12 @@ const (
 	disableSSLRedirect           = "disable-ssl-redirect"
 )
 
-func getAnnotation(ing *v1beta1.Ingress, rule string) string {
+func getAnnotation(ing *v1.Ingress, rule string) string {
 	return ing.Annotations[annotationPrefix+"/"+rule]
 }
 
 // TODO :- configure log middleware for all routes
-func generateRoute(ing *v1beta1.Ingress, rule v1beta1.IngressRule, path v1beta1.HTTPIngressPath) caddyhttp.Route {
+func generateRoute(ing *v1.Ingress, rule v1.IngressRule, path v1.HTTPIngressPath) caddyhttp.Route {
 	var handlers []json.RawMessage
 
 	// Generate handlers
@@ -44,7 +44,7 @@ func generateRoute(ing *v1beta1.Ingress, rule v1beta1.IngressRule, path v1beta1.
 		))
 	}
 
-	clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.ServiceName, ing.Namespace, path.Backend.ServicePort.IntVal)
+	clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.Service.Name, ing.Namespace, path.Backend.Service.Port.Number)
 	handlers = append(handlers, caddyconfig.JSONModuleObject(
 		reverseproxy.Handler{
 			Upstreams: reverseproxy.UpstreamPool{
@@ -68,7 +68,7 @@ func generateRoute(ing *v1beta1.Ingress, rule v1beta1.IngressRule, path v1beta1.
 	if path.Path != "" {
 		p := path.Path
 
-		if *path.PathType == v1beta1.PathTypePrefix {
+		if *path.PathType == v1.PathTypePrefix {
 			p += "*"
 		}
 		match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{p}, nil)

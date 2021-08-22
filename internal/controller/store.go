@@ -2,21 +2,21 @@ package controller
 
 import (
 	"github.com/caddyserver/ingress/internal/k8s"
-	"k8s.io/api/networking/v1beta1"
+	"k8s.io/api/networking/v1"
 )
 
 // NewStore returns a new store that keeps track of K8S resources needed by the controller.
 func NewStore(opts Options) *Store {
 	s := &Store{
 		Options:   &opts,
-		Ingresses: []*v1beta1.Ingress{},
+		Ingresses: []*v1.Ingress{},
 		ConfigMap: &k8s.ConfigMapOptions{},
 	}
 	return s
 }
 
 // AddIngress adds an ingress to the store. It updates the element at the given index if it is unique.
-func (s *Store) AddIngress(ing *v1beta1.Ingress) {
+func (s *Store) AddIngress(ing *v1.Ingress) {
 	isUniq := true
 
 	for i := range s.Ingresses {
@@ -33,7 +33,7 @@ func (s *Store) AddIngress(ing *v1beta1.Ingress) {
 }
 
 // PluckIngress removes the ingress passed in as an argument from the stores list of ingresses.
-func (s *Store) PluckIngress(ing *v1beta1.Ingress) {
+func (s *Store) PluckIngress(ing *v1.Ingress) {
 	id := ing.GetUID()
 
 	var index int

@@ -9,7 +9,7 @@ import (
 	"github.com/caddyserver/ingress/pkg/storage"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	"k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -52,7 +52,7 @@ type Options struct {
 type Store struct {
 	Options   *Options
 	ConfigMap *k8s.ConfigMapOptions
-	Ingresses []*v1beta1.Ingress
+	Ingresses []*v1.Ingress
 }
 
 // Informer defines the required SharedIndexInformers that interact with the API server.

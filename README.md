@@ -5,7 +5,12 @@ for monitoring `Ingress` resources on a Kubernetes cluster and includes support
 for providing automatic HTTPS certificates for all hostnames defined in ingress
 resources that it is managing.
 
-## Cloud Provider Setup (AWS, GCLOUD, ETC...)
+## Prerequisites
+
+- Helm 3+
+- Kubernetes 1.19+
+
+## Setup
 
 In the `charts` folder a Helm Chart is provided to make installing the Caddy
 Ingress Controller on a Kubernetes cluster straight forward. To install the
@@ -14,19 +19,19 @@ Caddy Ingress Controller adhere to the following steps:
 1. Create a new namespace in your cluster to isolate all Caddy resources.
 
 ```sh
-  kubectl create namespace caddy-system
+kubectl create namespace caddy-system
 ```
 
 2. Install the Helm Chart.
 
 ```sh
-  helm install \
-    --namespace=caddy-system \
-    --repo https://caddyserver.github.io/ingress/ \
-    --atomic \
-    --set image.tag=latest \
-    mycaddy \
-    caddy-ingress-controller
+helm install \
+  --namespace=caddy-system \
+  --repo https://caddyserver.github.io/ingress/ \
+  --atomic \
+  --set image.tag=latest \
+  mycaddy \
+  caddy-ingress-controller
 ```
 
 The helm chart create a service of type `LoadBalancer` in the `caddy-system`
@@ -44,7 +49,7 @@ pod logs of the Caddy Ingress Controller.
 Get the pod name with:
 
 ```sh
-  kubectl get pods -n caddy-system
+kubectl get pods -n caddy-system
 ```
 
 View the pod logs:
@@ -61,7 +66,6 @@ the argument `ingressController.autotls=true` and the email to use
 chart values.
 
 Example:
-
  - `--set ingressController.autotls=true`
  - `--set ingressController.email=your@email.com`
 
@@ -103,3 +107,11 @@ spec:
     - test.com
     secretName: mycerts # use mycerts for host test.com
 ```
+
+### Contribution
+
+Learn how to start contribution on the [Contributing Guidline](CONTRIBUTING.md).
+
+## License
+
+[Apache License 2.0](LICENSE.txt)

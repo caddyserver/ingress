@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -13,9 +13,9 @@ import (
 )
 
 type IngressHandlers struct {
-	AddFunc    func(obj *v1beta1.Ingress)
-	UpdateFunc func(oldObj, newObj *v1beta1.Ingress)
-	DeleteFunc func(obj *v1beta1.Ingress)
+	AddFunc    func(obj *networkingv1.Ingress)
+	UpdateFunc func(oldObj, newObj *networkingv1.Ingress)
+	DeleteFunc func(obj *networkingv1.Ingress)
 }
 
 type IngressParams struct {
@@ -30,22 +30,22 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			ingress, ok := obj.(*v1beta1.Ingress)
+			ingress, ok := obj.(*networkingv1.Ingress)
 
 			if ok && IsControllerIngress(options, ingress) {
 				funcs.AddFunc(ingress)
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			oldIng, ok1 := oldObj.(*v1beta1.Ingress)
-			newIng, ok2 := newObj.(*v1beta1.Ingress)
+			oldIng, ok1 := oldObj.(*networkingv1.Ingress)
+			newIng, ok2 := newObj.(*networkingv1.Ingress)
 
 			if ok1 && ok2 && IsControllerIngress(options, newIng) {
 				funcs.UpdateFunc(oldIng, newIng)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			ingress, ok := obj.(*v1beta1.Ingress)
+			ingress, ok := obj.(*networkingv1.Ingress)
 
 			if ok && IsControllerIngress(options, ingress) {
 				funcs.DeleteFunc(ingress)
@@ -57,18 +57,20 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 }
 
 // IsControllerIngress check if the ingress object can be controlled by us
-// TODO Handle `ingressClassName`
-func IsControllerIngress(options IngressParams, ingress *v1beta1.Ingress) bool {
+func IsControllerIngress(options IngressParams, ingress *networkingv1.Ingress) bool {
 	ingressClass := ingress.Annotations["kubernetes.io/ingress.class"]
+	if ingressClass == "" {
+		ingressClass = *ingress.Spec.IngressClassName
+	}
+
 	if !options.ClassNameRequired && ingressClass == "" {
 		return true
 	}
-
 	return ingressClass == options.ClassName
 }
 
-func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress) (*v1beta1.Ingress, error) {
-	ingClient := kubeClient.NetworkingV1beta1().Ingresses(ing.Namespace)
+func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *networkingv1.Ingress, status []apiv1.LoadBalancerIngress) (*networkingv1.Ingress, error) {
+	ingClient := kubeClient.NetworkingV1().Ingresses(ing.Namespace)
 
 	currIng, err := ingClient.Get(context.TODO(), ing.Name, v1.GetOptions{})
 	if err != nil {

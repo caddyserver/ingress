@@ -90,6 +90,10 @@
             }
           }
         },
+        "leaseId": {
+          "$id": "#/properties/ingressController/properties/leaseId",
+          "type": "string"
+        },
         "config": {
           "$id": "#/properties/ingressController/properties/config",
           "type": "object",

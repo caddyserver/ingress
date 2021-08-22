@@ -17,7 +17,7 @@ This chart bootstraps a caddy-ingress-deployment deployment on a [Kubernetes](ht
 ## Prerequisites
 
 - Helm 3+
-- Kubernetes 1.14+
+- Kubernetes 1.19+
 
 ## Installing the Chart
 
@@ -60,6 +60,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | ingressController.config.proxyProtocol | bool | `false` |  |
 | ingressController.rbac.create | bool | `true` |  |
 | ingressController.verbose | bool | `false` |  |
+| ingressController.leaseId | string | `""` |  |
 | ingressController.watchNamespace | string | `""` |  |
 | minikube | bool | `false` |  |
 | nameOverride | string | `""` |  |
