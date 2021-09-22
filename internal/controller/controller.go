@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/certmagic"
 	"github.com/caddyserver/ingress/internal/k8s"
 	"github.com/caddyserver/ingress/pkg/storage"
 	"go.uber.org/zap"
@@ -176,6 +177,12 @@ func NewCaddyController(
 func (c *CaddyController) Shutdown() error {
 	// remove this ingress controller's ip from ingress resources.
 	c.updateIngStatuses([]apiv1.LoadBalancerIngress{{}}, c.resourceStore.Ingresses)
+
+	if err := caddy.Stop(); err != nil {
+		c.logger.Error("failed to stop caddy server", zap.Error(err))
+		return err
+	}
+	certmagic.CleanUpOwnLocks()
 	return nil
 }
 
