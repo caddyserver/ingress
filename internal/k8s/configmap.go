@@ -7,6 +7,8 @@ import (
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
+	"reflect"
+	"time"
 )
 
 // ConfigMapOptions represents global options set through a configmap
@@ -70,6 +72,18 @@ func WatchConfigMaps(options ConfigMapParams, funcs ConfigMapHandlers) cache.Sha
 	return informer
 }
 
+func stringToCaddyDurationHookFunc() mapstructure.DecodeHookFunc {
+	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+		if t != reflect.TypeOf(caddy.Duration(time.Second)) {
+			return data, nil
+		}
+		return caddy.ParseDuration(data.(string))
+	}
+}
+
 func ParseConfigMap(cm *v12.ConfigMap) (*ConfigMapOptions, error) {
 	// parse configmap
 	cfgMap := ConfigMapOptions{}
@@ -78,6 +92,9 @@ func ParseConfigMap(cm *v12.ConfigMap) (*ConfigMapOptions, error) {
 		WeaklyTypedInput: true,
 		Result:           &cfgMap,
 		TagName:          "json",
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			stringToCaddyDurationHookFunc(),
+		),
 	}
 
 	decoder, err := mapstructure.NewDecoder(config)
