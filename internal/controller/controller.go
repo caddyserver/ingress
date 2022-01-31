@@ -182,7 +182,7 @@ func (c *CaddyController) Shutdown() error {
 		c.logger.Error("failed to stop caddy server", zap.Error(err))
 		return err
 	}
-	certmagic.CleanUpOwnLocks()
+	certmagic.CleanUpOwnLocks(c.logger.Desugar())
 	return nil
 }
 
@@ -281,7 +281,7 @@ func (c *CaddyController) reloadCaddy() error {
 		return nil
 	}
 
-	c.logger.Debug("reloading caddy with config %v" + string(j))
+	c.logger.Debug("reloading caddy with config", string(j))
 	err = caddy.Load(j, false)
 	if err != nil {
 		return fmt.Errorf("could not reload caddy config %v", err.Error())

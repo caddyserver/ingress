@@ -25,8 +25,7 @@ type IngressParams struct {
 }
 
 func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIndexInformer {
-	// TODO Handle new API
-	informer := options.InformerFactory.Networking().V1beta1().Ingresses().Informer()
+	informer := options.InformerFactory.Networking().V1().Ingresses().Informer()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -59,7 +58,7 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 // IsControllerIngress check if the ingress object can be controlled by us
 func IsControllerIngress(options IngressParams, ingress *networkingv1.Ingress) bool {
 	ingressClass := ingress.Annotations["kubernetes.io/ingress.class"]
-	if ingressClass == "" {
+	if ingressClass == "" && ingress.Spec.IngressClassName != nil {
 		ingressClass = *ingress.Spec.IngressClassName
 	}
 
