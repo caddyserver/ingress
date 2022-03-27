@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/certmagic"
 	"github.com/caddyserver/ingress/internal/k8s"
 	"github.com/caddyserver/ingress/pkg/storage"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	"k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -52,7 +53,7 @@ type Options struct {
 type Store struct {
 	Options   *Options
 	ConfigMap *k8s.ConfigMapOptions
-	Ingresses []*v1beta1.Ingress
+	Ingresses []*v1.Ingress
 }
 
 // Informer defines the required SharedIndexInformers that interact with the API server.
@@ -176,6 +177,12 @@ func NewCaddyController(
 func (c *CaddyController) Shutdown() error {
 	// remove this ingress controller's ip from ingress resources.
 	c.updateIngStatuses([]apiv1.LoadBalancerIngress{{}}, c.resourceStore.Ingresses)
+
+	if err := caddy.Stop(); err != nil {
+		c.logger.Error("failed to stop caddy server", zap.Error(err))
+		return err
+	}
+	certmagic.CleanUpOwnLocks(c.logger.Desugar())
 	return nil
 }
 
@@ -274,7 +281,7 @@ func (c *CaddyController) reloadCaddy() error {
 		return nil
 	}
 
-	c.logger.Debug("reloading caddy with config %v" + string(j))
+	c.logger.Debug("reloading caddy with config", string(j))
 	err = caddy.Load(j, false)
 	if err != nil {
 		return fmt.Errorf("could not reload caddy config %v", err.Error())

@@ -1,4 +1,4 @@
-FROM golang:1.14.2-alpine AS builder
+FROM golang:1.16.7-alpine AS builder
 WORKDIR /app
 
 COPY go.mod go.sum ./
@@ -13,7 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/ingress-controller .
 FROM alpine:latest AS certs
 RUN apk --update add ca-certificates
 
-FROM scratch
+FROM alpine:latest
 COPY --from=builder /app/bin/ingress-controller .
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 EXPOSE 80 443

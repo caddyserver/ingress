@@ -9,6 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -49,7 +52,6 @@ func main() {
 	}
 
 	stopCh := make(chan struct{}, 1)
-	defer close(stopCh)
 
 	c := controller.NewCaddyController(logger, kubeClient, cfg, caddy.Converter{}, stopCh)
 
@@ -57,7 +59,13 @@ func main() {
 	logger.Info("Starting the caddy ingress controller")
 	go c.Run()
 
-	// TODO :- listen to sigterm
+	// Listen for SIGINT and SIGTERM signals
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	<-sigs
+	close(stopCh)
+
+	// Let controller exit the process
 	select {}
 }
 

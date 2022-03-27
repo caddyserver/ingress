@@ -70,6 +70,9 @@ spec:
             {{- if .Values.ingressController.watchNamespace }}
             - -namespace={{ .Values.ingressController.watchNamespace }}
             {{- end }}
+            {{- if .Values.ingressController.leaseId }}
+            - -lease-id={{ .Values.ingressController.leaseId }}
+            {{- end }}
             {{- if .Values.ingressController.verbose }}
             - -v
             {{- end }}

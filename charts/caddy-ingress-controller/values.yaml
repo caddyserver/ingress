@@ -22,6 +22,7 @@ ingressController:
   rbac:
     create: true
 
+  leaseId: ""
   config:
     # -- Acme Server URL
     acmeCA: ""

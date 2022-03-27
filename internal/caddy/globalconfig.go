@@ -43,7 +43,8 @@ func LoadConfigMapOptions(config *Config, store *controller.Store) error {
 		}
 
 		tlsApp.Automation = &caddytls.AutomationConfig{
-			OnDemand: onDemandConfig,
+			OnDemand:          onDemandConfig,
+			OCSPCheckInterval: cfgMap.OCSPCheckInterval,
 			Policies: []*caddytls.AutomationPolicy{
 				{
 					IssuersRaw: []json.RawMessage{

@@ -5,7 +5,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/pool.v3"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	"k8s.io/api/networking/v1"
 	"k8s.io/client-go/kubernetes"
 	"net"
 	"sort"
@@ -27,7 +27,7 @@ func (r SyncStatusAction) handle(c *CaddyController) error {
 }
 
 // syncStatus ensures that the ingress source address points to this ingress controller's IP address.
-func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
+func (c *CaddyController) syncStatus(ings []*v1.Ingress) error {
 	addrs, err := k8s.GetAddresses(c.podInfo, c.kubeClient)
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (c *CaddyController) syncStatus(ings []*v1beta1.Ingress) error {
 
 // updateIngStatuses starts a queue and adds all monitored ingresses to update their status source address to the on
 // that the ingress controller is running on. This is called by the syncStatus queue.
-func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBalancerIngress, ings []*v1beta1.Ingress) {
+func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBalancerIngress, ings []*v1.Ingress) {
 	p := pool.NewLimited(10)
 	defer p.Close()
 
@@ -66,7 +66,7 @@ func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBala
 }
 
 // runUpdate updates the ingress status field.
-func runUpdate(logger *zap.SugaredLogger, ing *v1beta1.Ingress, status []apiv1.LoadBalancerIngress, client *kubernetes.Clientset) pool.WorkFunc {
+func runUpdate(logger *zap.SugaredLogger, ing *v1.Ingress, status []apiv1.LoadBalancerIngress, client *kubernetes.Clientset) pool.WorkFunc {
 	return func(wu pool.WorkUnit) (interface{}, error) {
 		if wu.IsCancelled() {
 			return nil, nil
