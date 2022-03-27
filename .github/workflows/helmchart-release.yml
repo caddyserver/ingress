@@ -3,6 +3,9 @@ name: Release Charts
 on:
   push:
     branches: [master]
+    paths:
+      - 'charts/**'
+      - '.github/workflows/helmchart-release.yml'
 
 jobs:
   release:

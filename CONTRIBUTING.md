@@ -58,3 +58,16 @@ curl -H 'Host: example2.kubernetes.localhost http://127.0.0.1:80/hello2
  - You can change local port forwarded by skaffold by changing the port values in the `skaffold.yaml` file on section `portForward` `localPort`. Remind that you can forward only port greather than 1024 if you execute it as non root user
  - You can delete your local cluster with the command `kind delete cluster`
  - To use TLS your domain should be publically resolved to your cluster IP in order to allow Let's Encript to validate the domain
+
+## Releasing new helm chart version
+
+If you want to release a new version of the `caddy-ingress-controller` chart, you'll need
+to create a new PR with:
+- The new chart's `version` in `Chart.yaml`
+- The new `image.tag` in `values.yaml` (if you want to update the default image used in the chart)
+- The new `appVersion` in `Chart.yaml` (if you did the previous line)
+
+## Releasing a new app version
+
+To release a new caddy-ingress-controller image, you need to create a new semver tag.
+It will build and push an image to https://hub.docker.com/r/caddy/ingress.
