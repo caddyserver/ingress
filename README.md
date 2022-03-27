@@ -33,20 +33,17 @@ Or
 
 2. Generate kubernetes yaml file.
 ```sh
-    # clone this repo
-    git clone git@github.com:caddyserver/ingress.git;
-    
-    # cd to the repository folder
-    cd ingress;
-    
-    # generate the yaml file
-    helm template mycaddy ./charts/caddy-ingress-controller \
-      --namespace=caddy-system \
-      --set image.tag=latest \
-      > mycaddy.yaml;
-    
-    # apply the file
-    kubectl apply -f mycaddy.yaml
+git clone https://github.com/caddyserver/ingress.git
+cd ingress
+
+# generate the yaml file
+helm template mycaddy ./charts/caddy-ingress-controller \
+  --namespace=caddy-system \
+  --set image.tag=latest \
+  > mycaddy.yaml
+
+# apply the file
+kubectl apply -f mycaddy.yaml
 ```
 
 This will create a service of type `LoadBalancer` in the `caddy-system`
