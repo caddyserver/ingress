@@ -103,8 +103,8 @@ certificates for `test.com`.
 kubectl create secret tls mycerts --key ./tls.key --cert ./tls.crt
 ```
 
-```
-apiVersion: extensions/v1beta1
+```yaml
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example
@@ -116,13 +116,16 @@ spec:
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: test
-          servicePort: 8080
+          service:
+            name: test
+            port:
+              number: 8080
   tls:
-  - hosts:
-    - test.com
-    secretName: mycerts # use mycerts for host test.com
+    - secretName: mycerts # use mycerts for host test.com
+      hosts:
+        - test.com
 ```
 
 ### Contribution
