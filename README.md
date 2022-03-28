@@ -29,7 +29,6 @@ helm install \
   --namespace=caddy-system \
   --repo https://caddyserver.github.io/ingress/ \
   --atomic \
-  --set image.tag=latest \
   mycaddy \
   caddy-ingress-controller
 ```
@@ -44,7 +43,6 @@ cd ingress
 # generate the yaml file
 helm template mycaddy ./charts/caddy-ingress-controller \
   --namespace=caddy-system \
-  --set image.tag=latest \
   > mycaddy.yaml
 
 # apply the file
