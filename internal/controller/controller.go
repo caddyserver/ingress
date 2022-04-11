@@ -8,9 +8,9 @@ import (
 	"github.com/caddyserver/certmagic"
 	"github.com/caddyserver/ingress/internal/k8s"
 	"github.com/caddyserver/ingress/pkg/storage"
+	"github.com/caddyserver/ingress/pkg/store"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -41,21 +41,6 @@ type Action interface {
 	handle(c *CaddyController) error
 }
 
-// Options represents ingress controller config received through cli arguments.
-type Options struct {
-	WatchNamespace string
-	ConfigMapName  string
-	Verbose        bool
-	LeaseId        string
-}
-
-// Store contains resources used to generate Caddy config
-type Store struct {
-	Options   *Options
-	ConfigMap *k8s.ConfigMapOptions
-	Ingresses []*v1.Ingress
-}
-
 // Informer defines the required SharedIndexInformers that interact with the API server.
 type Informer struct {
 	Ingress   cache.SharedIndexInformer
@@ -73,12 +58,12 @@ type InformerFactory struct {
 }
 
 type Converter interface {
-	ConvertToCaddyConfig(namespace string, store *Store) (interface{}, error)
+	ConvertToCaddyConfig(store *store.Store) (interface{}, error)
 }
 
-// CaddyController represents an caddy ingress controller.
+// CaddyController represents a caddy ingress controller.
 type CaddyController struct {
-	resourceStore *Store
+	resourceStore *store.Store
 
 	kubeClient *kubernetes.Clientset
 
@@ -93,9 +78,6 @@ type CaddyController struct {
 	// informer contains the cache Informers
 	informers *Informer
 
-	// ingress controller pod infos
-	podInfo *k8s.Info
-
 	// save last applied caddy config
 	lastAppliedConfig []byte
 
@@ -107,7 +89,7 @@ type CaddyController struct {
 func NewCaddyController(
 	logger *zap.SugaredLogger,
 	kubeClient *kubernetes.Clientset,
-	opts Options,
+	opts store.Options,
 	converter Converter,
 	stopChan chan struct{},
 ) *CaddyController {
@@ -125,13 +107,12 @@ func NewCaddyController(
 	if err != nil {
 		logger.Fatalf("Unexpected error obtaining pod information: %v", err)
 	}
-	controller.podInfo = podInfo
 
 	// Create informer factories
 	controller.factories.PodNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
 		resourcesSyncInterval,
-		informers.WithNamespace(controller.podInfo.Namespace),
+		informers.WithNamespace(podInfo.Namespace),
 	)
 	controller.factories.WatchedNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
@@ -168,7 +149,7 @@ func NewCaddyController(
 	caddy.RegisterModule(storage.SecretStorage{})
 
 	// Create resource store
-	controller.resourceStore = NewStore(opts)
+	controller.resourceStore = store.NewStore(opts, podInfo)
 
 	return controller
 }
@@ -260,13 +241,14 @@ func (c *CaddyController) processNextItem() bool {
 }
 
 // handleErrs reports errors received from queue actions.
+//goland:noinspection GoUnusedParameter
 func (c *CaddyController) handleErr(err error, action interface{}) {
 	c.logger.Error(err.Error())
 }
 
 // reloadCaddy generate a caddy config from controller's store
 func (c *CaddyController) reloadCaddy() error {
-	config, err := c.converter.ConvertToCaddyConfig(c.podInfo.Namespace, c.resourceStore)
+	config, err := c.converter.ConvertToCaddyConfig(c.resourceStore)
 	if err != nil {
 		return err
 	}

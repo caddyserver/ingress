@@ -1,16 +1,24 @@
-package controller
+package store
 
 import (
-	"github.com/caddyserver/ingress/internal/k8s"
-	"k8s.io/api/networking/v1"
+	v1 "k8s.io/api/networking/v1"
 )
 
+// Store contains resources used to generate Caddy config
+type Store struct {
+	Options    *Options
+	ConfigMap  *ConfigMapOptions
+	Ingresses  []*v1.Ingress
+	CurrentPod *PodInfo
+}
+
 // NewStore returns a new store that keeps track of K8S resources needed by the controller.
-func NewStore(opts Options) *Store {
+func NewStore(opts Options, podInfo *PodInfo) *Store {
 	s := &Store{
-		Options:   &opts,
-		Ingresses: []*v1.Ingress{},
-		ConfigMap: &k8s.ConfigMapOptions{},
+		Options:    &opts,
+		Ingresses:  []*v1.Ingress{},
+		ConfigMap:  &ConfigMapOptions{},
+		CurrentPod: podInfo,
 	}
 	return s
 }

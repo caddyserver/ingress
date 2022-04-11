@@ -28,7 +28,7 @@ func (r SyncStatusAction) handle(c *CaddyController) error {
 
 // syncStatus ensures that the ingress source address points to this ingress controller's IP address.
 func (c *CaddyController) syncStatus(ings []*v1.Ingress) error {
-	addrs, err := k8s.GetAddresses(c.podInfo, c.kubeClient)
+	addrs, err := k8s.GetAddresses(c.resourceStore.CurrentPod, c.kubeClient)
 	if err != nil {
 		return err
 	}
