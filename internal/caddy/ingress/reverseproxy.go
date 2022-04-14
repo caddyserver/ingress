@@ -13,7 +13,9 @@ type ReverseProxyPlugin struct{}
 func (p ReverseProxyPlugin) IngressPlugin() converter.PluginInfo {
 	return converter.PluginInfo{
 		Name: "ingress.reverseproxy",
-		New:  func() converter.Plugin { return new(ReverseProxyPlugin) },
+		// Should always go last by default
+		Priority: -10,
+		New:      func() converter.Plugin { return new(ReverseProxyPlugin) },
 	}
 }
 

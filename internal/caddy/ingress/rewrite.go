@@ -11,8 +11,9 @@ type RewritePlugin struct{}
 
 func (p RewritePlugin) IngressPlugin() converter.PluginInfo {
 	return converter.PluginInfo{
-		Name: "ingress.rewrite",
-		New:  func() converter.Plugin { return new(RewritePlugin) },
+		Name:     "ingress.rewrite",
+		Priority: 10,
+		New:      func() converter.Plugin { return new(RewritePlugin) },
 	}
 }
 

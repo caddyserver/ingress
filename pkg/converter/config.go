@@ -46,6 +46,9 @@ func NewConfig() *Config {
 						// Listen to both :80 and :443 ports in order
 						// to use the same listener wrappers (PROXY protocol use it)
 						Listen: []string{":80", ":443"},
+						TLSConnPolicies: caddytls.ConnectionPolicies{
+							&caddytls.ConnectionPolicy{},
+						},
 					},
 				},
 			},

@@ -42,8 +42,9 @@ type Plugin interface {
 }
 
 type PluginInfo struct {
-	Name string
-	New  func() Plugin
+	Name     string
+	Priority int
+	New      func() Plugin
 }
 
 func RegisterPlugin(m Plugin) {
@@ -53,6 +54,7 @@ func RegisterPlugin(m Plugin) {
 		panic(fmt.Sprintf("plugin already registered: %s", plugin.Name))
 	}
 	plugins[plugin.Name] = plugin
+	pluginInstances[plugin.Name] = plugin.New()
 }
 
 func getOrderIndex(order []string, plugin string) int {
@@ -64,32 +66,47 @@ func getOrderIndex(order []string, plugin string) int {
 	return -1
 }
 
+func sortPlugins(plugins []PluginInfo, order []string) []PluginInfo {
+	sort.SliceStable(plugins, func(i, j int) bool {
+		iPlugin, jPlugin := plugins[i], plugins[j]
+
+		iSortedIdx := getOrderIndex(order, iPlugin.Name)
+		jSortedIdx := getOrderIndex(order, jPlugin.Name)
+
+		if iSortedIdx != jSortedIdx {
+			return iSortedIdx > jSortedIdx
+		}
+
+		if iPlugin.Priority != jPlugin.Priority {
+			return iPlugin.Priority > jPlugin.Priority
+		}
+		return iPlugin.Name < jPlugin.Name
+
+	})
+	return plugins
+}
+
 // Plugins return a sorted array of plugin instances.
-// Sort is taken from the `order` parameter. Plugin names specified in the parameter
-// will be taken first, then other plugins will be added in alphabetical order.
+// Sort is made following these rules:
+//	- Plugins specified in the order slice will always go first (in the order specified in the slice)
+//	- A Plugin with higher priority will go before a plugin with lower priority
+// 	- If 2 plugins have the same priority (and not in order slice), they will be sorted by plugin name
 func Plugins(order []string) []Plugin {
 	sortedPlugins := make([]PluginInfo, 0, len(plugins))
 	for _, p := range plugins {
 		sortedPlugins = append(sortedPlugins, p)
 	}
 
-	sort.Slice(sortedPlugins, func(i, j int) bool {
-		iSortedIdx := getOrderIndex(order, sortedPlugins[i].Name)
-		jSortedIdx := getOrderIndex(order, sortedPlugins[j].Name)
-
-		if iSortedIdx == -1 && jSortedIdx == -1 {
-			return sortedPlugins[i].Name < sortedPlugins[j].Name
-		}
-		return iSortedIdx < jSortedIdx
-	})
+	sortPlugins(sortedPlugins, order)
 
 	pluginArr := make([]Plugin, 0, len(plugins))
 	for _, p := range sortedPlugins {
-		pluginArr = append(pluginArr, p.New())
+		pluginArr = append(pluginArr, pluginInstances[p.Name])
 	}
 	return pluginArr
 }
 
 var (
-	plugins = make(map[string]PluginInfo)
+	plugins         = make(map[string]PluginInfo)
+	pluginInstances = make(map[string]Plugin)
 )
