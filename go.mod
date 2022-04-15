@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/caddyserver/caddy/v2 v2.4.6
 	github.com/caddyserver/certmagic v0.15.2
+	github.com/corazawaf/coraza-caddy v1.2.0
 	github.com/google/uuid v1.3.0
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/pires/go-proxyproto v0.3.1
