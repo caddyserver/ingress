@@ -114,14 +114,7 @@ func (c *CaddyController) watchTLSSecrets() error {
 		}
 
 		for _, secret := range secrets {
-			content := make([]byte, 0)
-
-			for _, cert := range secret.Data {
-				content = append(content, cert...)
-			}
-
-			err := ioutil.WriteFile(filepath.Join(CertFolder, secret.Name+".pem"), content, 0644)
-			if err != nil {
+			if err := writeFile(secret); err != nil {
 				return err
 			}
 		}

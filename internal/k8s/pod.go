@@ -3,6 +3,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"github.com/caddyserver/ingress/pkg/store"
 	"os"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -11,18 +12,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// Info contains runtime information about the pod running the Ingress controller
-type Info struct {
-	Name      string
-	Namespace string
-	// Labels selectors of the running pod
-	// This is used to search for other Ingress controller pods
-	Labels map[string]string
-}
-
 // GetAddresses gets the ip address or name of the node in the cluster that the
 // ingress controller is running on.
-func GetAddresses(p *Info, kubeClient *kubernetes.Clientset) ([]string, error) {
+func GetAddresses(p *store.PodInfo, kubeClient *kubernetes.Clientset) ([]string, error) {
 	var addrs []string
 
 	// Get services that may select this pod
@@ -67,7 +59,7 @@ func GetAddressFromService(service *apiv1.Service) string {
 
 // GetPodDetails returns runtime information about the pod:
 // name, namespace and IP of the node where it is running
-func GetPodDetails(kubeClient *kubernetes.Clientset) (*Info, error) {
+func GetPodDetails(kubeClient *kubernetes.Clientset) (*store.PodInfo, error) {
 	podName := os.Getenv("POD_NAME")
 	podNs := os.Getenv("POD_NAMESPACE")
 
@@ -80,7 +72,7 @@ func GetPodDetails(kubeClient *kubernetes.Clientset) (*Info, error) {
 		return nil, fmt.Errorf("unable to get POD information")
 	}
 
-	return &Info{
+	return &store.PodInfo{
 		Name:      podName,
 		Namespace: podNs,
 		Labels:    pod.GetLabels(),

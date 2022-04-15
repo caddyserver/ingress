@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/caddyserver/ingress/internal/controller"
+	"github.com/caddyserver/ingress/pkg/store"
+	"strings"
 )
 
-func parseFlags() controller.Options {
+func parseFlags() store.Options {
 	var namespace string
 	flag.StringVar(&namespace, "namespace", "", "the namespace that you would like to observe kubernetes ingress resources in.")
 
@@ -18,12 +19,16 @@ func parseFlags() controller.Options {
 	var verbose bool
 	flag.BoolVar(&verbose, "v", false, "set the log level to debug")
 
+	var pluginsOrder string
+	flag.StringVar(&pluginsOrder, "plugins-order", "", "defines the order plugins should be used")
+
 	flag.Parse()
 
-	return controller.Options{
+	return store.Options{
 		WatchNamespace: namespace,
 		ConfigMapName:  configMapName,
 		Verbose:        verbose,
 		LeaseId:        leaseId,
+		PluginsOrder:   strings.Split(pluginsOrder, ","),
 	}
 }

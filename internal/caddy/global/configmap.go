@@ -1,20 +1,32 @@
-package caddy
+package global
 
 import (
 	"encoding/json"
 	caddy2 "github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
-	"github.com/caddyserver/ingress/internal/controller"
+	"github.com/caddyserver/ingress/pkg/converter"
+	"github.com/caddyserver/ingress/pkg/store"
 )
 
-// LoadConfigMapOptions load options from ConfigMap
-func LoadConfigMapOptions(config *Config, store *controller.Store) error {
+type ConfigMapPlugin struct{}
+
+func init() {
+	converter.RegisterPlugin(ConfigMapPlugin{})
+}
+
+func (p ConfigMapPlugin) IngressPlugin() converter.PluginInfo {
+	return converter.PluginInfo{
+		Name: "configmap",
+		New:  func() converter.Plugin { return new(ConfigMapPlugin) },
+	}
+}
+
+func (p ConfigMapPlugin) GlobalHandler(config *converter.Config, store *store.Store) error {
 	cfgMap := store.ConfigMap
 
-	tlsApp := config.Apps["tls"].(*caddytls.TLS)
-	httpServer := config.Apps["http"].(*caddyhttp.App).Servers[HttpServer]
+	tlsApp := config.GetTLSApp()
+	httpServer := config.GetHTTPServer()
 
 	if cfgMap.Debug {
 		config.Logging.Logs = map[string]*caddy2.CustomLog{"default": {Level: "DEBUG"}}
@@ -64,3 +76,8 @@ func LoadConfigMapOptions(config *Config, store *controller.Store) error {
 	}
 	return nil
 }
+
+// Interface guards
+var (
+	_ = converter.GlobalMiddleware(ConfigMapPlugin{})
+)
