@@ -76,13 +76,14 @@ kubectl logs <pod-name> -n caddy-system
 ## Automatic HTTPS
 
 To enable automatic https via ingress controller using Let's Encrypt you can set
-the argument `ingressController.autotls=true` and the email to use
-`ingressController.email=your@email.com` on the caddy ingress controller helm
+the argument `ingressController.config.onDemandTLS=true` and the email to use
+`ingressController.config.email=your@email.com` on the caddy ingress controller helm
 chart values.
 
 Example:
- - `--set ingressController.autotls=true`
- - `--set ingressController.email=your@email.com`
+
+ - `--set ingressController.config.onDemandTLS=true`
+ - `--set ingressController.config.email=your@email.com`
 
 when you execute the helm-chart installation.
 
