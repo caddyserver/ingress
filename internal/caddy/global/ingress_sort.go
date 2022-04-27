@@ -2,6 +2,7 @@ package global
 
 import (
 	"encoding/json"
+	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/ingress/pkg/converter"
 	"github.com/caddyserver/ingress/pkg/store"
 	"sort"
@@ -32,6 +33,26 @@ func getFirstItemFromJSON(data json.RawMessage) string {
 	return arr[0]
 }
 
+func sortRoutes(routes caddyhttp.RouteList) {
+	sort.SliceStable(routes, func(i, j int) bool {
+		iPath := getFirstItemFromJSON(routes[i].MatcherSetsRaw[0]["path"])
+		jPath := getFirstItemFromJSON(routes[j].MatcherSetsRaw[0]["path"])
+		iPrefixed := strings.HasSuffix(iPath, "*")
+		jPrefixed := strings.HasSuffix(jPath, "*")
+
+		// If both same type check by length
+		if iPrefixed == jPrefixed {
+			return len(jPath) < len(iPath)
+		}
+		// Empty path will be moved last
+		if jPath == "" || iPath == "" {
+			return jPath == ""
+		}
+		// j path is exact so should go first
+		return jPrefixed
+	})
+}
+
 // GlobalHandler in IngressSortPlugin tries to sort routes to have the less conflict.
 //
 // It only supports basic conflicts for now. It doesn't support multiple matchers in the same route
@@ -45,29 +66,7 @@ func (p IngressSortPlugin) GlobalHandler(config *converter.Config, store *store.
 
 	routes := config.GetHTTPServer().Routes
 
-	pathMap := make(map[int]string)
-	for i, route := range routes {
-		pathMap[i] = getFirstItemFromJSON(route.MatcherSetsRaw[0]["path"])
-	}
-
-	sort.SliceStable(routes, func(i, j int) bool {
-		iPath := pathMap[i]
-		jPath := pathMap[j]
-		iPrefixed := strings.HasSuffix(iPath, "*")
-		jPrefixed := strings.HasSuffix(jPath, "*")
-
-		// If both same type check by length
-		if iPrefixed == jPrefixed {
-			return len(jPath) > len(iPath)
-		}
-		// Empty path will be moved last
-		if jPath == "" || iPath == "" {
-			return iPath == ""
-		}
-		// j path is exact so should go first
-		return iPrefixed
-	})
-
+	sortRoutes(routes)
 	return nil
 }
 
