@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// get client to access the kubernetes service api
-	kubeClient, err := createApiserverClient(logger)
+	kubeClient, _, err := createApiserverClient(logger)
 	if err != nil {
 		logger.Fatalf("Could not establish a connection to the Kubernetes API Server. %v", err)
 	}
@@ -71,10 +71,10 @@ func main() {
 
 // createApiserverClient creates a new Kubernetes REST client. We assume the
 // controller runs inside Kubernetes and use the in-cluster config.
-func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, error) {
+func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, *version.Info, error) {
 	cfg, err := clientcmd.BuildConfigFromFlags("", "")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	logger.Infof("Creating API client for %s", cfg.Host)
@@ -84,7 +84,7 @@ func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, er
 	cfg.ContentType = "application/vnd.kubernetes.protobuf"
 	client, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// The client may fail to connect to the API server on the first request
@@ -113,12 +113,12 @@ func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, er
 
 	// err is returned in case of timeout in the exponential backoff (ErrWaitTimeout)
 	if err != nil {
-		return nil, lastErr
+		return nil, nil, lastErr
 	}
 
 	if retries > 0 {
 		logger.Warnf("Initial connection to the Kubernetes API server was retried %d times.", retries)
 	}
 
-	return client, nil
+	return client, v, nil
 }
