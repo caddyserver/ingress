@@ -5,7 +5,7 @@ on:
     branches: [master]
     paths:
       - 'charts/**'
-      - '.github/workflows/helmchart-release.yml'
+      - '.github/workflows/release-controller.yml'
 
 jobs:
   release:

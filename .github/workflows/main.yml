@@ -1,60 +1,27 @@
-name: Lint and Test Charts
+name: Checks
 
 on:
   push:
     branches: [master]
-    tags:
-      - 'v*'
   pull_request:
 
 jobs:
-  docker-build:
+  go-tests:
+    name: Run tests
     runs-on: ubuntu-latest
-    name: Building Docker Image
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Docker meta
-        id: docker_meta
-        uses: docker/metadata-action@v3
+      - name: Set up Go
+        uses: actions/setup-go@v2
         with:
-          images: caddy/ingress
-          tags: |
-            type=semver,pattern={{raw}}
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
+          go-version: 1.16
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+      - name: Test
+        run: go test -v ./...
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to DockerHub
-        # Forks don't have push access to docker
-        if: github.repository == 'caddyserver/ingress'
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          push: ${{ github.repository == 'caddyserver/ingress' }}
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  lint-test:
+  chart-test-current:
     name: Test and lint charts
-    needs:
-      - docker-build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -76,6 +43,13 @@ jobs:
 
       - name: Run chart-testing (lint)
         run: ct lint --config ct.yaml
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --snapshot --rm-dist
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.2.0
@@ -99,17 +73,8 @@ jobs:
                 - 172.17.255.1-172.17.255.200
           EOF
 
-      - name: Get image tag
-        id: image-tag
-        run: echo "::set-output name=data::$(echo ${GITHUB_SHA} | cut -c1-7)"
-
-      - name: Set current image tag
-        working-directory: charts/caddy-ingress-controller
-        # Forks don't have push access to docker so don't use it in tests
-        if: github.repository == 'caddyserver/ingress'
-        run: envsubst < ci/test-values.yaml.tpl > ci/test-values.yaml
-        env:
-          TAG: ${{ steps.image-tag.outputs.data }}
+      - name: Load image into Kind cluster
+        run: kind load docker-image "caddy/ingress:test-image"
 
       - name: Run chart-testing (install)
         run: ct install --config ct.yaml
