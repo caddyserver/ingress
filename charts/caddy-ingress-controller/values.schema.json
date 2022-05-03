@@ -126,6 +126,10 @@
                 }
               ]
             },
+            "experimentalSmartSort": {
+              "$id": "#/properties/ingressController/properties/config/properties/experimentalSmartSort",
+              "type": "boolean"
+            },
             "metrics": {
               "$id": "#/properties/ingressController/properties/config/properties/metrics",
               "type": "boolean"
