@@ -14,14 +14,15 @@ builds:
 
 dockers:
   - image_templates:
-      - "caddy/ingress:{{ .Tag }}-amd64"
+      - "caddy/ingress:test-image"
     use: buildx
     dockerfile: Dockerfile
+    skip_push: "true"
     build_flag_templates:
       - "--platform=linux/amd64"
 
   - image_templates:
-      - "caddy/ingress:test-image"
+      - "caddy/ingress:{{ .Tag }}-amd64"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -39,3 +40,6 @@ docker_manifests:
     image_templates:
       - "caddy/ingress:{{ .Tag }}-amd64"
       - "caddy/ingress:{{ .Tag }}-arm64v8"
+
+release:
+  disable: true
