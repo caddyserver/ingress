@@ -14,6 +14,7 @@ type ConfigMapOptions struct {
 	Debug                     bool           `json:"debug,omitempty"`
 	AcmeCA                    string         `json:"acmeCA,omitempty"`
 	Email                     string         `json:"email,omitempty"`
+	ExperimentalSmartSort     bool           `json:"experimentalSmartSort,omitempty"`
 	ProxyProtocol             bool           `json:"proxyProtocol,omitempty"`
 	Metrics                   bool           `json:"metrics,omitempty"`
 	OnDemandTLS               bool           `json:"onDemandTLS,omitempty"`
