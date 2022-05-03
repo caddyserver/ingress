@@ -19,14 +19,12 @@ dockers:
     dockerfile: Dockerfile
     build_flag_templates:
       - "--platform=linux/amd64"
-
  - image_templates:
       - "caddy/ingress:test-image"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
       - "--platform=linux/amd64"
-
   - image_templates:
       - "caddy/ingress:{{ .Tag }}-arm64v8"
     use: buildx
