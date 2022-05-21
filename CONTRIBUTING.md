@@ -9,7 +9,7 @@
  - You need a machine with [docker](https://docker.io) up & running
  - You need to install [kind](https://kind.sigs.k8s.io/) on your machine
 
-Than we can create a two nodes cluster (one master and one worker):
+Then we can create a two nodes cluster (one master and one worker):
 
 ```bash
 cat <<EOF | kind create cluster --config=-
@@ -34,7 +34,7 @@ Create a namespace to host the caddy ingress controller:
 kubectl create ns caddy-system
 ```
 
-Than we can start skaffold using:
+Then we can start skaffold using:
 ```
 skaffold dev --port-forward
 ```
@@ -55,9 +55,9 @@ curl -H 'Host: example2.kubernetes.localhost http://127.0.0.1:80/hello2
 
 ## Notes
 
- - You can change local port forwarded by skaffold by changing the port values in the `skaffold.yaml` file on section `portForward` `localPort`. Remind that you can forward only port greather than 1024 if you execute it as non root user
+ - You can change local port forwarded by skaffold by changing the port values in the `skaffold.yaml` file on section `portForward` `localPort`. Remind that you can forward only port greater than 1024 if you execute it as non-root user
  - You can delete your local cluster with the command `kind delete cluster`
- - To use TLS your domain should be publically resolved to your cluster IP in order to allow Let's Encript to validate the domain
+ - To use TLS your domain should be publicly resolved to your cluster IP in order to allow Let's Encrypt to validate the domain
 
 ## Releasing new helm chart version
 

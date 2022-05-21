@@ -24,7 +24,7 @@ func GetAddresses(p *store.PodInfo, kubeClient *kubernetes.Clientset) ([]string,
 	}
 
 	for _, svc := range svcs.Items {
-		if labels.AreLabelsInWhiteList(svc.Spec.Selector, p.Labels) {
+		if isSubset(svc.Spec.Selector, p.Labels) {
 			addr := GetAddressFromService(&svc)
 			if addr != "" {
 				addrs = append(addrs, addr)
@@ -35,7 +35,25 @@ func GetAddresses(p *store.PodInfo, kubeClient *kubernetes.Clientset) ([]string,
 	return addrs, nil
 }
 
-// GetNodeIPOrName returns the IP address or the name of a node in the cluster
+// Copied from https://github.com/kubernetes/kubernetes/pull/95179
+func isSubset(subSet, superSet labels.Set) bool {
+	if len(superSet) == 0 {
+		return true
+	}
+
+	for k, v := range subSet {
+		value, ok := superSet[k]
+		if !ok {
+			return false
+		}
+		if value != v {
+			return false
+		}
+	}
+	return true
+}
+
+// GetAddressFromService returns the IP address or the name of a node in the cluster
 func GetAddressFromService(service *apiv1.Service) string {
 	switch service.Spec.Type {
 	case apiv1.ServiceTypeNodePort:

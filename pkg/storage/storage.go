@@ -34,7 +34,7 @@ var matchLabels = map[string]string{
 }
 
 // specialChars is a regex that matches all special characters except '-'.
-var specialChars = regexp.MustCompile("[^0-9a-zA-Z-]+")
+var specialChars = regexp.MustCompile("[^\\da-zA-Z-]+")
 
 // cleanKey strips all special characters that are not supported by kubernetes names and converts them to a '.'.
 // sequences like '.*.' are also converted to a single '.'.
@@ -77,7 +77,7 @@ func (s *SecretStorage) CertMagicStorage() (certmagic.Storage, error) {
 }
 
 // Exists returns true if key exists in fs.
-func (s *SecretStorage) Exists(key string) bool {
+func (s *SecretStorage) Exists(ctx context.Context, key string) bool {
 	s.logger.Debug("finding secret", zap.String("name", key))
 	secrets, err := s.KubeClient.CoreV1().Secrets(s.Namespace).List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.name=%v", cleanKey(key, keyPrefix)),
@@ -99,7 +99,7 @@ func (s *SecretStorage) Exists(key string) bool {
 }
 
 // Store saves value at key. More than certs and keys are stored by certmagic in secrets.
-func (s *SecretStorage) Store(key string, value []byte) error {
+func (s *SecretStorage) Store(ctx context.Context, key string, value []byte) error {
 	se := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   cleanKey(key, keyPrefix),
@@ -111,7 +111,7 @@ func (s *SecretStorage) Store(key string, value []byte) error {
 	}
 
 	var err error
-	if s.Exists(key) {
+	if s.Exists(ctx, key) {
 		s.logger.Debug("creating secret", zap.String("name", key))
 		_, err = s.KubeClient.CoreV1().Secrets(s.Namespace).Update(context.TODO(), &se, metav1.UpdateOptions{})
 	} else {
@@ -127,7 +127,7 @@ func (s *SecretStorage) Store(key string, value []byte) error {
 }
 
 // Load retrieves the value at the given key.
-func (s *SecretStorage) Load(key string) ([]byte, error) {
+func (s *SecretStorage) Load(ctx context.Context, key string) ([]byte, error) {
 	secret, err := s.KubeClient.CoreV1().Secrets(s.Namespace).Get(context.TODO(), cleanKey(key, keyPrefix), metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (s *SecretStorage) Load(key string) ([]byte, error) {
 }
 
 // Delete deletes the value at the given key.
-func (s *SecretStorage) Delete(key string) error {
+func (s *SecretStorage) Delete(ctx context.Context, key string) error {
 	err := s.KubeClient.CoreV1().Secrets(s.Namespace).Delete(context.TODO(), cleanKey(key, keyPrefix), metav1.DeleteOptions{})
 	if err != nil {
 		return err
@@ -149,7 +149,7 @@ func (s *SecretStorage) Delete(key string) error {
 }
 
 // List returns all keys that match prefix.
-func (s *SecretStorage) List(prefix string, recursive bool) ([]string, error) {
+func (s *SecretStorage) List(ctx context.Context, prefix string, recursive bool) ([]string, error) {
 	var keys []string
 
 	s.logger.Debug("listing secrets", zap.String("name", prefix))
@@ -172,7 +172,7 @@ func (s *SecretStorage) List(prefix string, recursive bool) ([]string, error) {
 }
 
 // Stat returns information about key.
-func (s *SecretStorage) Stat(key string) (certmagic.KeyInfo, error) {
+func (s *SecretStorage) Stat(ctx context.Context, key string) (certmagic.KeyInfo, error) {
 	secret, err := s.KubeClient.CoreV1().Secrets(s.Namespace).Get(context.TODO(), cleanKey(key, keyPrefix), metav1.GetOptions{})
 	if err != nil {
 		return certmagic.KeyInfo{}, err
@@ -274,7 +274,7 @@ func (s *SecretStorage) tryAcquireOrRenew(ctx context.Context, key string, shoul
 	return false, nil
 }
 
-func (s *SecretStorage) Unlock(key string) error {
+func (s *SecretStorage) Unlock(ctx context.Context, key string) error {
 	err := s.KubeClient.CoordinationV1().Leases(s.Namespace).Delete(context.TODO(), cleanKey(key, leasePrefix), metav1.DeleteOptions{})
 	return err
 }
