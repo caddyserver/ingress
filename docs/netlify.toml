@@ -1,0 +1,42 @@
+[build]
+  publish = "public"
+  functions = "functions"
+
+[build.environment]
+  NODE_VERSION = "16.15.0"
+
+[context.production]
+  command = "yarn build"
+
+[context.deploy-preview]
+  command = "yarn build -- -b $DEPLOY_PRIME_URL"
+
+[context.branch-deploy]
+  command = "yarn build -- -b $DEPLOY_PRIME_URL"
+
+[context.next]
+  command = "yarn build"
+
+[context.next.environment]
+  HUGO_ENV = "next"
+
+[[plugins]]
+  package = "netlify-plugin-submit-sitemap"
+
+	[plugins.inputs]
+    baseUrl = "https://doks-child-theme.netlify.app/"
+    sitemapPath = "/sitemap.xml"
+    ignorePeriod = 0
+    providers = [
+      "google",
+      "bing",
+      "yandex"
+    ]
+
+[dev]
+  framework = "#custom"
+  command = "yarn start"
+  targetPort = 1313
+  port = 8888
+  publish = "public"
+  autoLaunch = false
