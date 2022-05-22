@@ -2,7 +2,7 @@
   "name": "caddy-ingress-controller-docs",
   "private": true,
   "description": "Caddy Ingress Controller docs",
-  "version": "0.4.3",
+  "version": "0.1.1",
   "engines": {
     "node": ">=16.15.0"
   },
@@ -31,7 +31,6 @@
     "@babel/preset-env": "^7.17",
     "@fullhuman/postcss-purgecss": "^4.1",
     "@hyas/doks": "^0.4",
-    "auto-changelog": "^2.4.0",
     "autoprefixer": "^10.4",
     "bootstrap": "^5.1",
     "clipboard": "^2.0",
