@@ -75,16 +75,23 @@ kubectl logs <pod-name> -n caddy-system
 
 ## Automatic HTTPS
 
-To enable automatic https via ingress controller using Let's Encrypt you can set
-the argument `ingressController.autotls=true` and the email to use
-`ingressController.email=your@email.com` on the caddy ingress controller helm
-chart values.
+To have automatic HTTPS (not to be confused with `On-demand TLS`), you simply have
+to specify your email in the config map. When using Helm chart, you can add
+`--set ingressController.config.email=your@email.com` when installing.
 
-Example:
- - `--set ingressController.autotls=true`
- - `--set ingressController.email=your@email.com`
+## On-Demand TLS
 
-when you execute the helm-chart installation.
+[On-demand TLS](https://caddyserver.com/docs/automatic-https#on-demand-tls) can generate SSL certs on the fly
+and can be enabled in this controller by setting the `onDemandTLS` config to `true`:
+
+```sh
+helm install ...\
+  --set ingressController.config.onDemandTLS=true
+```
+
+> You can also specify options 
+> for the on demand config: `onDemandRateLimitInterval`, `onDemandRateLimitBurst` and `onDemandAsk`
+
 
 ## Bringing Your Own Certificates
 

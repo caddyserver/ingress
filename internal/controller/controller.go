@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/caddyserver/caddy/v2"
@@ -163,7 +164,7 @@ func (c *CaddyController) Shutdown() error {
 		c.logger.Error("failed to stop caddy server", zap.Error(err))
 		return err
 	}
-	certmagic.CleanUpOwnLocks(c.logger.Desugar())
+	certmagic.CleanUpOwnLocks(context.TODO(), c.logger.Desugar())
 	return nil
 }
 

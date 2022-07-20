@@ -36,7 +36,7 @@ func (c *CaddyController) onConfigMapUpdated(old *v1.ConfigMap, new *v1.ConfigMa
 	})
 }
 
-// onConfigMapDeleted is run when an configmap is deleted from the namespace.
+// onConfigMapDeleted is run when a configmap is deleted from the namespace.
 func (c *CaddyController) onConfigMapDeleted(obj *v1.ConfigMap) {
 	c.syncQueue.Add(ConfigMapDeletedAction{
 		resource: obj,
