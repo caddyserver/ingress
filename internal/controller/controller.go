@@ -5,6 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/certmagic"
 	"github.com/caddyserver/ingress/internal/k8s"
@@ -18,8 +21,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"os"
-	"time"
 
 	// load required caddy plugins
 	_ "github.com/caddyserver/caddy/v2/modules/caddyhttp/reverseproxy"
@@ -123,10 +124,9 @@ func NewCaddyController(
 
 	// Watch ingress resources in selected namespaces
 	ingressParams := k8s.IngressParams{
-		InformerFactory: controller.factories.WatchedNamespace,
-		// TODO Add configuration for that
-		ClassName:         "caddy",
-		ClassNameRequired: false,
+		InformerFactory:   controller.factories.WatchedNamespace,
+		ClassName:         opts.ClassName,
+		ClassNameRequired: opts.ClassNameRequired,
 	}
 	controller.informers.Ingress = k8s.WatchIngresses(ingressParams, k8s.IngressHandlers{
 		AddFunc:    controller.onIngressAdded,

@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/caddyserver/ingress/pkg/store"
 	"strings"
+
+	"github.com/caddyserver/ingress/pkg/store"
 )
 
 func parseFlags() store.Options {
@@ -12,6 +13,12 @@ func parseFlags() store.Options {
 
 	var configMapName string
 	flag.StringVar(&configMapName, "config-map", "", "defines the config map name from where to load global options")
+
+	var className string
+	flag.StringVar(&className, "class-name", "caddy", "class name of the ingress controller")
+
+	var classNameRequired bool
+	flag.BoolVar(&classNameRequired, "class-name-required", false, "only allow ingress resources with a matching ingress class name")
 
 	var leaseId string
 	flag.StringVar(&leaseId, "lease-id", "", "defines the id of this instance for certmagic lock")
