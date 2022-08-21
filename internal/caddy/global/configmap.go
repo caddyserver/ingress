@@ -2,11 +2,13 @@ package global
 
 import (
 	"encoding/json"
+
 	caddy2 "github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 	"github.com/caddyserver/ingress/pkg/converter"
 	"github.com/caddyserver/ingress/pkg/store"
+	"github.com/mholt/acmez/acme"
 )
 
 type ConfigMapPlugin struct{}
@@ -37,6 +39,13 @@ func (p ConfigMapPlugin) GlobalHandler(config *converter.Config, store *store.St
 
 		if cfgMap.AcmeCA != "" {
 			acmeIssuer.CA = cfgMap.AcmeCA
+		}
+
+		if cfgMap.AcmeEABKeyId != "" && cfgMap.AcmeEABMacKey != "" {
+			acmeIssuer.ExternalAccount = &acme.EAB{
+				KeyID:  cfgMap.AcmeEABKeyId,
+				MACKey: cfgMap.AcmeEABMacKey,
+			}
 		}
 
 		if cfgMap.Email != "" {

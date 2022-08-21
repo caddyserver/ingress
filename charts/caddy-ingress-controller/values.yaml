@@ -24,6 +24,8 @@ ingressController:
 
   leaseId: ""
   config:
+    acmeEABKeyId: ""
+    acmeEABMacKey: ""
     # -- Acme Server URL
     acmeCA: ""
     debug: false
