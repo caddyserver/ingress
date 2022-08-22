@@ -53,6 +53,8 @@ The command removes all the Kubernetes components associated with the chart and 
 | image.tag | string | `"latest"` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingressController.config.acmeCA | string | `""` |  |
+| ingressController.config.acmeEABKeyId | string | `""` |  |
+| ingressController.config.acmeEABMacKey | string | `""` |  |
 | ingressController.config.debug | bool | `false` |  |
 | ingressController.config.email | string | `""` |  |
 | ingressController.config.metrics | bool | `true` |  |

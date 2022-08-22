@@ -110,6 +110,14 @@
                 }
               ]
             },
+            "acmeEABKeyId": {
+              "$id": "#/properties/ingressController/properties/config/properties/acmeEABKeyId",
+              "type": "string"
+            },
+            "acmeEABMacKey": {
+              "$id": "#/properties/ingressController/properties/config/properties/acmeEABMacKey",
+              "type": "string"
+            },
             "debug": {
               "$id": "#/properties/ingressController/properties/config/properties/debug",
               "type": "boolean"

@@ -1,18 +1,21 @@
 package store
 
 import (
+	"reflect"
+	"time"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
-	"reflect"
-	"time"
 )
 
 // ConfigMapOptions represents global options set through a configmap
 type ConfigMapOptions struct {
 	Debug                     bool           `json:"debug,omitempty"`
 	AcmeCA                    string         `json:"acmeCA,omitempty"`
+	AcmeEABKeyId              string         `json:"acmeEABKeyId,omitempty"`
+	AcmeEABMacKey             string         `json:"acmeEABMacKey,omitempty"`
 	Email                     string         `json:"email,omitempty"`
 	ExperimentalSmartSort     bool           `json:"experimentalSmartSort,omitempty"`
 	ProxyProtocol             bool           `json:"proxyProtocol,omitempty"`
