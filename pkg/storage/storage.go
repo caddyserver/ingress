@@ -3,6 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/certmagic"
 	"github.com/google/uuid"
@@ -14,9 +19,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
@@ -130,6 +132,9 @@ func (s *SecretStorage) Store(ctx context.Context, key string, value []byte) err
 func (s *SecretStorage) Load(ctx context.Context, key string) ([]byte, error) {
 	secret, err := s.KubeClient.CoreV1().Secrets(s.Namespace).Get(context.TODO(), cleanKey(key, keyPrefix), metav1.GetOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, fs.ErrNotExist
+		}
 		return nil, err
 	}
 
