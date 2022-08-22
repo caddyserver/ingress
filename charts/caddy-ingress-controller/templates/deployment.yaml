@@ -76,6 +76,12 @@ spec:
             {{- if .Values.ingressController.verbose }}
             - -v
             {{- end }}
+            {{- if .Values.ingressController.className }}
+            - -class-name={{ .Values.ingressController.className }}
+            {{- end }}
+            {{- if .Values.ingressController.classNameRequired }}
+            - -class-name-required={{ .Values.ingressController.classNameRequired }}
+            {{- end }}
           readinessProbe:
             initialDelaySeconds: 3
             periodSeconds: 10
