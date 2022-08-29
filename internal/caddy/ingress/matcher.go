@@ -21,7 +21,11 @@ func (p MatcherPlugin) IngressPlugin() converter.PluginInfo {
 func (p MatcherPlugin) IngressHandler(input converter.IngressMiddlewareInput) (*caddyhttp.Route, error) {
 	match := caddy.ModuleMap{}
 
-	if getAnnotation(input.Ingress, disableSSLRedirect) != "true" {
+	// Ignore disable-ssl-redirect annotation if ssl-redirect is set or the disable-ssl-redirect is not set / set to false.
+	ignoreDisableSSLRedirect := hasAnnotation(input.Ingress, sslRedirect) || !getAnnotationBool(input.Ingress, disableSSLRedirect, false)
+
+	// If the disable-ssl-redirect annotation is ignored, then the ssl-redirect annotation is used.
+	if ignoreDisableSSLRedirect && getAnnotationBool(input.Ingress, sslRedirect, true) {
 		match["protocol"] = caddyconfig.JSON(caddyhttp.MatchProtocol("https"), nil)
 	}
 
