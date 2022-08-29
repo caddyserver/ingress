@@ -24,7 +24,7 @@ func parseFlags() store.Options {
 	flag.StringVar(&leaseId, "lease-id", "", "defines the id of this instance for certmagic lock")
 
 	var verbose bool
-	flag.BoolVar(&verbose, "v", false, "set the log level to debug")
+	flag.BoolVar(&verbose, "verbose", false, "set the log level to debug")
 
 	var pluginsOrder string
 	flag.StringVar(&pluginsOrder, "plugins-order", "", "defines the order plugins should be used")

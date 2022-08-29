@@ -74,7 +74,7 @@ spec:
             - -lease-id={{ .Values.ingressController.leaseId }}
             {{- end }}
             {{- if .Values.ingressController.verbose }}
-            - -v
+            - -verbose
             {{- end }}
             {{- if .Values.ingressController.className }}
             - -class-name={{ .Values.ingressController.className }}
