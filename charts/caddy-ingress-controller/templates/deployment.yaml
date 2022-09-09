@@ -86,8 +86,8 @@ spec:
             initialDelaySeconds: 3
             periodSeconds: 10
             httpGet:
-              port: 9765
-              path: /metrics
+              port: 80
+              path: /healthz
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -3,3 +3,4 @@ bin
 vendor
 .idea/
 dist/
+ingress-controller
