@@ -23,20 +23,15 @@ func init() {
 }
 
 func (p MetricsPlugin) GlobalHandler(config *converter.Config, store *store.Store) error {
-	httpApp := config.Apps["http"].(*caddyhttp.App)
-
 	if store.ConfigMap.Metrics {
-		httpApp.Servers[converter.MetricsServer] = &caddyhttp.Server{
-			Listen:    []string{":9765"},
-			AutoHTTPS: &caddyhttp.AutoHTTPSConfig{Disabled: true},
-			Routes: []caddyhttp.Route{{
-				HandlersRaw: []json.RawMessage{json.RawMessage(`{ "handler": "metrics" }`)},
-				MatcherSetsRaw: []caddy.ModuleMap{{
-					"path": caddyconfig.JSON(caddyhttp.MatchPath{"/metrics"}, nil),
-				}},
+		metricsRoute := caddyhttp.Route{
+			HandlersRaw: []json.RawMessage{json.RawMessage(`{ "handler": "metrics" }`)},
+			MatcherSetsRaw: []caddy.ModuleMap{{
+				"path": caddyconfig.JSON(caddyhttp.MatchPath{"/metrics"}, nil),
 			}},
 		}
-
+		
+		config.GetMetricsServer().Routes = append(config.GetMetricsServer().Routes, metricsRoute)
 	}
 	return nil
 }

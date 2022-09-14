@@ -86,7 +86,7 @@ spec:
             initialDelaySeconds: 3
             periodSeconds: 10
             httpGet:
-              port: 80
+              port: 9765
               path: /healthz
       {{- with .Values.nodeSelector }}
       nodeSelector:

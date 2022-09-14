@@ -38,7 +38,7 @@ func (p HealthzPlugin) GlobalHandler(config *converter.Config, store *store.Stor
 		}},
 	}
 	
-	config.GetHTTPServer().Routes = append(config.GetHTTPServer().Routes, healthzRoute)
+	config.GetMetricsServer().Routes = append(config.GetMetricsServer().Routes, healthzRoute)
 	return nil
 }
 
