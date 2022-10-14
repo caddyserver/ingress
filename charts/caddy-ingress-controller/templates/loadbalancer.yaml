@@ -6,10 +6,15 @@ kind: Service
 metadata:
   name: {{ include "caddy-ingress-controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.loadBalancer.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
 spec:
   type: "LoadBalancer"
+  loadBalancerIP: {{ .Values.loadBalancer.loadBalancerIP }}
   ports:
     - name: http
       port: 80

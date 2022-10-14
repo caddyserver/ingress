@@ -39,6 +39,15 @@ ingressController:
     # onDemandRateLimitBurst:
     # onDemandAsk:
 
+loadBalancer:
+  loadBalancerIP:
+  annotations:
+    #service.beta.kubernetes.io/aws-load-balancer-type:
+    #service.beta.kubernetes.io/aws-load-balancer-nlb-target-type:
+    #service.beta.kubernetes.io/aws-load-balancer-scheme: 
+    #service.beta.kubernetes.io/aws-load-balancer-eip-allocations:
+    #service.beta.kubernetes.io/aws-load-balancer-subnets:
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
