@@ -21,7 +21,7 @@ func (p MatcherPlugin) IngressPlugin() converter.PluginInfo {
 func (p MatcherPlugin) IngressHandler(input converter.IngressMiddlewareInput) (*caddyhttp.Route, error) {
 	match := caddy.ModuleMap{}
 
-	if getAnnotation(input.Ingress, disableSSLRedirect) != "true" {
+	if GetAnnotation(input.Ingress, DisableSSLRedirect) != "true" {
 		match["protocol"] = caddyconfig.JSON(caddyhttp.MatchProtocol("https"), nil)
 	}
 

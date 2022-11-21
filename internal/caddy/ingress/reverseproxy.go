@@ -25,7 +25,7 @@ func (p ReverseProxyPlugin) IngressPlugin() converter.PluginInfo {
 func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInput) (*caddyhttp.Route, error) {
 	path := input.Path
 	ing := input.Ingress
-	backendProtocol := strings.ToLower(getAnnotation(ing, backendProtocol))
+	backendProtocol := strings.ToLower(GetAnnotation(ing, BackendProtocol))
 
 	// TODO :-
 	// when setting the upstream url we should bypass kube-dns and get the ip address of
@@ -37,7 +37,7 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 
 	if backendProtocol == "https" {
 		transport.TLS = &reverseproxy.TLSConfig{
-			InsecureSkipVerify: getAnnotationBool(ing, insecureSkipVerify, true),
+			InsecureSkipVerify: GetAnnotationBool(ing, InsecureSkipVerify, true),
 		}
 	}
 

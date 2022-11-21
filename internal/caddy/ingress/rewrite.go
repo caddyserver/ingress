@@ -21,7 +21,7 @@ func (p RewritePlugin) IngressPlugin() converter.PluginInfo {
 func (p RewritePlugin) IngressHandler(input converter.IngressMiddlewareInput) (*caddyhttp.Route, error) {
 	ing := input.Ingress
 
-	rewriteTo := getAnnotation(ing, rewriteToAnnotation)
+	rewriteTo := GetAnnotation(ing, RewriteToAnnotation)
 	if rewriteTo != "" {
 		handler := caddyconfig.JSONModuleObject(
 			rewrite.Rewrite{URI: rewriteTo},
@@ -31,7 +31,7 @@ func (p RewritePlugin) IngressHandler(input converter.IngressMiddlewareInput) (*
 		input.Route.HandlersRaw = append(input.Route.HandlersRaw, handler)
 	}
 
-	rewriteStripPrefix := getAnnotation(ing, rewriteStripPrefixAnnotation)
+	rewriteStripPrefix := GetAnnotation(ing, RewriteStripPrefixAnnotation)
 	if rewriteStripPrefix != "" {
 		handler := caddyconfig.JSONModuleObject(
 			rewrite.Rewrite{StripPathPrefix: rewriteStripPrefix},
