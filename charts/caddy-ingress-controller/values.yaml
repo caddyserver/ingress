@@ -40,7 +40,7 @@ ingressController:
     # onDemandAsk:
 
 loadBalancer:
-  loadBalancerIP:
+  loadBalancerIP: #Deprecated in Kubernetes v1.24 
   annotations:
     #service.beta.kubernetes.io/aws-load-balancer-type:
     #service.beta.kubernetes.io/aws-load-balancer-nlb-target-type:

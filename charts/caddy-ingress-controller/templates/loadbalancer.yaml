@@ -14,7 +14,7 @@ metadata:
     {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
 spec:
   type: "LoadBalancer"
-  loadBalancerIP: {{ .Values.loadBalancer.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.loadBalancer.loadBalancerIP }} #Deprecated in Kubernetes v1.24
   ports:
     - name: http
       port: 80
