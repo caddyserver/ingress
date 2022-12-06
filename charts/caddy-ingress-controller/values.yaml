@@ -40,13 +40,14 @@ ingressController:
     # onDemandAsk:
 
 loadBalancer:
-  loadBalancerIP: #Deprecated in Kubernetes v1.24 
+  # Deprecated in Kubernetes v1.24
+  loadBalancerIP:
   annotations:
-    #service.beta.kubernetes.io/aws-load-balancer-type:
-    #service.beta.kubernetes.io/aws-load-balancer-nlb-target-type:
-    #service.beta.kubernetes.io/aws-load-balancer-scheme: 
-    #service.beta.kubernetes.io/aws-load-balancer-eip-allocations:
-    #service.beta.kubernetes.io/aws-load-balancer-subnets:
+    # service.beta.kubernetes.io/aws-load-balancer-type:
+    # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type:
+    # service.beta.kubernetes.io/aws-load-balancer-scheme:
+    # service.beta.kubernetes.io/aws-load-balancer-eip-allocations:
+    # service.beta.kubernetes.io/aws-load-balancer-subnets:
 
 serviceAccount:
   # Specifies whether a service account should be created
