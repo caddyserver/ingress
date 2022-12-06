@@ -30,6 +30,10 @@ func (c Config) GetHTTPServer() *caddyhttp.Server {
 	return c.Apps["http"].(*caddyhttp.App).Servers[HttpServer]
 }
 
+func (c Config) GetMetricsServer() *caddyhttp.Server {
+	return c.Apps["http"].(*caddyhttp.App).Servers[MetricsServer]
+}
+
 func (c Config) GetTLSApp() *caddytls.TLS {
 	return c.Apps["tls"].(*caddytls.TLS)
 }
@@ -49,6 +53,10 @@ func NewConfig() *Config {
 						TLSConnPolicies: caddytls.ConnectionPolicies{
 							&caddytls.ConnectionPolicy{},
 						},
+					},
+					MetricsServer: {
+						Listen:    []string{":9765"},
+						AutoHTTPS: &caddyhttp.AutoHTTPSConfig{Disabled: true},
 					},
 				},
 			},

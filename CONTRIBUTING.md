@@ -27,7 +27,7 @@ kind export kubeconfig
 
 ## Setup development env
 
-Replace also the domain name to use in `hack/test/example-ingress.yaml` from `kubernetes.localhost` to your domain (ensure also that the subdomain `example1` and `example2` are resolved to the server public IP)
+Replace also the domain name to use in `kubernetes/sample/example-ingress.yaml` from `kubernetes.localhost` to your domain (ensure also that the subdomain `example1` and `example2` are resolved to the server public IP)
 
 Create a namespace to host the caddy ingress controller:
 ```
@@ -36,7 +36,7 @@ kubectl create ns caddy-system
 
 Then we can start skaffold using:
 ```
-skaffold dev --port-forward
+make dev
 ```
 
 this will automatically:

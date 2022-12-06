@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta3
+apiVersion: skaffold/v2beta29
 kind: Config
 metadata:
   name: caddy-ingress-controller
@@ -12,6 +12,10 @@ deploy:
         namespace: caddy-system
         chartPath: charts/caddy-ingress-controller
         recreatePods: true
+        artifactOverrides:
+          image: caddy/ingress
+        imageStrategy:
+          helm: {}
   kubectl:
     manifests:
       - kubernetes/sample/*.yaml
