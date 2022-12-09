@@ -11,7 +11,6 @@ import (
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/certmagic"
 	"github.com/caddyserver/ingress/internal/k8s"
-	"github.com/caddyserver/ingress/pkg/storage"
 	"github.com/caddyserver/ingress/pkg/store"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
@@ -28,6 +27,7 @@ import (
 	_ "github.com/caddyserver/caddy/v2/modules/caddytls/standardstek"
 	_ "github.com/caddyserver/caddy/v2/modules/metrics"
 	_ "github.com/caddyserver/ingress/pkg/proxy"
+	_ "github.com/caddyserver/ingress/pkg/storage"
 )
 
 const (
@@ -145,9 +145,6 @@ func NewCaddyController(
 		UpdateFunc: controller.onConfigMapUpdated,
 		DeleteFunc: controller.onConfigMapDeleted,
 	})
-
-	// register kubernetes specific cert-magic storage module and proxy module
-	caddy.RegisterModule(storage.SecretStorage{})
 
 	// Create resource store
 	controller.resourceStore = store.NewStore(opts, podInfo)
