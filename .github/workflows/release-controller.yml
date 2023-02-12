@@ -37,3 +37,28 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  bump-charts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set appVersion
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq -i '.appVersion = "${{ github.ref_name }}"' 'charts/caddy-ingress-controller/Chart.yaml'
+
+      - name: Set image tag
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq -i '.image.tag = "${{ github.ref_name }}"' 'charts/caddy-ingress-controller/values.yaml'
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          branch: update-charts
+          commit-message: Update caddy-ingress charts to ${{ github.ref_name }}
+          title: Update caddy-ingress charts to ${{ github.ref_name }}
+          body: |
+            This is an automated pull request to update charts.
