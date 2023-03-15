@@ -58,18 +58,18 @@ func GetAddressFromService(service *apiv1.Service) string {
 	switch service.Spec.Type {
 	case apiv1.ServiceTypeNodePort:
 	case apiv1.ServiceTypeClusterIP:
-		return service.Spec.ClusterIP
+		if service.Spec.ClusterIP != apiv1.ClusterIPNone {
+			return service.Spec.ClusterIP
+		}
 	case apiv1.ServiceTypeExternalName:
 		return service.Spec.ExternalName
 	case apiv1.ServiceTypeLoadBalancer:
-		{
-			if len(service.Status.LoadBalancer.Ingress) > 0 {
-				ingress := service.Status.LoadBalancer.Ingress[0]
-				if ingress.Hostname != "" {
-					return ingress.Hostname
-				}
-				return ingress.IP
+		if len(service.Status.LoadBalancer.Ingress) > 0 {
+			ingress := service.Status.LoadBalancer.Ingress[0]
+			if ingress.Hostname != "" {
+				return ingress.Hostname
 			}
+			return ingress.IP
 		}
 	}
 	return ""
