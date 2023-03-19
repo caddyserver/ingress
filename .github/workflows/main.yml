@@ -71,21 +71,27 @@ jobs:
 
       - name: Install MetalLB to allow LoadBalancer services
         run: |
-          kubectl create ns metallb-system
           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.9/config/manifests/metallb-native.yaml
+          kubectl wait --namespace metallb-system \
+                --for=condition=ready pod \
+                --selector=app=metallb \
+                --timeout=90s
+          
           cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ConfigMap
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
           metadata:
-            name: config
+            name: example
             namespace: metallb-system
-          data:
-            config: |
-              address-pools:
-              - name: default
-                protocol: layer2
-                addresses:
-                - 172.17.255.1-172.17.255.200
+          spec:
+            addresses:
+              - 172.19.255.200-172.19.255.250
+          ---
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: empty
+            namespace: metallb-system
           EOF
 
       - name: Load image into Kind cluster
