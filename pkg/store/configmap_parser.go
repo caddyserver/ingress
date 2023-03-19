@@ -21,9 +21,9 @@ type ConfigMapOptions struct {
 	ProxyProtocol             bool           `json:"proxyProtocol,omitempty"`
 	Metrics                   bool           `json:"metrics,omitempty"`
 	OnDemandTLS               bool           `json:"onDemandTLS,omitempty"`
-	OnDemandRateLimitInterval caddy.Duration `json:"onDemandTLSRateLimitInterval,omitempty"`
-	OnDemandRateLimitBurst    int            `json:"onDemandTLSRateLimitBurst,omitempty"`
-	OnDemandAsk               string         `json:"onDemandTLSAsk,omitempty"`
+	OnDemandRateLimitInterval caddy.Duration `json:"onDemandRateLimitInterval,omitempty"`
+	OnDemandRateLimitBurst    int            `json:"onDemandRateLimitBurst,omitempty"`
+	OnDemandAsk               string         `json:"onDemandAsk,omitempty"`
 	OCSPCheckInterval         caddy.Duration `json:"ocspCheckInterval,omitempty"`
 }
 
