@@ -1,2 +1,5 @@
 image:
   tag: test-image
+
+ingressController:
+  verbose: true
