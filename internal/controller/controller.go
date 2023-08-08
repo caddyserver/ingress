@@ -13,7 +13,7 @@ import (
 	"github.com/caddyserver/ingress/internal/k8s"
 	"github.com/caddyserver/ingress/pkg/store"
 	"go.uber.org/zap"
-	apiv1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -155,7 +155,7 @@ func NewCaddyController(
 // Shutdown stops the caddy controller.
 func (c *CaddyController) Shutdown() error {
 	// remove this ingress controller's ip from ingress resources.
-	c.updateIngStatuses([]apiv1.LoadBalancerIngress{{}}, c.resourceStore.Ingresses)
+	c.updateIngStatuses([]networkingv1.IngressLoadBalancerIngress{{}}, c.resourceStore.Ingresses)
 
 	if err := caddy.Stop(); err != nil {
 		c.logger.Error("failed to stop caddy server", zap.Error(err))

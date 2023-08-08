@@ -1,12 +1,12 @@
 package store
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
 )
 
@@ -54,11 +54,11 @@ func ParseConfigMap(cm *apiv1.ConfigMap) (*ConfigMapOptions, error) {
 
 	decoder, err := mapstructure.NewDecoder(config)
 	if err != nil {
-		return nil, errors.Wrap(err, "unexpected error creating decoder")
+		return nil, fmt.Errorf("unexpected error creating decoder: %w", err)
 	}
 	err = decoder.Decode(cm.Data)
 	if err != nil {
-		return nil, errors.Wrap(err, "unexpected error parsing configmap")
+		return nil, fmt.Errorf("unexpected error parsing configmap: %w", err)
 	}
 
 	return &cfgMap, nil

@@ -8,8 +8,7 @@ import (
 	"github.com/caddyserver/ingress/internal/k8s"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/pool.v3"
-	apiv1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/networking/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -28,7 +27,7 @@ func (r SyncStatusAction) handle(c *CaddyController) error {
 }
 
 // syncStatus ensures that the ingress source address points to this ingress controller's IP address.
-func (c *CaddyController) syncStatus(ings []*v1.Ingress) error {
+func (c *CaddyController) syncStatus(ings []*networkingv1.Ingress) error {
 	addrs, err := k8s.GetAddresses(c.resourceStore.CurrentPod, c.kubeClient)
 	if err != nil {
 		return err
@@ -42,7 +41,7 @@ func (c *CaddyController) syncStatus(ings []*v1.Ingress) error {
 
 // updateIngStatuses starts a queue and adds all monitored ingresses to update their status source address to the on
 // that the ingress controller is running on. This is called by the syncStatus queue.
-func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBalancerIngress, ings []*v1.Ingress) {
+func (c *CaddyController) updateIngStatuses(controllerAddresses []networkingv1.IngressLoadBalancerIngress, ings []*networkingv1.Ingress) {
 	p := pool.NewLimited(10)
 	defer p.Close()
 
@@ -67,7 +66,7 @@ func (c *CaddyController) updateIngStatuses(controllerAddresses []apiv1.LoadBala
 }
 
 // runUpdate updates the ingress status field.
-func runUpdate(logger *zap.SugaredLogger, ing *v1.Ingress, status []apiv1.LoadBalancerIngress, client *kubernetes.Clientset) pool.WorkFunc {
+func runUpdate(logger *zap.SugaredLogger, ing *networkingv1.Ingress, status []networkingv1.IngressLoadBalancerIngress, client *kubernetes.Clientset) pool.WorkFunc {
 	return func(wu pool.WorkUnit) (interface{}, error) {
 		if wu.IsCancelled() {
 			return nil, nil
@@ -91,7 +90,7 @@ func runUpdate(logger *zap.SugaredLogger, ing *v1.Ingress, status []apiv1.LoadBa
 }
 
 // ingressSliceEqual determines if the ingress source matches the ingress controller's.
-func ingressSliceEqual(lhs, rhs []apiv1.LoadBalancerIngress) bool {
+func ingressSliceEqual(lhs, rhs []networkingv1.IngressLoadBalancerIngress) bool {
 	if len(lhs) != len(rhs) {
 		return false
 	}
@@ -109,7 +108,7 @@ func ingressSliceEqual(lhs, rhs []apiv1.LoadBalancerIngress) bool {
 }
 
 // lessLoadBalancerIngress is a sorting function for ingress hostnames.
-func lessLoadBalancerIngress(addrs []apiv1.LoadBalancerIngress) func(int, int) bool {
+func lessLoadBalancerIngress(addrs []networkingv1.IngressLoadBalancerIngress) func(int, int) bool {
 	return func(a, b int) bool {
 		switch strings.Compare(addrs[a].Hostname, addrs[b].Hostname) {
 		case -1:
@@ -122,13 +121,13 @@ func lessLoadBalancerIngress(addrs []apiv1.LoadBalancerIngress) func(int, int) b
 }
 
 // sliceToLoadBalancerIngress converts a slice of IP and/or hostnames to LoadBalancerIngress
-func sliceToLoadBalancerIngress(endpoints []string) []apiv1.LoadBalancerIngress {
-	lbi := []apiv1.LoadBalancerIngress{}
+func sliceToLoadBalancerIngress(endpoints []string) []networkingv1.IngressLoadBalancerIngress {
+	lbi := []networkingv1.IngressLoadBalancerIngress{}
 	for _, ep := range endpoints {
 		if net.ParseIP(ep) == nil {
-			lbi = append(lbi, apiv1.LoadBalancerIngress{Hostname: ep})
+			lbi = append(lbi, networkingv1.IngressLoadBalancerIngress{Hostname: ep})
 		} else {
-			lbi = append(lbi, apiv1.LoadBalancerIngress{IP: ep})
+			lbi = append(lbi, networkingv1.IngressLoadBalancerIngress{IP: ep})
 		}
 	}
 

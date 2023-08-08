@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
-	apiv1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -66,18 +64,19 @@ func isControllerIngress(options IngressParams, ingress *networkingv1.Ingress) b
 	if !options.ClassNameRequired && ingressClass == "" {
 		return true
 	}
+
 	return ingressClass == options.ClassName
 }
 
-func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *networkingv1.Ingress, status []apiv1.LoadBalancerIngress) (*networkingv1.Ingress, error) {
+func UpdateIngressStatus(kubeClient *kubernetes.Clientset, ing *networkingv1.Ingress, status []networkingv1.IngressLoadBalancerIngress) (*networkingv1.Ingress, error) {
 	ingClient := kubeClient.NetworkingV1().Ingresses(ing.Namespace)
 
-	currIng, err := ingClient.Get(context.TODO(), ing.Name, v1.GetOptions{})
+	currIng, err := ingClient.Get(context.TODO(), ing.Name, metav1.GetOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("unexpected error searching Ingress %v/%v", ing.Namespace, ing.Name))
+		return nil, fmt.Errorf("unexpected error searching Ingress %v/%v: %w", ing.Namespace, ing.Name, err)
 	}
 
 	currIng.Status.LoadBalancer.Ingress = status
 
-	return ingClient.UpdateStatus(context.TODO(), currIng, v1.UpdateOptions{})
+	return ingClient.UpdateStatus(context.TODO(), currIng, metav1.UpdateOptions{})
 }
