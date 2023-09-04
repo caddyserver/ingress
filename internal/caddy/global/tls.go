@@ -30,9 +30,7 @@ func (p TLSPlugin) GlobalHandler(config *converter.Config, store *store.Store) e
 	// Get all Hosts subject to custom TLS certs
 	for _, ing := range store.Ingresses {
 		for _, tlsRule := range ing.Spec.TLS {
-			for _, h := range tlsRule.Hosts {
-				hosts = append(hosts, h)
-			}
+			hosts = append(hosts, tlsRule.Hosts...)
 		}
 	}
 
