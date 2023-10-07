@@ -1,0 +1,13 @@
+/.github
+/bin
+/charts
+/kubernetes
+
+/.gitignore
+/.goreleaser.yaml
+/CONTRIBUTING.md
+/ct.yaml
+/skaffold.yaml
+/README.md
+/Makefile
+/LICENSE.txt
