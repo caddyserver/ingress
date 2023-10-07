@@ -2,6 +2,7 @@ package global
 
 import (
 	"encoding/json"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
@@ -30,7 +31,7 @@ func (p MetricsPlugin) GlobalHandler(config *converter.Config, store *store.Stor
 				"path": caddyconfig.JSON(caddyhttp.MatchPath{"/metrics"}, nil),
 			}},
 		}
-		
+
 		config.GetMetricsServer().Routes = append(config.GetMetricsServer().Routes, metricsRoute)
 	}
 	return nil

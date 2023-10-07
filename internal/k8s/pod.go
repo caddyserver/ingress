@@ -3,8 +3,9 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"github.com/caddyserver/ingress/pkg/store"
 	"os"
+
+	"github.com/caddyserver/ingress/pkg/store"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

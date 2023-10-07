@@ -2,11 +2,12 @@ package global
 
 import (
 	"encoding/json"
+	"reflect"
+	"testing"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"reflect"
-	"testing"
 )
 
 func TestIngressSort(t *testing.T) {

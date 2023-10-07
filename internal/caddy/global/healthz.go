@@ -16,9 +16,9 @@ type HealthzPlugin struct{}
 
 func (p HealthzPlugin) IngressPlugin() converter.PluginInfo {
 	return converter.PluginInfo{
-		Name: "healthz",
+		Name:     "healthz",
 		Priority: -20,
-		New:  func() converter.Plugin { return new(HealthzPlugin) },
+		New:      func() converter.Plugin { return new(HealthzPlugin) },
 	}
 }
 
@@ -37,7 +37,7 @@ func (p HealthzPlugin) GlobalHandler(config *converter.Config, store *store.Stor
 			"path": caddyconfig.JSON(caddyhttp.MatchPath{"/healthz"}, nil),
 		}},
 	}
-	
+
 	config.GetMetricsServer().Routes = append(config.GetMetricsServer().Routes, healthzRoute)
 	return nil
 }

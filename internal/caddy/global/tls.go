@@ -2,6 +2,7 @@ package global
 
 import (
 	"encoding/json"
+
 	"github.com/caddyserver/ingress/internal/controller"
 	"github.com/caddyserver/ingress/pkg/converter"
 	"github.com/caddyserver/ingress/pkg/store"

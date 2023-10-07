@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"k8s.io/api/networking/v1"
+	v1 "k8s.io/api/networking/v1"
 )
 
 // IngressAddedAction provides an implementation of the action interface.
