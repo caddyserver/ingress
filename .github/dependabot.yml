@@ -4,6 +4,19 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    reviewers:
+      - "mavimo"
+      - "mholt"
+    labels:
+      - "dependencies"
+      - "dependabot"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: daily
+    reviewers:
+      - "mavimo"
+      - "mholt"
     labels:
       - "dependencies"
       - "dependabot"
