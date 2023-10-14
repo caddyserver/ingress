@@ -18,10 +18,10 @@ import (
 
 const (
 	// high enough QPS to fit all expected use cases.
-	defaultQPS = 1e6
+	highQPS = 1e6
 
 	// high enough Burst to fit all expected use cases.
-	defaultBurst = 1e6
+	highBurst = 1e6
 )
 
 func createLogger(verbose bool) *zap.SugaredLogger {
@@ -80,9 +80,10 @@ func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, *v
 
 	logger.Infof("Creating API client for %s", cfg.Host)
 
-	cfg.QPS = defaultQPS
-	cfg.Burst = defaultBurst
+	cfg.QPS = highQPS
+	cfg.Burst = highBurst
 	cfg.ContentType = "application/vnd.kubernetes.protobuf"
+
 	client, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, nil, err
