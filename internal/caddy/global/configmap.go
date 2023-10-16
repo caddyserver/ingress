@@ -31,7 +31,7 @@ func (p ConfigMapPlugin) GlobalHandler(config *converter.Config, store *store.St
 	httpServer := config.GetHTTPServer()
 
 	if cfgMap.Debug {
-		config.Logging.Logs = map[string]*caddy2.CustomLog{"default": {Level: "DEBUG"}}
+		config.Logging.Logs = map[string]*caddy2.CustomLog{"default": {BaseLog: caddy2.BaseLog{Level: "DEBUG"}}}
 	}
 
 	if cfgMap.AcmeCA != "" || cfgMap.Email != "" {
