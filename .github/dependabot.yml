@@ -5,6 +5,7 @@ updates:
     schedule:
       interval: daily
     reviewers:
+      - "Embraser01"
       - "mavimo"
       - "mholt"
     labels:
@@ -15,6 +16,7 @@ updates:
     schedule:
       interval: daily
     reviewers:
+      - "Embraser01"
       - "mavimo"
       - "mholt"
     labels:
