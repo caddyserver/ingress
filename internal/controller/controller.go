@@ -239,6 +239,7 @@ func (c *CaddyController) processNextItem() bool {
 }
 
 // handleErrs reports errors received from queue actions.
+//
 //goland:noinspection GoUnusedParameter
 func (c *CaddyController) handleErr(err error, action interface{}) {
 	c.logger.Error(err.Error())

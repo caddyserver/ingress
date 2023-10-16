@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"github.com/caddyserver/ingress/internal/k8s"
 	"io/ioutil"
-	apiv1 "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
+
+	"github.com/caddyserver/ingress/internal/k8s"
+	apiv1 "k8s.io/api/core/v1"
 )
 
 var CertFolder = filepath.FromSlash("/etc/caddy/certs")

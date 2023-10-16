@@ -72,7 +72,6 @@ jobs:
           GORELEASER_CURRENT_TAG: v0.0.1
           GORELEASER_PREVIOUS_TAG: v0.0.0
 
-
       - name: Create kind cluster
         uses: helm/kind-action@v1
 

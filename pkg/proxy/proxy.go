@@ -1,9 +1,10 @@
 package proxy
 
 import (
+	"net"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/pires/go-proxyproto"
-	"net"
 )
 
 var (

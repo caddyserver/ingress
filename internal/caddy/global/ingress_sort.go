@@ -2,11 +2,12 @@ package global
 
 import (
 	"encoding/json"
+	"sort"
+	"strings"
+
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/ingress/pkg/converter"
 	"github.com/caddyserver/ingress/pkg/store"
-	"sort"
-	"strings"
 )
 
 type IngressSortPlugin struct{}

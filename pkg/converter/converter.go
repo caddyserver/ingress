@@ -2,10 +2,11 @@ package converter
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/ingress/pkg/store"
 	v1 "k8s.io/api/networking/v1"
-	"sort"
 )
 
 const (
@@ -15,9 +16,9 @@ const (
 
 // GlobalMiddleware is called with a default caddy config
 // already configured with:
-//	- Secret storage store
-//	- A TLS App (https://caddyserver.com/docs/json/apps/tls/)
-//	- A HTTP App with an HTTP server listening to 80 443 ports (https://caddyserver.com/docs/json/apps/http/)
+//   - Secret storage store
+//   - A TLS App (https://caddyserver.com/docs/json/apps/tls/)
+//   - A HTTP App with an HTTP server listening to 80 443 ports (https://caddyserver.com/docs/json/apps/http/)
 type GlobalMiddleware interface {
 	GlobalHandler(config *Config, store *store.Store) error
 }
@@ -88,9 +89,9 @@ func sortPlugins(plugins []PluginInfo, order []string) []PluginInfo {
 
 // Plugins return a sorted array of plugin instances.
 // Sort is made following these rules:
-//	- Plugins specified in the order slice will always go first (in the order specified in the slice)
-//	- A Plugin with higher priority will go before a plugin with lower priority
-// 	- If 2 plugins have the same priority (and not in order slice), they will be sorted by plugin name
+//   - Plugins specified in the order slice will always go first (in the order specified in the slice)
+//   - A Plugin with higher priority will go before a plugin with lower priority
+//   - If 2 plugins have the same priority (and not in order slice), they will be sorted by plugin name
 func Plugins(order []string) []Plugin {
 	sortedPlugins := make([]PluginInfo, 0, len(plugins))
 	for _, p := range plugins {

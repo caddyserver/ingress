@@ -1,6 +1,11 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/caddyserver/ingress/internal/caddy"
 	"github.com/caddyserver/ingress/internal/controller"
 	"go.uber.org/zap"
@@ -9,10 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 const (
