@@ -90,7 +90,7 @@ helm install ...\
 ```
 
 > You can also specify options 
-> for the on-demand config: `onDemandRateLimitInterval`, `onDemandRateLimitBurst`, and `onDemandAsk`
+> for the on-demand config: `onDemandRateLimitInterval`, `onDemandRateLimitBurst` and `onDemandAsk`
 
 
 ## Bringing Your Own Certificates
