@@ -31,7 +31,7 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 		AddFunc: func(obj interface{}) {
 			ingress, ok := obj.(*networkingv1.Ingress)
 
-			if ok && IsControllerIngress(options, ingress) {
+			if ok && isControllerIngress(options, ingress) {
 				funcs.AddFunc(ingress)
 			}
 		},
@@ -39,14 +39,14 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 			oldIng, ok1 := oldObj.(*networkingv1.Ingress)
 			newIng, ok2 := newObj.(*networkingv1.Ingress)
 
-			if ok1 && ok2 && IsControllerIngress(options, newIng) {
+			if ok1 && ok2 && isControllerIngress(options, newIng) {
 				funcs.UpdateFunc(oldIng, newIng)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			ingress, ok := obj.(*networkingv1.Ingress)
 
-			if ok && IsControllerIngress(options, ingress) {
+			if ok && isControllerIngress(options, ingress) {
 				funcs.DeleteFunc(ingress)
 			}
 		},
@@ -55,8 +55,8 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 	return informer
 }
 
-// IsControllerIngress check if the ingress object can be controlled by us
-func IsControllerIngress(options IngressParams, ingress *networkingv1.Ingress) bool {
+// isControllerIngress check if the ingress object can be controlled by us
+func isControllerIngress(options IngressParams, ingress *networkingv1.Ingress) bool {
 	ingressClass := ingress.Annotations["kubernetes.io/ingress.class"]
 	if ingressClass == "" && ingress.Spec.IngressClassName != nil {
 		ingressClass = *ingress.Spec.IngressClassName
