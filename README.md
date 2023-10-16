@@ -2,8 +2,8 @@
 
 This is the Kubernetes Ingress Controller for Caddy. It includes functionality
 for monitoring `Ingress` resources on a Kubernetes cluster and includes support
-for providing automatic HTTPS certificates for all hostnames defined in the ingress
-resources that it is managing.
+for providing automatic HTTPS certificates for all hostnames defined in the 
+ingress resources that it is managing.
 
 ## Prerequisites
 
