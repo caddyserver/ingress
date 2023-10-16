@@ -2,7 +2,7 @@
 
 This is the Kubernetes Ingress Controller for Caddy. It includes functionality
 for monitoring `Ingress` resources on a Kubernetes cluster and includes support
-for providing automatic HTTPS certificates for all hostnames defined in ingress
+for providing automatic HTTPS certificates for all hostnames defined in the ingress
 resources that it is managing.
 
 ## Prerequisites
@@ -12,8 +12,8 @@ resources that it is managing.
 
 ## Setup
 
-In the `charts` folder a Helm Chart is provided to make installing the Caddy
-Ingress Controller on a Kubernetes cluster straight forward. To install the
+In the `charts` folder, a Helm Chart is provided to make installing the Caddy
+Ingress Controller on a Kubernetes cluster straightforward. To install the
 Caddy Ingress Controller adhere to the following steps:
 
 1. Create a new namespace in your cluster to isolate all Caddy resources.
@@ -90,7 +90,7 @@ helm install ...\
 ```
 
 > You can also specify options 
-> for the on demand config: `onDemandRateLimitInterval`, `onDemandRateLimitBurst` and `onDemandAsk`
+> for the on-demand config: `onDemandRateLimitInterval`, `onDemandRateLimitBurst`, and `onDemandAsk`
 
 
 ## Bringing Your Own Certificates
@@ -135,7 +135,7 @@ spec:
 
 ### Contribution
 
-Learn how to start contribution on the [Contributing Guidline](CONTRIBUTING.md).
+Learn how to start contributing on the [Contributing Guidline](CONTRIBUTING.md).
 
 ## License
 
