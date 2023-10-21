@@ -26,6 +26,7 @@ func (p RedirectPlugin) IngressHandler(input converter.IngressMiddlewareInput) (
 
 	var code string = "301"
 
+	// Logic taken from Caddy's parseRedir builtin function
 	redirectCode := getAnnotation(ing, permanentRedirectCode)
 	if redirectCode != "" {
 		switch redirectCode {
@@ -34,7 +35,7 @@ func (p RedirectPlugin) IngressHandler(input converter.IngressMiddlewareInput) (
 		case "temporary":
 			code = "302"
 		default:
-			codeInt, err := strconv.Atoi(code)
+			codeInt, err := strconv.Atoi(redirectCode)
 			if err != nil {
 				return nil, fmt.Errorf("not a supported redir code type or not valid integer: '%s'", code)
 			}
@@ -43,6 +44,7 @@ func (p RedirectPlugin) IngressHandler(input converter.IngressMiddlewareInput) (
 				return nil, fmt.Errorf("redir code not in the 3xx range or 401: '%v'", codeInt)
 			}
 
+			code = redirectCode
 		}
 	}
 
