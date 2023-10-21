@@ -9,6 +9,8 @@ const (
 	disableSSLRedirect           = "disable-ssl-redirect"
 	backendProtocol              = "backend-protocol"
 	insecureSkipVerify           = "insecure-skip-verify"
+	permanentRedirectAnnotation  = "permanent-redirect"
+	permanentRedirectCode        = "permanent-redirect-code"
 )
 
 func getAnnotation(ing *v1.Ingress, rule string) string {
