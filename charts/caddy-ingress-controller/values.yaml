@@ -42,6 +42,8 @@ ingressController:
 loadBalancer:
   # Deprecated in Kubernetes v1.24
   loadBalancerIP:
+  # Set to 'Local' to maintain the client's IP on inbound connections
+  externalTrafficPolicy:
   annotations:
     # service.beta.kubernetes.io/aws-load-balancer-type:
     # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type:
