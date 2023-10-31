@@ -22,7 +22,7 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@ed43eb303604cbc0eeec8390544f7748dc6c790d
+        uses: helm/chart-releaser-action@d17b1907017ff7c811322eaba531f2bf1edca06d
         with:
           charts_dir: charts
           mark_as_latest: false
