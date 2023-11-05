@@ -10,7 +10,7 @@ RUN go mod download
 COPY . .
 RUN go build -o ./bin/ingress-controller ./cmd/caddy
 
-FROM gcr.io/distroless/static-debian11
+FROM alpine:3.18
 
 EXPOSE 80 443
 
