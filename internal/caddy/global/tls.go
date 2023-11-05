@@ -2,6 +2,7 @@ package global
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/caddyserver/ingress/internal/controller"
 	"github.com/caddyserver/ingress/pkg/converter"
@@ -31,7 +32,9 @@ func (p TLSPlugin) GlobalHandler(config *converter.Config, store *store.Store) e
 	for _, ing := range store.Ingresses {
 		for _, tlsRule := range ing.Spec.TLS {
 			for _, h := range tlsRule.Hosts {
-				hosts = append(hosts, h)
+				if !slices.Contains(hosts, h) {
+					hosts = append(hosts, h)
+				}
 			}
 		}
 	}
