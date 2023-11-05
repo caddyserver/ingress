@@ -1,24 +1,27 @@
-apiVersion: skaffold/v2beta29
+apiVersion: skaffold/v4beta7
 kind: Config
 metadata:
   name: caddy-ingress-controller
 build:
   artifacts:
-    - image: caddy/ingress
+    - image: caddy-ingress
+      context: .
+      docker:
+        dockerfile: Dockerfile.dev
 deploy:
   helm:
     releases:
       - name: caddy-ingress-development
         namespace: caddy-system
         chartPath: charts/caddy-ingress-controller
-        recreatePods: true
-        artifactOverrides:
-          image: caddy/ingress
-        imageStrategy:
-          helm: {}
-  kubectl:
-    manifests:
-      - kubernetes/sample/*.yaml
+        createNamespace: true
+        setValueTemplates:
+          image:
+            repository: "{{ .IMAGE_REPO_NO_DOMAIN_caddy_ingress }}"
+            tag: "{{.IMAGE_TAG_caddy_ingress}}@{{.IMAGE_DIGEST_caddy_ingress}}"
+manifests:
+  rawYaml:
+   - ./kubernetes/sample/*.yaml
 portForward:
   - resourceType: service
     resourceName: caddy-ingress-development-caddy-ingress-controller

@@ -4,6 +4,6 @@ metadata:
   name: caddy-global-options
   namespace: caddy-system
 data:
-  acmeCA: https://acme-staging-v02.api.letsencrypt.org/directory
-  email: test@example.com
-  debug: "false"
+  acmeCA: internal
+  # email: test@example.com
+  # debug: "false"

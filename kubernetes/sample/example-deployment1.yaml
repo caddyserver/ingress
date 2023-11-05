@@ -19,6 +19,6 @@ spec:
         image: hashicorp/http-echo
         args:
         - "-listen=:8080"
-        - "-text=hello world 1"
+        - '-text="hello world 1"'
         ports:
         - containerPort: 8080

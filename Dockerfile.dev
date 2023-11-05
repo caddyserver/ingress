@@ -1,0 +1,19 @@
+FROM golang:1.21 as build
+
+ENV CGO_ENABLED=0
+
+WORKDIR /go/ingress-controller
+
+COPY go.mod go.sum /go/ingress-controller/
+RUN go mod download
+
+COPY . .
+RUN go build -o ./bin/ingress-controller ./cmd/caddy
+
+FROM alpine:3.18
+
+EXPOSE 80 443
+
+COPY --from=build /go/ingress-controller/bin/ingress-controller /ingress-controller
+
+ENTRYPOINT ["/ingress-controller"]
