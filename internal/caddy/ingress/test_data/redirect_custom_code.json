@@ -1,0 +1,13 @@
+{
+  "handle": [
+    {
+      "handler": "static_response",
+      "headers": {
+        "Location": [
+          "http://example.com"
+        ]
+      },
+      "status_code": 308
+    }
+  ]
+}
