@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestConvertToCaddyConfig(t *testing.T) {
+func TestRedirectConvertToCaddyConfig(t *testing.T) {
 	rp := RedirectPlugin{}
 
 	tests := []struct {
@@ -53,24 +53,6 @@ func TestConvertToCaddyConfig(t *testing.T) {
 			},
 		},
 		{
-			name:               "Check permanent redirect with invalid custom redirect code",
-			expectedConfigPath: "",
-			annotations: map[string]string{
-				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
-				"caddy.ingress.kubernetes.io/permanent-redirect-code": "502",
-			},
-			expectedError: "redir code not in the 3xx range or 401: '502'",
-		},
-		{
-			name:               "Check permanent redirect with invalid custom redirect code string",
-			expectedConfigPath: "",
-			annotations: map[string]string{
-				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
-				"caddy.ingress.kubernetes.io/permanent-redirect-code": "randomstring",
-			},
-			expectedError: "not a supported redir code type or not valid integer: 'randomstring'",
-		},
-		{
 			name:               "Check permanent redirect with 401 as redirect code",
 			expectedConfigPath: "test_data/redirect_401.json",
 			annotations: map[string]string{
@@ -91,23 +73,64 @@ func TestConvertToCaddyConfig(t *testing.T) {
 			}
 
 			route, err := rp.IngressHandler(input)
-			if test.expectedError != "" {
-				if assert.Error(t, err) {
-					assert.EqualError(t, err, test.expectedError)
-				}
-			} else {
-				assert.NoError(t, err, "unable to generate the route.")
+			assert.NoError(t, err, "unable to generate the route")
+
+			expectedCfg, err := os.ReadFile(test.expectedConfigPath)
+			assert.NoError(t, err, "unable to find the file for comparison")
+
+			cfgJson, err := json.Marshal(&route)
+			assert.NoError(t, err, "unable to marshal the route to JSON")
+
+			assert.JSONEq(t, string(cfgJson), string(expectedCfg))
+		})
+	}
+}
+
+func TestMisconfiguredRedirectConvertToCaddyConfig(t *testing.T) {
+	rp := RedirectPlugin{}
+
+	tests := []struct {
+		name          string
+		expectedError string
+		annotations   map[string]string
+	}{
+		{
+			name: "Check permanent redirect with invalid custom redirect code",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
+				"caddy.ingress.kubernetes.io/permanent-redirect-code": "502",
+			},
+			expectedError: "redir code not in the 3xx range or 401: '502'",
+		},
+		{
+			name: "Check permanent redirect with invalid custom redirect code string",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
+				"caddy.ingress.kubernetes.io/permanent-redirect-code": "randomstring",
+			},
+			expectedError: "not a supported redir code type or not valid integer: 'randomstring'",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			input := converter.IngressMiddlewareInput{
+				Ingress: &networkingv1.Ingress{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: test.annotations,
+					},
+				},
+				Route: &caddyhttp.Route{},
 			}
 
-			if test.expectedError == "" {
-				expectedCfg, err := os.ReadFile(test.expectedConfigPath)
-				assert.NoError(t, err, "unable to find the file for comparison.")
-
-				cfgJson, err := json.Marshal(&route)
-				assert.NoError(t, err, "unable to marshal the route to JSON.")
-
-				assert.JSONEq(t, string(cfgJson), string(expectedCfg))
+			route, err := rp.IngressHandler(input)
+			if assert.Error(t, err, "expected an error while generating the ingress route") {
+				assert.EqualError(t, err, test.expectedError)
 			}
+
+			cfgJson, err := json.Marshal(&route)
+			assert.NoError(t, err, "unable to marshal the route to JSON")
+
+			assert.JSONEq(t, string(cfgJson), "null")
 		})
 	}
 }
