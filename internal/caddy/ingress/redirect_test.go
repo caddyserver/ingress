@@ -73,13 +73,13 @@ func TestRedirectConvertToCaddyConfig(t *testing.T) {
 			}
 
 			route, err := rp.IngressHandler(input)
-			assert.NoError(t, err, "unable to generate the route")
+			assert.NoError(t, err, "failed to generate ingress route")
 
 			expectedCfg, err := os.ReadFile(test.expectedConfigPath)
-			assert.NoError(t, err, "unable to find the file for comparison")
+			assert.NoError(t, err, "failed to find config file for comparison")
 
 			cfgJson, err := json.Marshal(&route)
-			assert.NoError(t, err, "unable to marshal the route to JSON")
+			assert.NoError(t, err, "failed to marshal route to JSON")
 
 			assert.JSONEq(t, string(cfgJson), string(expectedCfg))
 		})
@@ -128,7 +128,7 @@ func TestMisconfiguredRedirectConvertToCaddyConfig(t *testing.T) {
 			}
 
 			cfgJson, err := json.Marshal(&route)
-			assert.NoError(t, err, "unable to marshal the route to JSON")
+			assert.NoError(t, err, "failed to marshal route to JSON")
 
 			assert.JSONEq(t, string(cfgJson), "null")
 		})
