@@ -62,20 +62,20 @@ docker_manifests:
   # https://goreleaser.com/customization/docker_manifest/
   - name_template: caddy/{{ .ProjectName }}:latest
     image_templates:
-      - caddy/{{ .ProjectName }}:{{ .Version }}-amd64
-      - caddy/{{ .ProjectName }}:{{ .Version }}-arm64v8
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
   - name_template: caddy/{{ .ProjectName }}:{{ .Major }}
     image_templates:
-      - caddy/{{ .ProjectName }}:{{ .Version }}-amd64
-      - caddy/{{ .ProjectName }}:{{ .Version }}-arm64v8
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
   - name_template: caddy/{{ .ProjectName }}:{{ .Major }}.{{ .Minor }}
     image_templates:
-      - caddy/{{ .ProjectName }}:{{ .Version }}-amd64
-      - caddy/{{ .ProjectName }}:{{ .Version }}-arm64v8
-  - name_template: caddy/{{ .ProjectName }}:{{ .Version }}
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
+  - name_template: caddy/{{ .ProjectName }}:{{ .Tag }}
     image_templates:
-      - caddy/{{ .ProjectName }}:{{ .Version }}-amd64
-      - caddy/{{ .ProjectName }}:{{ .Version }}-arm64v8
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
 
 release:
   disable: true
