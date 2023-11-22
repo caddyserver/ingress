@@ -37,11 +37,11 @@ func (p RedirectPlugin) IngressHandler(input converter.IngressMiddlewareInput) (
 		default:
 			codeInt, err := strconv.Atoi(redirectCode)
 			if err != nil {
-				return nil, fmt.Errorf("not a supported redir code type or not valid integer: '%s'", redirectCode)
+				return nil, fmt.Errorf("not a supported redirection code type or not a valid integer: '%s'", redirectCode)
 			}
 
 			if codeInt < 300 || (codeInt > 399 && codeInt != 401) {
-				return nil, fmt.Errorf("redir code not in the 3xx range or 401: '%v'", codeInt)
+				return nil, fmt.Errorf("redirection code not in the 3xx range or 401: '%v'", codeInt)
 			}
 
 			code = redirectCode
