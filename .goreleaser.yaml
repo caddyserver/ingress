@@ -64,11 +64,11 @@ docker_manifests:
     image_templates:
       - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
       - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
-  - name_template: caddy/{{ .ProjectName }}:{{ .Major }}
+  - name_template: caddy/{{ .ProjectName }}:v{{ .Major }}
     image_templates:
       - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
       - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
-  - name_template: caddy/{{ .ProjectName }}:{{ .Major }}.{{ .Minor }}
+  - name_template: caddy/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}
     image_templates:
       - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
       - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
