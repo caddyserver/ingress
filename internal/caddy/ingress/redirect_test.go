@@ -60,6 +60,13 @@ func TestRedirectConvertToCaddyConfig(t *testing.T) {
 				"caddy.ingress.kubernetes.io/permanent-redirect-code": "401",
 			},
 		},
+		{
+			name:               "Check temporary redirect",
+			expectedConfigPath: "test_data/redirect_temporary.json",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/temporal-redirect": "http://example.com",
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -100,7 +107,7 @@ func TestMisconfiguredRedirectConvertToCaddyConfig(t *testing.T) {
 				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
 				"caddy.ingress.kubernetes.io/permanent-redirect-code": "502",
 			},
-			expectedError: "redir code not in the 3xx range or 401: '502'",
+			expectedError: "redirection code not in the 3xx range or 401: '502'",
 		},
 		{
 			name: "Check permanent redirect with invalid custom redirect code string",
@@ -108,7 +115,15 @@ func TestMisconfiguredRedirectConvertToCaddyConfig(t *testing.T) {
 				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
 				"caddy.ingress.kubernetes.io/permanent-redirect-code": "randomstring",
 			},
-			expectedError: "not a supported redir code type or not valid integer: 'randomstring'",
+			expectedError: "not a supported redirection code type or not a valid integer: 'randomstring'",
+		},
+		{
+			name: "Check if both permanent and temporary redirection annotations are set",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/permanent-redirect": "http://example.com",
+				"caddy.ingress.kubernetes.io/temporal-redirect":  "http://example2.com",
+			},
+			expectedError: "cannot use permanent-redirect annotation with temporal-redirect",
 		},
 	}
 	for _, test := range tests {

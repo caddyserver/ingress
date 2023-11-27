@@ -11,6 +11,7 @@ const (
 	insecureSkipVerify              = "insecure-skip-verify"
 	permanentRedirectAnnotation     = "permanent-redirect"
 	permanentRedirectCodeAnnotation = "permanent-redirect-code"
+	temporaryRedirectAnnotation     = "temporal-redirect"
 )
 
 func getAnnotation(ing *v1.Ingress, rule string) string {

@@ -24,31 +24,47 @@ func (p RedirectPlugin) IngressPlugin() converter.PluginInfo {
 func (p RedirectPlugin) IngressHandler(input converter.IngressMiddlewareInput) (*caddyhttp.Route, error) {
 	ing := input.Ingress
 
+	permanentRedir := getAnnotation(ing, permanentRedirectAnnotation)
+	temporaryRedir := getAnnotation(ing, temporaryRedirectAnnotation)
+
 	var code string = "301"
+	var redirectTo string = ""
 
-	// Logic taken from Caddy's parseRedir builtin function
-	redirectCode := getAnnotation(ing, permanentRedirectCodeAnnotation)
-	if redirectCode != "" {
-		switch redirectCode {
-		case "permanent":
-			code = "301"
-		case "temporary":
-			code = "302"
-		default:
-			codeInt, err := strconv.Atoi(redirectCode)
-			if err != nil {
-				return nil, fmt.Errorf("not a supported redirection code type or not a valid integer: '%s'", redirectCode)
-			}
-
-			if codeInt < 300 || (codeInt > 399 && codeInt != 401) {
-				return nil, fmt.Errorf("redirection code not in the 3xx range or 401: '%v'", codeInt)
-			}
-
-			code = redirectCode
-		}
+	// Don't allow both redirect annotations to be set
+	if permanentRedir != "" && temporaryRedir != "" {
+		return nil, fmt.Errorf("cannot use permanent-redirect annotation with temporal-redirect")
 	}
 
-	redirectTo := getAnnotation(ing, permanentRedirectAnnotation)
+	if permanentRedir != "" {
+		// Logic taken from Caddy's parseRedir builtin function
+		redirectCode := getAnnotation(ing, permanentRedirectCodeAnnotation)
+		if redirectCode != "" {
+			switch redirectCode {
+			case "permanent":
+				code = "301"
+			case "temporary":
+				code = "302"
+			default:
+				codeInt, err := strconv.Atoi(redirectCode)
+				if err != nil {
+					return nil, fmt.Errorf("not a supported redirection code type or not a valid integer: '%s'", redirectCode)
+				}
+
+				if codeInt < 300 || (codeInt > 399 && codeInt != 401) {
+					return nil, fmt.Errorf("redirection code not in the 3xx range or 401: '%v'", codeInt)
+				}
+
+				code = redirectCode
+			}
+		}
+		redirectTo = permanentRedir
+	}
+
+	if temporaryRedir != "" {
+		code = "302"
+		redirectTo = temporaryRedir
+	}
+
 	if redirectTo != "" {
 		handler := caddyconfig.JSONModuleObject(
 			caddyhttp.StaticResponse{
