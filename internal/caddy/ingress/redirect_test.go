@@ -29,22 +29,6 @@ func TestRedirectConvertToCaddyConfig(t *testing.T) {
 			},
 		},
 		{
-			name:               "Check permanent redirect with 'permanent' redirect code",
-			expectedConfigPath: "test_data/redirect_permanent.json",
-			annotations: map[string]string{
-				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
-				"caddy.ingress.kubernetes.io/permanent-redirect-code": "permanent",
-			},
-		},
-		{
-			name:               "Check permanent redirect with 'temporary' redirect code",
-			expectedConfigPath: "test_data/redirect_temporary.json",
-			annotations: map[string]string{
-				"caddy.ingress.kubernetes.io/permanent-redirect":      "http://example.com",
-				"caddy.ingress.kubernetes.io/permanent-redirect-code": "temporary",
-			},
-		},
-		{
 			name:               "Check permanent redirect with custom redirect code",
 			expectedConfigPath: "test_data/redirect_custom_code.json",
 			annotations: map[string]string{

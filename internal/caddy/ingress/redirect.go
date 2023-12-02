@@ -36,26 +36,18 @@ func (p RedirectPlugin) IngressHandler(input converter.IngressMiddlewareInput) (
 	}
 
 	if permanentRedir != "" {
-		// Logic taken from Caddy's parseRedir builtin function
 		redirectCode := getAnnotation(ing, permanentRedirectCodeAnnotation)
 		if redirectCode != "" {
-			switch redirectCode {
-			case "permanent":
-				code = "301"
-			case "temporary":
-				code = "302"
-			default:
-				codeInt, err := strconv.Atoi(redirectCode)
-				if err != nil {
-					return nil, fmt.Errorf("not a supported redirection code type or not a valid integer: '%s'", redirectCode)
-				}
-
-				if codeInt < 300 || (codeInt > 399 && codeInt != 401) {
-					return nil, fmt.Errorf("redirection code not in the 3xx range or 401: '%v'", codeInt)
-				}
-
-				code = redirectCode
+			codeInt, err := strconv.Atoi(redirectCode)
+			if err != nil {
+				return nil, fmt.Errorf("not a supported redirection code type or not a valid integer: '%s'", redirectCode)
 			}
+
+			if codeInt < 300 || (codeInt > 399 && codeInt != 401) {
+				return nil, fmt.Errorf("redirection code not in the 3xx range or 401: '%v'", codeInt)
+			}
+
+			code = redirectCode
 		}
 		redirectTo = permanentRedir
 	}
