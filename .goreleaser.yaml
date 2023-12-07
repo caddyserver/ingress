@@ -12,6 +12,7 @@ builds:
     goarch:
       - amd64
       - arm64
+      - s390x
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 dockers:
@@ -58,24 +59,42 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
 
+  - use: buildx
+    goos: linux
+    goarch: s390x
+    dockerfile: ./Dockerfile
+    image_templates:
+      - "caddy/{{ .ProjectName }}:{{ .Tag }}-s390x"
+    build_flag_templates:
+      - "--platform=linux/s390x"
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
 docker_manifests:
   # https://goreleaser.com/customization/docker_manifest/
   - name_template: caddy/{{ .ProjectName }}:latest
     image_templates:
       - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
       - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-s390x
   - name_template: caddy/{{ .ProjectName }}:v{{ .Major }}
     image_templates:
       - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
       - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-s390x
   - name_template: caddy/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}
     image_templates:
       - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
       - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-s390x
   - name_template: caddy/{{ .ProjectName }}:{{ .Tag }}
     image_templates:
       - caddy/{{ .ProjectName }}:{{ .Tag }}-amd64
       - caddy/{{ .ProjectName }}:{{ .Tag }}-arm64v8
+      - caddy/{{ .ProjectName }}:{{ .Tag }}-s390x
 
 release:
   disable: true
