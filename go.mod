@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/caddyserver/caddy/v2 v2.7.6
 	github.com/caddyserver/certmagic v0.20.0
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/mholt/acmez v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pires/go-proxyproto v0.7.0
