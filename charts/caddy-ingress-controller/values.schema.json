@@ -161,6 +161,10 @@
             "onDemandAsk": {
               "$id": "#/properties/ingressController/properties/config/properties/onDemandAsk",
               "type": "string"
+            },
+            "ocspCheckInterval": {
+              "$id": "#/properties/ingressController/properties/config/properties/ocspCheckInterval",
+              "type": "string"
             }
           }
         },
