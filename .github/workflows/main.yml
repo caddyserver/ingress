@@ -22,7 +22,7 @@ jobs:
         run: go test -race -coverprofile=coverage.out -covermode=atomic -v ./...
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
