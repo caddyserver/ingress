@@ -60,7 +60,7 @@ jobs:
           cmd: yq -i '.image.tag = "${{ github.ref_name }}"' 'charts/caddy-ingress-controller/values.yaml'
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           branch: update-charts
           commit-message: Update caddy-ingress charts to ${{ github.ref_name }}
