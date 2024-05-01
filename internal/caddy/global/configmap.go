@@ -8,7 +8,7 @@ import (
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 	"github.com/caddyserver/ingress/pkg/converter"
 	"github.com/caddyserver/ingress/pkg/store"
-	"github.com/mholt/acmez/acme"
+	"github.com/mholt/acmez/v2/acme"
 )
 
 type ConfigMapPlugin struct{}
