@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -61,7 +60,7 @@ func writeFile(s *apiv1.Secret) error {
 		content = append(content, cert...)
 	}
 
-	err := ioutil.WriteFile(filepath.Join(CertFolder, s.Name+".pem"), content, 0644)
+	err := os.WriteFile(filepath.Join(CertFolder, s.Name+".pem"), content, 0644)
 	if err != nil {
 		return err
 	}
