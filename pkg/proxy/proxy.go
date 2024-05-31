@@ -19,6 +19,8 @@ func init() {
 
 // Wrapper provides PROXY protocol support to Caddy by implementing the caddy.ListenerWrapper interface.
 // It must be loaded before the `tls` listener.
+//
+// Deprecated: This caddy module should be replaced by the included proxy_protocol listener in Caddy.
 type Wrapper struct {
 	policy proxyproto.PolicyFunc
 }
