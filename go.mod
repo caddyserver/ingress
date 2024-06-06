@@ -5,10 +5,10 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	github.com/caddyserver/caddy/v2 v2.8.1
-	github.com/caddyserver/certmagic v0.21.2
+	github.com/caddyserver/caddy/v2 v2.8.4
+	github.com/caddyserver/certmagic v0.21.3
 	github.com/google/uuid v1.6.0
-	github.com/mholt/acmez v1.2.0
+	github.com/mholt/acmez/v2 v2.0.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pires/go-proxyproto v0.7.0
 	github.com/stretchr/testify v1.9.0
@@ -81,7 +81,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/mholt/acmez/v2 v2.0.1 // indirect
 	github.com/miekg/dns v1.1.59 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
