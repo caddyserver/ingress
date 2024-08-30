@@ -1,6 +1,4 @@
-{{- if .Values.minikube }}
-# we don't need a loadbalancer for local deployment purposes
-{{ else }}
+{{- if .Values.loadBalancer.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -14,7 +12,9 @@ metadata:
     {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
 spec:
   type: "LoadBalancer"
+  {{- if (semverCompare "<= 1.24-0" .Capabilities.KubeVersion.Version) }}
   loadBalancerIP: {{ .Values.loadBalancer.loadBalancerIP }} #Deprecated in Kubernetes v1.24
+  {{- end }}
   externalTrafficPolicy: {{ .Values.loadBalancer.externalTrafficPolicy }}
   ports:
     - name: http
