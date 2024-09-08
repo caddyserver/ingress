@@ -12,6 +12,7 @@ const (
 	permanentRedirectAnnotation     = "permanent-redirect"
 	permanentRedirectCodeAnnotation = "permanent-redirect-code"
 	temporaryRedirectAnnotation     = "temporal-redirect"
+	trustedProxies                  = "trusted-proxies"
 )
 
 func getAnnotation(ing *v1.Ingress, rule string) string {
