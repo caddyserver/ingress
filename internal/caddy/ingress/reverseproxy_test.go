@@ -28,11 +28,25 @@ func TestTrustedProxesConvertToCaddyConfig(t *testing.T) {
 			expectedConfigPath: "test_data/reverseproxy_trusted_proxies_ipv4.json",
 		},
 		{
+			name: "ipv4 trusted proxies wit subnet",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/trusted-proxies": "192.168.1.0/16,10.0.0.1/8",
+			},
+			expectedConfigPath: "test_data/reverseproxy_trusted_proxies_ipv4_subnet.json",
+		},
+		{
 			name: "ipv6 trusted proxies",
 			annotations: map[string]string{
 				"caddy.ingress.kubernetes.io/trusted-proxies": "2001:db8::1, 2001:db8::5",
 			},
 			expectedConfigPath: "test_data/reverseproxy_trusted_proxies_ipv6.json",
+		},
+		{
+			name: "ipv6 trusted proxies",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/trusted-proxies": "2001:db8::1/36,2001:db8::5/60",
+			},
+			expectedConfigPath: "test_data/reverseproxy_trusted_proxies_ipv6_subnet.json",
 		},
 	}
 
@@ -86,11 +100,39 @@ func TestMisconfiguredTrustedProxiesConvertToCaddyConfig(t *testing.T) {
 			expectedError: `failed to parse IP: "999.999.999.999"`,
 		},
 		{
+			name: "invalid ipv4 with subnet trusted proxy",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/trusted-proxies": "999.999.999.999/32",
+			},
+			expectedError: `failed to parse IP: "999.999.999.999/32"`,
+		},
+		{
+			name: "invalid subnet for ipv4 trusted proxy",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/trusted-proxies": "10.0.0.0/100",
+			},
+			expectedError: `failed to parse IP: "10.0.0.0/100"`,
+		},
+		{
 			name: "invalid ipv6 trusted proxy",
 			annotations: map[string]string{
 				"caddy.ingress.kubernetes.io/trusted-proxies": "2001:db8::g",
 			},
 			expectedError: `failed to parse IP: "2001:db8::g"`,
+		},
+		{
+			name: "invalid ipv6 with subnet trusted proxy",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/trusted-proxies": "2001:db8::g/128",
+			},
+			expectedError: `failed to parse IP: "2001:db8::g/128"`,
+		},
+		{
+			name: "invalid subnet for ipv6 trusted proxy",
+			annotations: map[string]string{
+				"caddy.ingress.kubernetes.io/trusted-proxies": "2001:db8::/200",
+			},
+			expectedError: `failed to parse IP: "2001:db8::/200"`,
 		},
 	}
 

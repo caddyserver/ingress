@@ -1,0 +1,19 @@
+{
+  "handle": [
+    {
+      "handler": "reverse_proxy",
+      "transport": {
+        "protocol": "http"
+      },
+      "trusted_proxies": [
+       "2001:db8::1/36",
+       "2001:db8::5/60"
+      ],
+      "upstreams": [
+        {
+          "dial": "svcName.namespace.svc.cluster.local:80"
+        }
+      ]
+    }
+  ]
+}
