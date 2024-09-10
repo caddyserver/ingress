@@ -229,11 +229,23 @@
             },
             "ipFamilies": {
               "$id": "#/properties/service/properties/ipDualStack/properties/ipFamilies",
-              "type": "array"
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "IPv4",
+                  "IPv6"
+                ]
+              }
             },
             "ipFamilyPolicy": {
               "$id": "#/properties/service/properties/ipDualStack/properties/ipFamilyPolicy",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "SingleStack",
+                "PreferDualStack",
+                "RequireDualStack"
+              ]
             }
           }
         }
