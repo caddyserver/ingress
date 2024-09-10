@@ -2,6 +2,7 @@ package ingress
 
 import (
 	"fmt"
+	"net/netip"
 	"strings"
 
 	"github.com/caddyserver/caddy/v2/caddyconfig"
@@ -26,6 +27,7 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 	path := input.Path
 	ing := input.Ingress
 	backendProtocol := strings.ToLower(getAnnotation(ing, backendProtocol))
+	trustedProxiesAnnotation := strings.ToLower(getAnnotation(ing, trustedProxies))
 
 	// TODO :-
 	// when setting the upstream url we should bypass kube-dns and get the ip address of
@@ -41,11 +43,22 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 		}
 	}
 
+	var err error
+	var parsedProxies []string
+	if trustedProxiesAnnotation != "" {
+		trustedProxies := strings.Split(trustedProxiesAnnotation, ",")
+		parsedProxies, err = parseTrustedProxies(trustedProxies)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	handler := reverseproxy.Handler{
 		TransportRaw: caddyconfig.JSONModuleObject(transport, "protocol", "http", nil),
 		Upstreams: reverseproxy.UpstreamPool{
 			{Dial: clusterHostName},
 		},
+		TrustedProxies: parsedProxies,
 	}
 
 	handlerModule := caddyconfig.JSONModuleObject(
@@ -56,6 +69,28 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 	)
 	input.Route.HandlersRaw = append(input.Route.HandlersRaw, handlerModule)
 	return input.Route, nil
+}
+
+// Copied from https://github.com/caddyserver/caddy/blob/21af88fefc9a8239a024f635f1c6fdd9defd7eb7/modules/caddyhttp/reverseproxy/reverseproxy.go#L270-L286
+func parseTrustedProxies(trustedProxies []string) (parsedProxies []string, err error) {
+	for _, trustedProxy := range trustedProxies {
+		trustedProxy = strings.TrimSpace(trustedProxy)
+		if strings.Contains(trustedProxy, "/") {
+			ipNet, err := netip.ParsePrefix(trustedProxy)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse IP: %q", trustedProxy)
+			}
+			parsedProxies = append(parsedProxies, ipNet.String())
+		} else {
+			ipAddr, err := netip.ParseAddr(trustedProxy)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse IP: %q", trustedProxy)
+			}
+			ipNew := netip.PrefixFrom(ipAddr, ipAddr.BitLen())
+			parsedProxies = append(parsedProxies, ipNew.String())
+		}
+	}
+	return parsedProxies, nil
 }
 
 func init() {
