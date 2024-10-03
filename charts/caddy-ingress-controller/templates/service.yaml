@@ -1,0 +1,35 @@
+{{- if not .Values.loadBalancer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "caddy-ingress-controller.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+{{- if .Values.service.ipDualStack.enabled }}
+  ipFamilies: {{ toYaml .Values.service.ipDualStack.ipFamilies | nindent 4 }}
+  ipFamilyPolicy: {{ .Values.service.ipDualStack.ipFamilyPolicy }}
+{{- end }}
+  internalTrafficPolicy: {{ .Values.service.internalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+{{- if and (eq .Values.service.type "ClusterIP") .Values.service.clusterIP }}
+  clusterIP: "{{ .Values.service.clusterIP }}"
+{{- end }}
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: https
+  selector:
+    {{- include "caddy-ingress-controller.selectorLabels" . | nindent 4 }}
+{{- end }}
