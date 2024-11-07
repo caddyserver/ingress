@@ -40,6 +40,7 @@ ingressController:
     # onDemandAsk:
 
 loadBalancer:
+  enabled: true
   # Deprecated in Kubernetes v1.24
   loadBalancerIP:
   # Set to 'Local' to maintain the client's IP on inbound connections
@@ -50,6 +51,26 @@ loadBalancer:
     # service.beta.kubernetes.io/aws-load-balancer-scheme:
     # service.beta.kubernetes.io/aws-load-balancer-eip-allocations:
     # service.beta.kubernetes.io/aws-load-balancer-subnets:
+
+service:
+  # Set to 'Local' to maintain the client's IP on inbound connections
+  externalTrafficPolicy: Cluster
+  # Enable internal traffic policy for the service
+  internalTrafficPolicy: Cluster
+  annotations: {}
+  # service.beta.kubernetes.io/aws-load-balancer-type:
+  # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type:
+  # service.beta.kubernetes.io/aws-load-balancer-scheme:
+  # service.beta.kubernetes.io/aws-load-balancer-eip-allocations:
+  # service.beta.kubernetes.io/aws-load-balancer-subnets:
+  ## Service type
+  type: ClusterIP
+  ## IP address for type ClusterIP
+  clusterIP: ""
+  ipDualStack:
+    enabled: false
+    ipFamilies: ["IPv6", "IPv4"]
+    ipFamilyPolicy: "PreferDualStack"
 
 serviceAccount:
   # Specifies whether a service account should be created
