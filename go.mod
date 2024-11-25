@@ -11,7 +11,7 @@ require (
 	github.com/mholt/acmez/v2 v2.0.3
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pires/go-proxyproto v0.8.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	gopkg.in/go-playground/pool.v3 v3.1.1
 	k8s.io/api v0.31.3
