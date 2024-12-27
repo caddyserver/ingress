@@ -51,7 +51,8 @@ loadBalancer:
     # service.beta.kubernetes.io/aws-load-balancer-scheme:
     # service.beta.kubernetes.io/aws-load-balancer-eip-allocations:
     # service.beta.kubernetes.io/aws-load-balancer-subnets:
-
+  labels: {}
+  
 service:
   # Set to 'Local' to maintain the client's IP on inbound connections
   externalTrafficPolicy: Cluster
