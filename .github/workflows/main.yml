@@ -15,7 +15,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: 1.23
           check-latest: true
 
       - name: Test
@@ -38,12 +38,12 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.11.1
+          version: v3.16.4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: 1.23
           check-latest: true
 
       - name: Set up QEMU
@@ -53,7 +53,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: 3.12
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.6.1
