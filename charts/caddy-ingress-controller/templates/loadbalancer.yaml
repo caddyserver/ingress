@@ -10,6 +10,9 @@ metadata:
   {{- end }}
   labels:
     {{- include "caddy-ingress-controller.labels" . | nindent 4 }}
+    {{- with .Values.loadBalancer.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   type: "LoadBalancer"
   {{- if (semverCompare "<= 1.24.0" .Capabilities.KubeVersion.Version) }}

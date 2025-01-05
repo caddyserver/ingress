@@ -68,6 +68,33 @@
       "$id": "#/properties/fullnameOverride",
       "type": "string"
     },
+    "loadBalancer": {
+      "$id": "#/properties/loadBalancer",
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "$id": "#/properties/loadBalancer/properties/enabled",
+          "type": "boolean"
+        },
+        "annotations": {
+          "$id": "#/properties/loadBalancer/properties/annotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "$id": "#/properties/loadBalancer/properties/labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "ingressController": {
       "$id": "#/properties/ingressController",
       "type": "object",
