@@ -45,7 +45,7 @@ loadBalancer:
   loadBalancerIP:
   # Set to 'Local' to maintain the client's IP on inbound connections
   externalTrafficPolicy:
-  annotations:
+  annotations: {}
     # service.beta.kubernetes.io/aws-load-balancer-type:
     # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type:
     # service.beta.kubernetes.io/aws-load-balancer-scheme:
