@@ -177,14 +177,6 @@
               "$id": "#/properties/ingressController/properties/config/properties/onDemandTLS",
               "type": "boolean"
             },
-            "onDemandRateLimitInterval": {
-              "$id": "#/properties/ingressController/properties/config/properties/onDemandRateLimitInterval",
-              "type": "string"
-            },
-            "onDemandRateLimitBurst": {
-              "$id": "#/properties/ingressController/properties/config/properties/onDemandRateLimitBurst",
-              "type": "number"
-            },
             "onDemandAsk": {
               "$id": "#/properties/ingressController/properties/config/properties/onDemandAsk",
               "type": "string"

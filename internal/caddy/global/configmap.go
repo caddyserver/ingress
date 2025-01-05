@@ -8,7 +8,7 @@ import (
 	"github.com/caddyserver/caddy/v2/modules/caddytls"
 	"github.com/caddyserver/ingress/pkg/converter"
 	"github.com/caddyserver/ingress/pkg/store"
-	"github.com/mholt/acmez/v2/acme"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 type ConfigMapPlugin struct{}
@@ -55,10 +55,6 @@ func (p ConfigMapPlugin) GlobalHandler(config *converter.Config, store *store.St
 		var onDemandConfig *caddytls.OnDemandConfig
 		if cfgMap.OnDemandTLS {
 			onDemandConfig = &caddytls.OnDemandConfig{
-				RateLimit: &caddytls.RateLimit{
-					Interval: cfgMap.OnDemandRateLimitInterval,
-					Burst:    cfgMap.OnDemandRateLimitBurst,
-				},
 				Ask: cfgMap.OnDemandAsk,
 			}
 		}

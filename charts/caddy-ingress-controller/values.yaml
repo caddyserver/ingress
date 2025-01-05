@@ -35,8 +35,6 @@ ingressController:
     proxyProtocol: false
     experimentalSmartSort: false
     onDemandTLS: false
-    # onDemandRateLimitInterval:
-    # onDemandRateLimitBurst:
     # onDemandAsk:
 
 loadBalancer:
