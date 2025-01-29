@@ -20,3 +20,10 @@ updates:
     labels:
       - "dependencies"
       - "dependabot"
+    groups:
+      kubernetes-dependencies:
+        patterns:
+          - "k8s.io/api"
+          - "k8s.io/apimachinery"
+          - "k8s.io/client-go"
+          - "k8s.io/component-base"
