@@ -7,7 +7,6 @@ updates:
     reviewers:
       - "Embraser01"
       - "mavimo"
-      - "mholt"
     labels:
       - "dependencies"
       - "dependabot"
@@ -18,7 +17,6 @@ updates:
     reviewers:
       - "Embraser01"
       - "mavimo"
-      - "mholt"
     labels:
       - "dependencies"
       - "dependabot"
