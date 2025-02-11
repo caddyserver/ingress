@@ -12,19 +12,17 @@ import (
 
 // ConfigMapOptions represents global options set through a configmap
 type ConfigMapOptions struct {
-	Debug                     bool           `json:"debug,omitempty"`
-	AcmeCA                    string         `json:"acmeCA,omitempty"`
-	AcmeEABKeyId              string         `json:"acmeEABKeyId,omitempty"`
-	AcmeEABMacKey             string         `json:"acmeEABMacKey,omitempty"`
-	Email                     string         `json:"email,omitempty"`
-	ExperimentalSmartSort     bool           `json:"experimentalSmartSort,omitempty"`
-	ProxyProtocol             bool           `json:"proxyProtocol,omitempty"`
-	Metrics                   bool           `json:"metrics,omitempty"`
-	OnDemandTLS               bool           `json:"onDemandTLS,omitempty"`
-	OnDemandRateLimitInterval caddy.Duration `json:"onDemandRateLimitInterval,omitempty"`
-	OnDemandRateLimitBurst    int            `json:"onDemandRateLimitBurst,omitempty"`
-	OnDemandAsk               string         `json:"onDemandAsk,omitempty"`
-	OCSPCheckInterval         caddy.Duration `json:"ocspCheckInterval,omitempty"`
+	Debug                 bool           `json:"debug,omitempty"`
+	AcmeCA                string         `json:"acmeCA,omitempty"`
+	AcmeEABKeyId          string         `json:"acmeEABKeyId,omitempty"`
+	AcmeEABMacKey         string         `json:"acmeEABMacKey,omitempty"`
+	Email                 string         `json:"email,omitempty"`
+	ExperimentalSmartSort bool           `json:"experimentalSmartSort,omitempty"`
+	ProxyProtocol         bool           `json:"proxyProtocol,omitempty"`
+	Metrics               bool           `json:"metrics,omitempty"`
+	OnDemandTLS           bool           `json:"onDemandTLS,omitempty"`
+	OnDemandAsk           string         `json:"onDemandAsk,omitempty"`
+	OCSPCheckInterval     caddy.Duration `json:"ocspCheckInterval,omitempty"`
 }
 
 func stringToCaddyDurationHookFunc() mapstructure.DecodeHookFunc {
