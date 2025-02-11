@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.4
 
 require (
-	github.com/caddyserver/caddy/v2 v2.9.0
+	github.com/caddyserver/caddy/v2 v2.9.1
 	github.com/caddyserver/certmagic v0.21.7
 	github.com/google/uuid v1.6.0
 	github.com/mholt/acmez/v3 v3.0.1
