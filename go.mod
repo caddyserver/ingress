@@ -4,9 +4,9 @@ go 1.24.0
 
 require (
 	github.com/caddyserver/caddy/v2 v2.9.1
-	github.com/caddyserver/certmagic v0.22.0
+	github.com/caddyserver/certmagic v0.22.1
 	github.com/google/uuid v1.6.0
-	github.com/mholt/acmez/v3 v3.1.0
+	github.com/mholt/acmez/v3 v3.1.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pires/go-proxyproto v0.8.0
 	github.com/stretchr/testify v1.10.0
