@@ -81,8 +81,8 @@ github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBT
 github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23/go.mod h1:bbYlZJ7hK1yFx9hf58LP0zeX7UjIGs20ufpu3evjr+s=
 github.com/caddyserver/caddy/v2 v2.9.1 h1:OEYiZ7DbCzAWVb6TNEkjRcSCRGHVoZsJinoDR/n9oaY=
 github.com/caddyserver/caddy/v2 v2.9.1/go.mod h1:ImUELya2el1FDVp3ahnSO2iH1or1aHxlQEQxd/spP68=
-github.com/caddyserver/certmagic v0.22.0 h1:hi2skv2jouUw9uQUEyYSTTmqPZPHgf61dOANSIVCLOw=
-github.com/caddyserver/certmagic v0.22.0/go.mod h1:Vc0msarAPhOagbDc/SU6M2zbzdwVuZ0lkTh2EqtH4vs=
+github.com/caddyserver/certmagic v0.22.2 h1:qzZURXlrxwR5m25/jpvVeEyJHeJJMvAwe5zlMufOTQk=
+github.com/caddyserver/certmagic v0.22.2/go.mod h1:hbqE7BnkjhX5IJiFslPmrSeobSeZvI6ux8tyxhsd6qs=
 github.com/caddyserver/zerossl v0.1.3 h1:onS+pxp3M8HnHpN5MMbOMyNjmTheJyWRaZYwn+YTAyA=
 github.com/caddyserver/zerossl v0.1.3/go.mod h1:CxA0acn7oEGO6//4rtrRjYgEoa4MFw/XofZnrYwGqG4=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
