@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/caddyserver/caddy/v2"
@@ -52,10 +53,10 @@ type Informer struct {
 
 // InformerFactory contains shared informer factory
 // We need to type of factory:
-// - One used to watch resources in the Pod namespaces (caddy config, secrets...)
+// - One used to watch ConfigMap and Secret resources
 // - Another one for Ingress resources in the selected namespace
 type InformerFactory struct {
-	PodNamespace     informers.SharedInformerFactory
+	ConfigNamespace  informers.SharedInformerFactory
 	WatchedNamespace informers.SharedInformerFactory
 }
 
@@ -105,16 +106,25 @@ func NewCaddyController(
 		factories:  &InformerFactory{},
 	}
 
-	podInfo, err := k8s.GetPodDetails(kubeClient)
+	podInfo, err := k8s.GetPodDetails(logger, kubeClient)
 	if err != nil {
 		logger.Fatalf("Unexpected error obtaining pod information: %v", err)
 	}
 
+	var configNamespace, configMapName string
+	if parts := strings.SplitN(opts.ConfigMapName, "/", 2); len(parts) == 2 {
+		configNamespace, configMapName = parts[0], parts[1]
+	} else if podInfo != nil {
+		configNamespace, configMapName = podInfo.Namespace, opts.ConfigMapName
+	} else {
+		logger.Fatalf("Must set a namespace for -config-map when running outside a cluster: %s", opts.ConfigMapName)
+	}
+
 	// Create informer factories
-	controller.factories.PodNamespace = informers.NewSharedInformerFactoryWithOptions(
+	controller.factories.ConfigNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
 		resourcesSyncInterval,
-		informers.WithNamespace(podInfo.Namespace),
+		informers.WithNamespace(configNamespace),
 	)
 	controller.factories.WatchedNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
@@ -136,9 +146,9 @@ func NewCaddyController(
 
 	// Watch Configmap in the pod's namespace for global options
 	cmOptionsParams := k8s.ConfigMapParams{
-		Namespace:       podInfo.Namespace,
-		InformerFactory: controller.factories.PodNamespace,
-		ConfigMapName:   opts.ConfigMapName,
+		Namespace:       configNamespace,
+		InformerFactory: controller.factories.ConfigNamespace,
+		ConfigMapName:   configMapName,
 	}
 	controller.informers.ConfigMap = k8s.WatchConfigMaps(cmOptionsParams, k8s.ConfigMapHandlers{
 		AddFunc:    controller.onConfigMapAdded,
@@ -147,7 +157,7 @@ func NewCaddyController(
 	})
 
 	// Create resource store
-	controller.resourceStore = store.NewStore(opts, podInfo)
+	controller.resourceStore = store.NewStore(opts, configNamespace, podInfo)
 
 	return controller
 }

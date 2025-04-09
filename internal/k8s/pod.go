@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/caddyserver/ingress/pkg/store"
+	"go.uber.org/zap"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,11 @@ import (
 // ingress controller is running on.
 func GetAddresses(p *store.PodInfo, kubeClient *kubernetes.Clientset) ([]string, error) {
 	var addrs []string
+
+	// If not running inside a cluster, we currently don't report any addresses
+	if p == nil {
+		return addrs, nil
+	}
 
 	// Get services that may select this pod
 	svcs, err := kubeClient.CoreV1().Services(p.Namespace).List(context.TODO(), metav1.ListOptions{})
@@ -78,9 +84,14 @@ func GetAddressFromService(service *apiv1.Service) string {
 
 // GetPodDetails returns runtime information about the pod:
 // name, namespace and IP of the node where it is running
-func GetPodDetails(kubeClient *kubernetes.Clientset) (*store.PodInfo, error) {
+func GetPodDetails(logger *zap.SugaredLogger, kubeClient *kubernetes.Clientset) (*store.PodInfo, error) {
 	podName := os.Getenv("POD_NAME")
 	podNs := os.Getenv("POD_NAMESPACE")
+
+	if podName == "" && podNs == "" {
+		logger.Warn("POD_NAME and POD_NAMESPACE are not set, assuming the controller is running outside a cluster")
+		return nil, nil
+	}
 
 	if podName == "" || podNs == "" {
 		return nil, fmt.Errorf("unable to get POD information (missing POD_NAME or POD_NAMESPACE environment variable")
