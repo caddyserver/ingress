@@ -8,7 +8,21 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 )
 
-var CertFolder = filepath.FromSlash("/etc/caddy/certs")
+var certFolder = ""
+
+// GetCertFolder returns the staging path for storing certificates as files.
+func GetCertFolder() string {
+	if certFolder == "" {
+		// Use the systemd cache directory if possible.
+		runtimeDir := os.Getenv("RUNTIME_DIRECTORY")
+		if runtimeDir != "" {
+			certFolder = filepath.Join(runtimeDir, "certs")
+		} else {
+			certFolder = filepath.FromSlash("/etc/caddy/certs")
+		}
+	}
+	return certFolder
+}
 
 // SecretAddedAction provides an implementation of the action interface.
 type SecretAddedAction struct {
@@ -60,7 +74,7 @@ func writeFile(s *apiv1.Secret) error {
 		content = append(content, cert...)
 	}
 
-	err := os.WriteFile(filepath.Join(CertFolder, s.Name+".pem"), content, 0644)
+	err := os.WriteFile(filepath.Join(GetCertFolder(), s.Name+".pem"), content, 0644)
 	if err != nil {
 		return err
 	}
@@ -80,13 +94,17 @@ func (r SecretUpdatedAction) handle(c *CaddyController) error {
 
 func (r SecretDeletedAction) handle(c *CaddyController) error {
 	c.logger.Infof("TLS secret deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
-	return os.Remove(filepath.Join(CertFolder, r.resource.Name+".pem"))
+	return os.Remove(filepath.Join(GetCertFolder(), r.resource.Name+".pem"))
 }
 
 // watchTLSSecrets Start listening to TLS secrets if at least one ingress needs it.
 // It will sync the CertFolder with TLS secrets
 func (c *CaddyController) watchTLSSecrets() error {
 	if c.informers.TLSSecret == nil && c.resourceStore.HasManagedTLS() {
+		if err := os.MkdirAll(GetCertFolder(), 0755); err != nil && !os.IsExist(err) {
+			return err
+		}
+
 		// Init informers
 		params := k8s.TLSSecretParams{
 			InformerFactory: c.factories.WatchedNamespace,
@@ -104,13 +122,6 @@ func (c *CaddyController) watchTLSSecrets() error {
 		secrets, err := k8s.ListTLSSecrets(params, c.resourceStore.Ingresses)
 		if err != nil {
 			return err
-		}
-
-		if _, err := os.Stat(CertFolder); os.IsNotExist(err) {
-			err = os.MkdirAll(CertFolder, 0755)
-			if err != nil {
-				return err
-			}
 		}
 
 		for _, secret := range secrets {
