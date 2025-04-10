@@ -24,13 +24,13 @@ func TestConvertToCaddyConfig(t *testing.T) {
 			cfg, err := Converter{}.ConvertToCaddyConfig(store.NewStore(store.Options{}, &store.PodInfo{}))
 			require.NoError(t, err)
 
-			cfgJson, err := json.Marshal(cfg)
+			cfgJSON, err := json.Marshal(cfg)
 			require.NoError(t, err)
 
 			expectedCfg, err := os.ReadFile(test.expectedConfigPath)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expectedCfg), string(cfgJson))
+			require.JSONEq(t, string(expectedCfg), string(cfgJSON))
 		})
 	}
 }

@@ -47,7 +47,7 @@ func cleanKey(key string, prefix string) string {
 // SecretStorage facilitates storing certificates retrieved by certmagic in kubernetes secrets.
 type SecretStorage struct {
 	Namespace string
-	LeaseId   string
+	LeaseID   string
 
 	kubeClient *kubernetes.Clientset
 	logger     *zap.Logger
@@ -72,8 +72,8 @@ func (s *SecretStorage) Provision(ctx caddy.Context) error {
 
 	s.logger = ctx.Logger(s)
 	s.kubeClient = clientset
-	if s.LeaseId == "" {
-		s.LeaseId = uuid.New().String()
+	if s.LeaseID == "" {
+		s.LeaseID = uuid.New().String()
 	}
 	return nil
 }
@@ -236,7 +236,7 @@ func (s *SecretStorage) tryAcquireOrRenew(ctx context.Context, key string, shoul
 		},
 		Client: s.kubeClient.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: s.LeaseId,
+			Identity: s.LeaseID,
 		},
 	}
 

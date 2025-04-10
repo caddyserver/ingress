@@ -76,10 +76,10 @@ func TestTrustedProxesConvertToCaddyConfig(t *testing.T) {
 			expectedCfg, err := os.ReadFile(test.expectedConfigPath)
 			require.NoError(t, err)
 
-			cfgJson, err := json.Marshal(&route)
+			cfgJSON, err := json.Marshal(&route)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expectedCfg), string(cfgJson))
+			require.JSONEq(t, string(expectedCfg), string(cfgJSON))
 		})
 	}
 }
@@ -159,10 +159,10 @@ func TestMisconfiguredTrustedProxiesConvertToCaddyConfig(t *testing.T) {
 			route, err := rpp.IngressHandler(input)
 			require.EqualError(t, err, test.expectedError)
 
-			cfgJson, err := json.Marshal(&route)
+			cfgJSON, err := json.Marshal(&route)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(cfgJson), "null")
+			require.JSONEq(t, string(cfgJSON), "null")
 		})
 	}
 }

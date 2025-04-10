@@ -14,7 +14,7 @@ import (
 type ConfigMapOptions struct {
 	Debug                 bool           `json:"debug,omitempty"`
 	AcmeCA                string         `json:"acmeCA,omitempty"`
-	AcmeEABKeyId          string         `json:"acmeEABKeyId,omitempty"`
+	AcmeEABKeyID          string         `json:"acmeEABKeyId,omitempty"`
 	AcmeEABMacKey         string         `json:"acmeEABMacKey,omitempty"`
 	Email                 string         `json:"email,omitempty"`
 	ExperimentalSmartSort bool           `json:"experimentalSmartSort,omitempty"`

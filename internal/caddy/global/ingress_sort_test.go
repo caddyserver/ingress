@@ -93,12 +93,12 @@ func TestIngressSort(t *testing.T) {
 
 			var got []int
 			for i := range test.expect {
-				var currentId int
-				err := json.Unmarshal(routes[i].MatcherSetsRaw[0]["id"], &currentId)
+				var currentID int
+				err := json.Unmarshal(routes[i].MatcherSetsRaw[0]["id"], &currentID)
 				if err != nil {
 					t.Fatalf("error unmarshaling id for i %v, %v", i, err)
 				}
-				got = append(got, currentId)
+				got = append(got, currentID)
 			}
 
 			if !reflect.DeepEqual(test.expect, got) {

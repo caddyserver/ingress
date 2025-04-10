@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	HttpServer    = "ingress_server"
+	HTTPServer    = "ingress_server"
 	MetricsServer = "metrics_server"
 )
 
