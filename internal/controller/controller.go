@@ -72,7 +72,7 @@ type CaddyController struct {
 	logger *zap.SugaredLogger
 
 	// main queue syncing ingresses, configmaps, ... with caddy
-	syncQueue workqueue.RateLimitingInterface
+	syncQueue workqueue.TypedRateLimitingInterface[Action]
 
 	// informer factories
 	factories *InformerFactory
@@ -100,7 +100,7 @@ func NewCaddyController(
 		kubeClient: kubeClient,
 		converter:  converter,
 		stopChan:   stopChan,
-		syncQueue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		syncQueue:  workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[Action]()),
 		informers:  &Informer{},
 		factories:  &InformerFactory{},
 	}
@@ -223,7 +223,7 @@ func (c *CaddyController) processNextItem() bool {
 	defer c.syncQueue.Done(action)
 
 	// Invoke the method containing the business logic
-	err := action.(Action).handle(c)
+	err := action.handle(c)
 	if err != nil {
 		c.handleErr(err, action)
 		return true
