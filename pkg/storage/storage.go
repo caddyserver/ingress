@@ -36,7 +36,7 @@ var matchLabels = map[string]string{
 }
 
 // specialChars is a regex that matches all special characters except '-'.
-var specialChars = regexp.MustCompile("[^\\da-zA-Z-]+")
+var specialChars = regexp.MustCompile(`[^\da-zA-Z-]+`)
 
 // cleanKey strips all special characters that are not supported by kubernetes names and converts them to a '.'.
 // sequences like '.*.' are also converted to a single '.'.
