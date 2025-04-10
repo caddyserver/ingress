@@ -60,7 +60,7 @@ type InformerFactory struct {
 }
 
 type Converter interface {
-	ConvertToCaddyConfig(store *store.Store) (interface{}, error)
+	ConvertToCaddyConfig(store *store.Store) (any, error)
 }
 
 // CaddyController represents a caddy ingress controller.
@@ -241,7 +241,7 @@ func (c *CaddyController) processNextItem() bool {
 // handleErrs reports errors received from queue actions.
 //
 //goland:noinspection GoUnusedParameter
-func (c *CaddyController) handleErr(err error, action interface{}) {
+func (c *CaddyController) handleErr(err error, action any) {
 	c.logger.Error(err.Error())
 }
 

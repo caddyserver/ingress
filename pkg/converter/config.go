@@ -20,10 +20,10 @@ type Storage struct {
 
 // Config represents a caddy2 config file.
 type Config struct {
-	Admin   caddy.AdminConfig      `json:"admin,omitempty"`
-	Storage Storage                `json:"storage"`
-	Apps    map[string]interface{} `json:"apps"`
-	Logging caddy.Logging          `json:"logging"`
+	Admin   caddy.AdminConfig `json:"admin,omitempty"`
+	Storage Storage           `json:"storage"`
+	Apps    map[string]any    `json:"apps"`
+	Logging caddy.Logging     `json:"logging"`
 }
 
 func (c Config) GetHTTPServer() *caddyhttp.Server {
@@ -41,7 +41,7 @@ func (c Config) GetTLSApp() *caddytls.TLS {
 func NewConfig() *Config {
 	return &Config{
 		Logging: caddy.Logging{},
-		Apps: map[string]interface{}{
+		Apps: map[string]any{
 			"tls": &caddytls.TLS{CertificatesRaw: caddy.ModuleMap{}},
 			"http": &caddyhttp.App{
 				Servers: map[string]*caddyhttp.Server{
