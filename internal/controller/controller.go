@@ -46,9 +46,11 @@ type Action interface {
 
 // Informer defines the required SharedIndexInformers that interact with the API server.
 type Informer struct {
-	ConfigMap cache.SharedIndexInformer
-	Ingress   cache.SharedIndexInformer
-	Secret    cache.SharedIndexInformer
+	ConfigMap     cache.SharedIndexInformer
+	Ingress       cache.SharedIndexInformer
+	Service       cache.SharedIndexInformer
+	EndpointSlice cache.SharedIndexInformer
+	Secret        cache.SharedIndexInformer
 }
 
 // InformerFactory contains shared informer factory
@@ -134,17 +136,10 @@ func NewCaddyController(
 	)
 
 	// Create informers
-	controller.informers.ConfigMap = controller.factories.ConfigNamespace.Core().V1().ConfigMaps().Informer()
-	controller.informers.ConfigMap.SetTransform(controller.configMapTransform)
-
-	controller.informers.Ingress = controller.factories.WatchedNamespace.Networking().V1().Ingresses().Informer()
-	controller.informers.Ingress.SetTransform(controller.ingressTransform)
-	controller.informers.Secret = controller.factories.WatchedNamespace.Core().V1().Secrets().Informer()
-	controller.informers.Secret.SetTransform(controller.secretTransform)
-
-	// Add watchers
 	controller.watchConfigMap()
 	controller.watchIngresses()
+	controller.watchServices()
+	controller.watchEndpointSlices()
 	controller.watchSecrets()
 
 	// Create resource store
@@ -155,6 +150,8 @@ func NewCaddyController(
 		configNamespace,
 		podInfo,
 		controller.informers.Ingress.GetIndexer(),
+		controller.informers.Service.GetIndexer(),
+		controller.informers.EndpointSlice.GetIndexer(),
 		controller.informers.Secret.GetIndexer(),
 	)
 	if err != nil {

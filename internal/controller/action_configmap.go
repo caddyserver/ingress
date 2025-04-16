@@ -42,6 +42,8 @@ func (c *CaddyController) isOurConfigMap(obj *v1.ConfigMap) bool {
 
 // watchConfigMap installs event handlers for the ConfigMap containing global options
 func (c *CaddyController) watchConfigMap() {
+	c.informers.ConfigMap = c.factories.ConfigNamespace.Core().V1().ConfigMaps().Informer()
+	c.informers.ConfigMap.SetTransform(c.configMapTransform)
 	c.informers.ConfigMap.AddEventHandler(&QueuedEventHandlers[v1.ConfigMap]{
 		Queue:      c.syncQueue,
 		FilterFunc: c.isOurConfigMap,

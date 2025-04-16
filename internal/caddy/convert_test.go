@@ -7,7 +7,6 @@ import (
 
 	"github.com/caddyserver/ingress/pkg/store"
 	"github.com/stretchr/testify/require"
-	"k8s.io/client-go/tools/cache"
 )
 
 func TestConvertToCaddyConfig(t *testing.T) {
@@ -22,9 +21,7 @@ func TestConvertToCaddyConfig(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ingressCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
-			secretCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
-			store, err := store.NewStore(nil, nil, store.Options{}, "", &store.PodInfo{}, ingressCache, secretCache)
+			store, err := store.NewStore(nil, nil, store.Options{}, "", &store.PodInfo{}, nil, nil, nil, nil)
 			require.NoError(t, err)
 
 			cfg, err := Converter{}.ConvertToCaddyConfig(store)
