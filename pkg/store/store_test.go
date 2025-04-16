@@ -5,7 +5,7 @@ import (
 
 	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	typev1 "k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/cache"
 )
 
 func TestStoreIngresses(t *testing.T) {
@@ -84,19 +84,20 @@ func TestStoreIngresses(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s := NewStore(Options{}, "", &PodInfo{})
+			ingressCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+			s, _ := NewStore(Options{}, "", &PodInfo{}, ingressCache)
 			for _, uid := range test.addIngresses {
 				i := createIngress(uid)
-				s.AddIngress(&i)
+				ingressCache.Add(&i)
 			}
 
 			for _, uid := range test.removeIngresses {
 				i := createIngress(uid)
-				s.PluckIngress(&i)
+				ingressCache.Delete(&i)
 			}
 
-			if test.expectCount != len(s.Ingresses) {
-				t.Errorf("Number of ingresses do not match expectation in %s: got %v, expected %v", test.name, len(s.Ingresses), test.expectCount)
+			if test.expectCount != len(s.Ingresses()) {
+				t.Errorf("Number of ingresses do not match expectation in %s: got %v, expected %v", test.name, len(s.Ingresses()), test.expectCount)
 			}
 		})
 	}
@@ -164,9 +165,10 @@ func TestStoreReturnIfHasManagedTLS(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s := NewStore(Options{}, "", &PodInfo{})
+			ingressCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+			s, _ := NewStore(Options{}, "", &PodInfo{}, ingressCache)
 			for _, i := range test.ingresses {
-				s.AddIngress(&i)
+				ingressCache.Add(&i)
 			}
 
 			if test.expect != s.HasManagedTLS() {
@@ -176,8 +178,8 @@ func TestStoreReturnIfHasManagedTLS(t *testing.T) {
 	}
 }
 
-func createIngressTLS(uid string, hosts []string, secret string) v1.Ingress {
-	i := createIngress(uid)
+func createIngressTLS(name string, hosts []string, secret string) v1.Ingress {
+	i := createIngress(name)
 
 	i.Spec = v1.IngressSpec{
 		TLS: []v1.IngressTLS{
@@ -191,10 +193,10 @@ func createIngressTLS(uid string, hosts []string, secret string) v1.Ingress {
 	return i
 }
 
-func createIngress(uid string) v1.Ingress {
+func createIngress(name string) v1.Ingress {
 	return v1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			UID: typev1.UID(uid),
+			Name: name,
 		},
 	}
 }
