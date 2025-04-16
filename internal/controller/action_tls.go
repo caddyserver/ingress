@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caddyserver/ingress/internal/k8s"
 	apiv1 "k8s.io/api/core/v1"
 )
 
@@ -24,46 +23,22 @@ func GetCertFolder() string {
 	return certFolder
 }
 
-// SecretAddedAction provides an implementation of the action interface.
-type SecretAddedAction struct {
-	resource *apiv1.Secret
-}
-
-// SecretUpdatedAction provides an implementation of the action interface.
-type SecretUpdatedAction struct {
-	resource    *apiv1.Secret
-	oldResource *apiv1.Secret
-}
-
-// SecretDeletedAction provides an implementation of the action interface.
-type SecretDeletedAction struct {
-	resource *apiv1.Secret
-}
-
 // onSecretAdded runs when a TLS secret resource is added to the cluster.
-func (c *CaddyController) onSecretAdded(obj *apiv1.Secret) {
-	if k8s.IsManagedTLSSecret(obj, c.resourceStore.Ingresses) {
-		c.syncQueue.Add(SecretAddedAction{
-			resource: obj,
-		})
-	}
+func (c *CaddyController) onSecretAdded(obj *apiv1.Secret) error {
+	c.logger.Infof("TLS secret created (%s/%s)", obj.Namespace, obj.Name)
+	return writeFile(obj)
 }
 
 // onSecretUpdated is run when a TLS secret resource is updated in the cluster.
-func (c *CaddyController) onSecretUpdated(old *apiv1.Secret, new *apiv1.Secret) {
-	if k8s.IsManagedTLSSecret(new, c.resourceStore.Ingresses) {
-		c.syncQueue.Add(SecretUpdatedAction{
-			resource:    new,
-			oldResource: old,
-		})
-	}
+func (c *CaddyController) onSecretUpdated(obj *apiv1.Secret) error {
+	c.logger.Infof("TLS secret updated (%s/%s)", obj.Namespace, obj.Name)
+	return writeFile(obj)
 }
 
 // onSecretDeleted is run when a TLS secret resource is deleted from the cluster.
-func (c *CaddyController) onSecretDeleted(obj *apiv1.Secret) {
-	c.syncQueue.Add(SecretDeletedAction{
-		resource: obj,
-	})
+func (c *CaddyController) onSecretDeleted(obj *apiv1.Secret) error {
+	c.logger.Infof("TLS secret deleted (%s/%s)", obj.Namespace, obj.Name)
+	return os.Remove(filepath.Join(GetCertFolder(), obj.Name+".pem"))
 }
 
 // writeFile writes a secret to a .pem file on disk.
@@ -82,52 +57,41 @@ func writeFile(s *apiv1.Secret) error {
 	return nil
 }
 
-func (r SecretAddedAction) handle(c *CaddyController) error {
-	c.logger.Infof("TLS secret created (%s/%s)", r.resource.Namespace, r.resource.Name)
-	return writeFile(r.resource)
-}
-
-func (r SecretUpdatedAction) handle(c *CaddyController) error {
-	c.logger.Infof("TLS secret updated (%s/%s)", r.resource.Namespace, r.resource.Name)
-	return writeFile(r.resource)
-}
-
-func (r SecretDeletedAction) handle(c *CaddyController) error {
-	c.logger.Infof("TLS secret deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
-	return os.Remove(filepath.Join(GetCertFolder(), r.resource.Name+".pem"))
-}
-
-// watchTLSSecrets Start listening to TLS secrets if at least one ingress needs it.
-// It will sync the CertFolder with TLS secrets
-func (c *CaddyController) watchTLSSecrets() error {
-	if c.informers.TLSSecret == nil && c.resourceStore.HasManagedTLS() {
-		if err := os.MkdirAll(GetCertFolder(), 0755); err != nil && !os.IsExist(err) {
-			return err
-		}
-
-		// Init informers
-		params := k8s.TLSSecretParams{
-			InformerFactory: c.factories.WatchedNamespace,
-		}
-		c.informers.TLSSecret = k8s.WatchTLSSecrets(params, k8s.TLSSecretHandlers{
-			AddFunc:    c.onSecretAdded,
-			UpdateFunc: c.onSecretUpdated,
-			DeleteFunc: c.onSecretDeleted,
-		})
-
-		// Run it
-		go c.informers.TLSSecret.Run(c.stopChan)
-
-		// Sync secrets
-		secrets, err := k8s.ListTLSSecrets(params, c.resourceStore.Ingresses)
-		if err != nil {
-			return err
-		}
-
-		for _, secret := range secrets {
-			if err := writeFile(secret); err != nil {
-				return err
+func (c *CaddyController) isManagedTLSSecret(secret *apiv1.Secret) bool {
+	for _, ing := range c.resourceStore.Ingresses() {
+		for _, tlsRule := range ing.Spec.TLS {
+			if tlsRule.SecretName == secret.Name && ing.Namespace == secret.Namespace {
+				return true
 			}
+		}
+	}
+	return false
+}
+
+// watchTLSSecrets starts listening to TLS secrets and syncs CertFolder.
+func (c *CaddyController) watchTLSSecrets() error {
+	if err := os.MkdirAll(GetCertFolder(), 0755); err != nil && !os.IsExist(err) {
+		return err
+	}
+
+	// Init informers
+	c.informers.Secret = c.factories.WatchedNamespace.Core().V1().Secrets().Informer()
+	c.informers.Secret.AddEventHandler(&QueuedEventHandlers[apiv1.Secret]{
+		Queue:      c.syncQueue,
+		FilterFunc: c.isManagedTLSSecret,
+		AddFunc:    c.onSecretAdded,
+		UpdateFunc: c.onSecretUpdated,
+		DeleteFunc: c.onSecretDeleted,
+	})
+
+	// Run it
+	go c.informers.Secret.Run(c.stopChan)
+	c.factories.WatchedNamespace.WaitForCacheSync(c.stopChan)
+
+	// Sync secrets
+	for _, secret := range c.informers.Secret.GetStore().List() {
+		if err := writeFile(secret.(*apiv1.Secret)); err != nil {
+			return err
 		}
 	}
 

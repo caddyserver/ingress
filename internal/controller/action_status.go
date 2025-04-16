@@ -23,7 +23,7 @@ type SyncStatusAction struct {
 
 // handle is run when a syncStatusAction appears in the queue.
 func (r SyncStatusAction) handle(c *CaddyController) error {
-	return c.syncStatus(c.resourceStore.Ingresses)
+	return c.syncStatus(c.resourceStore.Ingresses())
 }
 
 // syncStatus ensures that the ingress source address points to this ingress controller's IP address.

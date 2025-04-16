@@ -32,7 +32,7 @@ func (p IngressPlugin) GlobalHandler(config *converter.Config, store *store.Stor
 
 	// create a server route for each ingress route
 	var routes caddyhttp.RouteList
-	for _, ing := range store.Ingresses {
+	for _, ing := range store.Ingresses() {
 		for _, rule := range ing.Spec.Rules {
 			for _, path := range rule.HTTP.Paths {
 				r := &caddyhttp.Route{
