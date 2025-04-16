@@ -21,14 +21,21 @@ type eventAction[T any] struct {
 func (e eventAction[T]) handle(c *CaddyController) error {
 	switch e.action {
 	case actionAdd:
-		return e.handlers.AddFunc(e.resource)
+		if e.handlers.AddFunc != nil {
+			return e.handlers.AddFunc(e.resource)
+		}
 	case actionUpdate:
-		return e.handlers.UpdateFunc(e.resource)
+		if e.handlers.UpdateFunc != nil {
+			return e.handlers.UpdateFunc(e.resource)
+		}
 	case actionDelete:
-		return e.handlers.DeleteFunc(e.resource)
+		if e.handlers.DeleteFunc != nil {
+			return e.handlers.DeleteFunc(e.resource)
+		}
 	default:
 		panic("invalid action")
 	}
+	return nil
 }
 
 type QueuedEventHandlers[T any] struct {

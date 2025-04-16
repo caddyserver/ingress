@@ -1,7 +1,10 @@
 package store
 
 import (
+	"go.uber.org/zap"
+	apicore "k8s.io/api/core/v1"
 	apinetworking "k8s.io/api/networking/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -12,26 +15,35 @@ const (
 
 // Store contains resources used to generate Caddy config
 type Store struct {
+	Logger          *zap.SugaredLogger
+	KubeClient      *kubernetes.Clientset
 	Options         *Options
 	ConfigMap       *ConfigMapOptions
 	ConfigNamespace string
 	CurrentPod      *PodInfo
 	ingressCache    cache.Indexer
+	secretCache     cache.Indexer
 }
 
 // NewStore returns a new store that keeps track of K8S resources needed by the controller.
 func NewStore(
+	logger *zap.SugaredLogger,
+	kubeClient *kubernetes.Clientset,
 	opts Options,
 	configNamespace string,
 	podInfo *PodInfo,
 	ingressCache cache.Indexer,
+	secretCache cache.Indexer,
 ) (*Store, error) {
 	s := &Store{
+		Logger:          logger,
+		KubeClient:      kubeClient,
 		Options:         &opts,
 		ConfigMap:       &ConfigMapOptions{},
 		ConfigNamespace: configNamespace,
 		CurrentPod:      podInfo,
 		ingressCache:    ingressCache,
+		secretCache:     secretCache,
 	}
 
 	err := ingressCache.AddIndexers(map[string]cache.IndexFunc{
@@ -61,11 +73,13 @@ func (s *Store) Ingresses() []*apinetworking.Ingress {
 	return result
 }
 
-func (s *Store) HasManagedTLS() bool {
-	for _, ing := range s.Ingresses() {
-		if len(ing.Spec.TLS) > 0 {
-			return true
+// SecretMeta returns metadata for a secret.
+// The secretName must be specified in full as `<namespace>/<name>`
+func (s *Store) SecretMeta(secretName string) *apicore.Secret {
+	if secret, exists, _ := s.secretCache.GetByKey(secretName); exists {
+		if secret, ok := secret.(*apicore.Secret); ok {
+			return secret
 		}
 	}
-	return false
+	return nil
 }
