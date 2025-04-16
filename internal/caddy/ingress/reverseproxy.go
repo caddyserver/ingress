@@ -24,19 +24,69 @@ func (p ReverseProxyPlugin) IngressPlugin() converter.PluginInfo {
 
 // IngressHandler Add a reverse proxy handler to the route
 func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInput) (*caddyhttp.Route, error) {
+	logger := input.Store.Logger
 	path := input.Path
 	ing := input.Ingress
 	backendProtocol := strings.ToLower(getAnnotation(ing, backendProtocol))
 	trustedProxiesAnnotation := strings.ToLower(getAnnotation(ing, trustedProxies))
 
-	// TODO :-
-	// when setting the upstream url we should bypass kube-dns and get the ip address of
-	// the pod for the deployment we are proxying to so that we can proxy to that ip address port.
-	// this is good for session affinity and increases performance.
-	clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.Service.Name, ing.Namespace, path.Backend.Service.Port.Number)
+	serviceRef := path.Backend.Service
+	if serviceRef == nil {
+		logger.Warnf("Ingress %s/%s uses a non-service backend, which is not supported, and will be ignored", ing.Namespace, ing.Name)
+		return input.Route, nil
+	}
+
+	serviceName := fmt.Sprintf("%s/%s", ing.Namespace, serviceRef.Name)
+	service := input.Store.Service(serviceName)
+	if service == nil {
+		logger.Warnf("Ingress %s/%s references unknown service %s and will be ignored", ing.Namespace, ing.Name, serviceRef.Name)
+		return input.Route, nil
+	}
+
+	var upstreams reverseproxy.UpstreamPool
+	if service.Spec.Type == "ExternalName" {
+		// Create a single upstream for type=ExternalName.
+		if serviceRef.Port.Number == 0 {
+			logger.Warnf("Ingress %s/%s references service %s with type=ExternalName and a named port, which is not supported, and will be ignored", ing.Namespace, ing.Name, service.Name)
+			return input.Route, nil
+		}
+		upstreams = reverseproxy.UpstreamPool{
+			{Dial: formatDialAddr(service.Spec.ExternalName, serviceRef.Port.Number)},
+		}
+	} else {
+		// Find the TargetPort on the Service.
+		var targetPort int32
+		for _, port := range service.Spec.Ports {
+			if (serviceRef.Port.Number != 0 && port.Port == serviceRef.Port.Number) ||
+				(serviceRef.Port.Name != "" && port.Name == serviceRef.Port.Name) {
+				targetPort = int32(port.TargetPort.IntValue())
+				if targetPort == 0 {
+					logger.Warnf("Ingress %s/%s references service %s with a named target port, which is not supported, and will be ignored", ing.Namespace, ing.Name, service.Name)
+					return input.Route, nil
+				}
+				break
+			}
+		}
+		if targetPort == 0 {
+			logger.Warnf("Ingress %s/%s references an unknown port on service %s, and will be ignored", ing.Namespace, ing.Name, service.Name)
+			return input.Route, nil
+		}
+
+		// Create upstreams for each endpoint.
+		for _, es := range input.Store.EndpointSlicesByService(serviceName) {
+			for _, e := range es.Endpoints {
+				if e.Conditions.Ready == nil || *e.Conditions.Ready {
+					for _, addr := range e.Addresses {
+						upstreams = append(upstreams, &reverseproxy.Upstream{
+							Dial: formatDialAddr(addr, targetPort),
+						})
+					}
+				}
+			}
+		}
+	}
 
 	transport := &reverseproxy.HTTPTransport{}
-
 	if backendProtocol == "https" {
 		transport.TLS = &reverseproxy.TLSConfig{
 			InsecureSkipVerify: getAnnotationBool(ing, insecureSkipVerify, true),
@@ -54,10 +104,8 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 	}
 
 	handler := reverseproxy.Handler{
-		TransportRaw: caddyconfig.JSONModuleObject(transport, "protocol", "http", nil),
-		Upstreams: reverseproxy.UpstreamPool{
-			{Dial: clusterHostName},
-		},
+		TransportRaw:   caddyconfig.JSONModuleObject(transport, "protocol", "http", nil),
+		Upstreams:      upstreams,
 		TrustedProxies: parsedProxies,
 	}
 
@@ -69,6 +117,13 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 	)
 	input.Route.HandlersRaw = append(input.Route.HandlersRaw, handlerModule)
 	return input.Route, nil
+}
+
+func formatDialAddr(host string, port int32) string {
+	if strings.Contains(host, ":") {
+		return fmt.Sprintf("[%s]:%d", host, port)
+	}
+	return fmt.Sprintf("%s:%d", host, port)
 }
 
 // Copied from https://github.com/caddyserver/caddy/blob/21af88fefc9a8239a024f635f1c6fdd9defd7eb7/modules/caddyhttp/reverseproxy/reverseproxy.go#L270-L286

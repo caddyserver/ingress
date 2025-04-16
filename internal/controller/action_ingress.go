@@ -24,6 +24,8 @@ func (c *CaddyController) onIngressDeleted(obj *v1.Ingress) error {
 
 // watchIngresses
 func (c *CaddyController) watchIngresses() {
+	c.informers.Ingress = c.factories.WatchedNamespace.Networking().V1().Ingresses().Informer()
+	c.informers.Ingress.SetTransform(c.ingressTransform)
 	c.informers.Ingress.AddEventHandler(&QueuedEventHandlers[v1.Ingress]{
 		Queue:      c.syncQueue,
 		AddFunc:    c.onIngressAdded,

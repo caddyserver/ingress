@@ -5,7 +5,6 @@ import (
 
 	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/cache"
 )
 
 func TestStoreIngresses(t *testing.T) {
@@ -84,16 +83,15 @@ func TestStoreIngresses(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ingressCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
-			s, _ := NewStore(nil, nil, Options{}, "", &PodInfo{}, ingressCache, nil)
+			s, _ := NewStore(nil, nil, Options{}, "", &PodInfo{}, nil, nil, nil, nil)
 			for _, uid := range test.addIngresses {
 				i := createIngress(uid)
-				ingressCache.Add(&i)
+				s.ingressCache.Add(&i)
 			}
 
 			for _, uid := range test.removeIngresses {
 				i := createIngress(uid)
-				ingressCache.Delete(&i)
+				s.ingressCache.Delete(&i)
 			}
 
 			if test.expectCount != len(s.Ingresses()) {

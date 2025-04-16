@@ -174,8 +174,7 @@ func TestIngressTlsSkipCertificates(t *testing.T) {
 			}
 
 			c := converter.NewConfig()
-			secretCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
-			s, err := store.NewStore(nil, nil, store.Options{}, "", &store.PodInfo{}, ingressCache, secretCache)
+			s, err := store.NewStore(nil, nil, store.Options{}, "", &store.PodInfo{}, ingressCache, nil, nil, nil)
 			assert.NoError(t, err)
 
 			p := &TLSPlugin{}

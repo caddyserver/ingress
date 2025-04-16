@@ -6,6 +6,8 @@ import (
 
 // watchSecrets starts listening for changes to secrets.
 func (c *CaddyController) watchSecrets() {
+	c.informers.Secret = c.factories.WatchedNamespace.Core().V1().Secrets().Informer()
+	c.informers.Secret.SetTransform(c.secretTransform)
 	c.informers.Secret.AddEventHandler(&QueuedEventHandlers[apiv1.Secret]{
 		Queue: c.syncQueue,
 	})
