@@ -46,8 +46,8 @@ type Action interface {
 
 // Informer defines the required SharedIndexInformers that interact with the API server.
 type Informer struct {
-	Ingress   cache.SharedIndexInformer
 	ConfigMap cache.SharedIndexInformer
+	Ingress   cache.SharedIndexInformer
 	Secret    cache.SharedIndexInformer
 }
 
@@ -134,21 +134,28 @@ func NewCaddyController(
 	)
 
 	// Create informers
-	controller.informers.Ingress = controller.factories.WatchedNamespace.Networking().V1().Ingresses().Informer()
-	controller.informers.Ingress.SetTransform(controller.ingressTransform)
 	controller.informers.ConfigMap = controller.factories.ConfigNamespace.Core().V1().ConfigMaps().Informer()
 	controller.informers.ConfigMap.SetTransform(controller.configMapTransform)
+
+	controller.informers.Ingress = controller.factories.WatchedNamespace.Networking().V1().Ingresses().Informer()
+	controller.informers.Ingress.SetTransform(controller.ingressTransform)
+	controller.informers.Secret = controller.factories.WatchedNamespace.Core().V1().Secrets().Informer()
+	controller.informers.Secret.SetTransform(controller.secretTransform)
 
 	// Add watchers
 	controller.watchConfigMap()
 	controller.watchIngresses()
+	controller.watchSecrets()
 
 	// Create resource store
 	controller.resourceStore, err = store.NewStore(
+		logger,
+		kubeClient,
 		opts,
 		configNamespace,
 		podInfo,
 		controller.informers.Ingress.GetIndexer(),
+		controller.informers.Secret.GetIndexer(),
 	)
 	if err != nil {
 		logger.Fatalf("Unexpected error initializing store: %v", err)

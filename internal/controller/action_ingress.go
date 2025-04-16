@@ -7,17 +7,13 @@ import (
 // onIngressAdded runs when an ingress resource is added to the cluster.
 func (c *CaddyController) onIngressAdded(obj *v1.Ingress) error {
 	c.logger.Infof("Ingress created (%s/%s)", obj.Namespace, obj.Name)
-
-	// Ingress may now have a TLS config
-	return c.watchTLSSecrets()
+	return nil
 }
 
 // onIngressUpdated is run when an ingress resource is updated in the cluster.
 func (c *CaddyController) onIngressUpdated(obj *v1.Ingress) error {
 	c.logger.Infof("Ingress updated (%s/%s)", obj.Namespace, obj.Name)
-
-	// Ingress may now have a TLS config
-	return c.watchTLSSecrets()
+	return nil
 }
 
 // onIngressDeleted is run when an ingress resource is deleted from the cluster.
