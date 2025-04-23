@@ -2,11 +2,14 @@ package store
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"go.uber.org/zap"
 	apicore "k8s.io/api/core/v1"
 	apidiscovery "k8s.io/api/discovery/v1"
 	apinetworking "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
@@ -107,11 +110,13 @@ func NewStore(
 func (s *Store) Ingresses() []*apinetworking.Ingress {
 	// Note: errors only when the index does not exist.
 	list, _ := s.ingressCache.ByIndex(isControlledIngressIndex, yesIndexValue)
+	sortResources(list)
 
 	result := make([]*apinetworking.Ingress, 0, len(list))
 	for _, ingress := range list {
 		result = append(result, ingress.(*apinetworking.Ingress))
 	}
+
 	return result
 }
 
@@ -120,6 +125,7 @@ func (s *Store) Ingresses() []*apinetworking.Ingress {
 func (s *Store) EndpointSlicesByService(serviceName string) []*apidiscovery.EndpointSlice {
 	// Note: errors only when the index does not exist.
 	list, _ := s.endpointSliceCache.ByIndex(endpointSlicesByServiceNameIndex, serviceName)
+	sortResources(list)
 
 	result := make([]*apidiscovery.EndpointSlice, 0, len(list))
 	for _, obj := range list {
@@ -148,4 +154,22 @@ func (s *Store) SecretMeta(secretName string) *apicore.Secret {
 		}
 	}
 	return nil
+}
+
+func sortResources(slice []any) {
+	sort.Slice(slice, func(i, j int) bool {
+		iMeta, _ := meta.Accessor(slice[i])
+		jMeta, _ := meta.Accessor(slice[j])
+
+		if iMeta == nil || jMeta == nil {
+			return jMeta != nil
+		}
+
+		nsDiff := strings.Compare(iMeta.GetNamespace(), jMeta.GetNamespace())
+		if nsDiff != 0 {
+			return nsDiff < 0
+		}
+
+		return strings.Compare(iMeta.GetName(), jMeta.GetName()) < 0
+	})
 }
