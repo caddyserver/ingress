@@ -8,17 +8,24 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp/reverseproxy"
+	"github.com/caddyserver/ingress/internal/controller"
 	"github.com/caddyserver/ingress/pkg/converter"
 )
 
-type ReverseProxyPlugin struct{}
+type ReverseProxyPlugin struct {
+	diags controller.Diagnostics
+}
 
 func (p ReverseProxyPlugin) IngressPlugin() converter.PluginInfo {
 	return converter.PluginInfo{
 		Name: "ingress.reverseproxy",
 		// Should always go last by default
 		Priority: -10,
-		New:      func() converter.Plugin { return new(ReverseProxyPlugin) },
+		New: func() converter.Plugin {
+			return &ReverseProxyPlugin{
+				diags: make(controller.Diagnostics),
+			}
+		},
 	}
 }
 
@@ -32,14 +39,14 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 
 	serviceRef := path.Backend.Service
 	if serviceRef == nil {
-		logger.Warnf("Ingress %s/%s uses a non-service backend, which is not supported, and will be ignored", ing.Namespace, ing.Name)
+		p.diags.Warnf(logger, "Ingress %s/%s uses a non-service backend, which is not supported, and will be ignored", ing.Namespace, ing.Name)
 		return input.Route, nil
 	}
 
 	serviceName := fmt.Sprintf("%s/%s", ing.Namespace, serviceRef.Name)
 	service := input.Store.Service(serviceName)
 	if service == nil {
-		logger.Warnf("Ingress %s/%s references unknown service %s and will be ignored", ing.Namespace, ing.Name, serviceRef.Name)
+		p.diags.Warnf(logger, "Ingress %s/%s references unknown service %s and will be ignored", ing.Namespace, ing.Name, serviceRef.Name)
 		return input.Route, nil
 	}
 
@@ -47,7 +54,7 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 	if service.Spec.Type == "ExternalName" {
 		// Create a single upstream for type=ExternalName.
 		if serviceRef.Port.Number == 0 {
-			logger.Warnf("Ingress %s/%s references service %s with type=ExternalName and a named port, which is not supported, and will be ignored", ing.Namespace, ing.Name, service.Name)
+			p.diags.Warnf(logger, "Ingress %s/%s references service %s with type=ExternalName and a named port, which is not supported, and will be ignored", ing.Namespace, ing.Name, service.Name)
 			return input.Route, nil
 		}
 		upstreams = reverseproxy.UpstreamPool{
@@ -61,14 +68,14 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 				(serviceRef.Port.Name != "" && port.Name == serviceRef.Port.Name) {
 				targetPort = int32(port.TargetPort.IntValue())
 				if targetPort == 0 {
-					logger.Warnf("Ingress %s/%s references service %s with a named target port, which is not supported, and will be ignored", ing.Namespace, ing.Name, service.Name)
+					p.diags.Warnf(logger, "Ingress %s/%s references service %s with a named target port, which is not supported, and will be ignored", ing.Namespace, ing.Name, service.Name)
 					return input.Route, nil
 				}
 				break
 			}
 		}
 		if targetPort == 0 {
-			logger.Warnf("Ingress %s/%s references an unknown port on service %s, and will be ignored", ing.Namespace, ing.Name, service.Name)
+			p.diags.Warnf(logger, "Ingress %s/%s references an unknown port on service %s, and will be ignored", ing.Namespace, ing.Name, service.Name)
 			return input.Route, nil
 		}
 
@@ -119,6 +126,10 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 	return input.Route, nil
 }
 
+func (p ReverseProxyPlugin) Finalize() {
+	p.diags.Gc()
+}
+
 func formatDialAddr(host string, port int32) string {
 	if strings.Contains(host, ":") {
 		return fmt.Sprintf("[%s]:%d", host, port)
@@ -155,4 +166,5 @@ func init() {
 // Interface guards
 var (
 	_ = converter.IngressMiddleware(ReverseProxyPlugin{})
+	_ = converter.Finalizer(ReverseProxyPlugin{})
 )
