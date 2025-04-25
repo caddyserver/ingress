@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/caddyserver/caddy/v2"
@@ -45,17 +46,19 @@ type Action interface {
 
 // Informer defines the required SharedIndexInformers that interact with the API server.
 type Informer struct {
-	Ingress   cache.SharedIndexInformer
-	ConfigMap cache.SharedIndexInformer
-	TLSSecret cache.SharedIndexInformer
+	ConfigMap     cache.SharedIndexInformer
+	Ingress       cache.SharedIndexInformer
+	Service       cache.SharedIndexInformer
+	EndpointSlice cache.SharedIndexInformer
+	Secret        cache.SharedIndexInformer
 }
 
 // InformerFactory contains shared informer factory
 // We need to type of factory:
-// - One used to watch resources in the Pod namespaces (caddy config, secrets...)
+// - One used to watch ConfigMap and Secret resources
 // - Another one for Ingress resources in the selected namespace
 type InformerFactory struct {
-	PodNamespace     informers.SharedInformerFactory
+	ConfigNamespace  informers.SharedInformerFactory
 	WatchedNamespace informers.SharedInformerFactory
 }
 
@@ -105,16 +108,26 @@ func NewCaddyController(
 		factories:  &InformerFactory{},
 	}
 
-	podInfo, err := k8s.GetPodDetails(kubeClient)
+	podInfo, err := k8s.GetPodDetails(logger, kubeClient)
 	if err != nil {
 		logger.Fatalf("Unexpected error obtaining pod information: %v", err)
 	}
 
+	var configNamespace, configMapName string
+	if parts := strings.SplitN(opts.ConfigMapName, "/", 2); len(parts) == 2 {
+		configNamespace, configMapName = parts[0], parts[1]
+	} else if podInfo != nil {
+		configNamespace, configMapName = podInfo.Namespace, opts.ConfigMapName
+	} else {
+		logger.Fatalf("Must set a namespace for -config-map when running outside a cluster: %s", opts.ConfigMapName)
+	}
+	opts.ConfigMapName = configMapName
+
 	// Create informer factories
-	controller.factories.PodNamespace = informers.NewSharedInformerFactoryWithOptions(
+	controller.factories.ConfigNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
 		resourcesSyncInterval,
-		informers.WithNamespace(podInfo.Namespace),
+		informers.WithNamespace(configNamespace),
 	)
 	controller.factories.WatchedNamespace = informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
@@ -122,32 +135,28 @@ func NewCaddyController(
 		informers.WithNamespace(opts.WatchNamespace),
 	)
 
-	// Watch ingress resources in selected namespaces
-	ingressParams := k8s.IngressParams{
-		InformerFactory:   controller.factories.WatchedNamespace,
-		ClassName:         opts.ClassName,
-		ClassNameRequired: opts.ClassNameRequired,
-	}
-	controller.informers.Ingress = k8s.WatchIngresses(ingressParams, k8s.IngressHandlers{
-		AddFunc:    controller.onIngressAdded,
-		UpdateFunc: controller.onIngressUpdated,
-		DeleteFunc: controller.onIngressDeleted,
-	})
-
-	// Watch Configmap in the pod's namespace for global options
-	cmOptionsParams := k8s.ConfigMapParams{
-		Namespace:       podInfo.Namespace,
-		InformerFactory: controller.factories.PodNamespace,
-		ConfigMapName:   opts.ConfigMapName,
-	}
-	controller.informers.ConfigMap = k8s.WatchConfigMaps(cmOptionsParams, k8s.ConfigMapHandlers{
-		AddFunc:    controller.onConfigMapAdded,
-		UpdateFunc: controller.onConfigMapUpdated,
-		DeleteFunc: controller.onConfigMapDeleted,
-	})
+	// Create informers
+	controller.watchConfigMap()
+	controller.watchIngresses()
+	controller.watchServices()
+	controller.watchEndpointSlices()
+	controller.watchSecrets()
 
 	// Create resource store
-	controller.resourceStore = store.NewStore(opts, podInfo)
+	controller.resourceStore, err = store.NewStore(
+		logger,
+		kubeClient,
+		opts,
+		configNamespace,
+		podInfo,
+		controller.informers.Ingress.GetIndexer(),
+		controller.informers.Service.GetIndexer(),
+		controller.informers.EndpointSlice.GetIndexer(),
+		controller.informers.Secret.GetIndexer(),
+	)
+	if err != nil {
+		logger.Fatalf("Unexpected error initializing store: %v", err)
+	}
 
 	return controller
 }
@@ -155,7 +164,7 @@ func NewCaddyController(
 // Shutdown stops the caddy controller.
 func (c *CaddyController) Shutdown() error {
 	// remove this ingress controller's ip from ingress resources.
-	c.updateIngStatuses([]networkingv1.IngressLoadBalancerIngress{{}}, c.resourceStore.Ingresses)
+	c.updateIngStatuses([]networkingv1.IngressLoadBalancerIngress{{}}, c.resourceStore.Ingresses())
 
 	if err := caddy.Stop(); err != nil {
 		c.logger.Error("failed to stop caddy server", zap.Error(err))
@@ -171,17 +180,13 @@ func (c *CaddyController) Run() {
 	defer c.syncQueue.ShutDown()
 
 	// start informers where we listen to new / updated resources
-	go c.informers.ConfigMap.Run(c.stopChan)
-	go c.informers.Ingress.Run(c.stopChan)
+	c.factories.ConfigNamespace.Start(c.stopChan)
+	c.factories.WatchedNamespace.Start(c.stopChan)
 
 	// wait for all involved caches to be synced before processing items
 	// from the queue
-	if !cache.WaitForCacheSync(c.stopChan,
-		c.informers.ConfigMap.HasSynced,
-		c.informers.Ingress.HasSynced,
-	) {
-		runtime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
-	}
+	c.factories.ConfigNamespace.WaitForCacheSync(c.stopChan)
+	c.factories.WatchedNamespace.WaitForCacheSync(c.stopChan)
 
 	// start processing events for syncing ingress resources
 	go wait.Until(c.runWorker, time.Second, c.stopChan)
