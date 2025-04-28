@@ -7,6 +7,6 @@ type Options struct {
 	ClassName         string
 	ClassNameRequired bool
 	Verbose           bool
-	LeaseId           string
+	LeaseID           string
 	PluginsOrder      []string
 }

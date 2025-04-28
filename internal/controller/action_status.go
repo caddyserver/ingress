@@ -67,7 +67,7 @@ func (c *CaddyController) updateIngStatuses(controllerAddresses []networkingv1.I
 
 // runUpdate updates the ingress status field.
 func runUpdate(logger *zap.SugaredLogger, ing *networkingv1.Ingress, status []networkingv1.IngressLoadBalancerIngress, client *kubernetes.Clientset) pool.WorkFunc {
-	return func(wu pool.WorkUnit) (interface{}, error) {
+	return func(wu pool.WorkUnit) (any, error) {
 		if wu.IsCancelled() {
 			return nil, nil
 		}

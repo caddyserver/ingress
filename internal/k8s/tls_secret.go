@@ -21,14 +21,14 @@ func WatchTLSSecrets(options TLSSecretParams, funcs TLSSecretHandlers) cache.Sha
 	informer := options.InformerFactory.Core().V1().Secrets().Informer()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			secret, ok := obj.(*v12.Secret)
 
 			if ok && secret.Type == v12.SecretTypeTLS {
 				funcs.AddFunc(secret)
 			}
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj any) {
 			oldSecret, ok1 := oldObj.(*v12.Secret)
 			newSecret, ok2 := newObj.(*v12.Secret)
 
@@ -36,7 +36,7 @@ func WatchTLSSecrets(options TLSSecretParams, funcs TLSSecretHandlers) cache.Sha
 				funcs.UpdateFunc(oldSecret, newSecret)
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			secret, ok := obj.(*v12.Secret)
 
 			if ok && secret.Type == v12.SecretTypeTLS {

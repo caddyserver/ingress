@@ -9,7 +9,7 @@ import (
 // StorageValues represents the config for certmagic storage providers.
 type StorageValues struct {
 	Namespace string `json:"namespace"`
-	LeaseId   string `json:"leaseId"`
+	LeaseID   string `json:"leaseId"`
 }
 
 // Storage represents the certmagic storage configuration.
@@ -20,14 +20,14 @@ type Storage struct {
 
 // Config represents a caddy2 config file.
 type Config struct {
-	Admin   caddy.AdminConfig      `json:"admin,omitempty"`
-	Storage Storage                `json:"storage"`
-	Apps    map[string]interface{} `json:"apps"`
-	Logging caddy.Logging          `json:"logging"`
+	Admin   caddy.AdminConfig `json:"admin,omitempty"`
+	Storage Storage           `json:"storage"`
+	Apps    map[string]any    `json:"apps"`
+	Logging caddy.Logging     `json:"logging"`
 }
 
 func (c Config) GetHTTPServer() *caddyhttp.Server {
-	return c.Apps["http"].(*caddyhttp.App).Servers[HttpServer]
+	return c.Apps["http"].(*caddyhttp.App).Servers[HTTPServer]
 }
 
 func (c Config) GetMetricsServer() *caddyhttp.Server {
@@ -41,11 +41,11 @@ func (c Config) GetTLSApp() *caddytls.TLS {
 func NewConfig() *Config {
 	return &Config{
 		Logging: caddy.Logging{},
-		Apps: map[string]interface{}{
+		Apps: map[string]any{
 			"tls": &caddytls.TLS{CertificatesRaw: caddy.ModuleMap{}},
 			"http": &caddyhttp.App{
 				Servers: map[string]*caddyhttp.Server{
-					HttpServer: {
+					HTTPServer: {
 						AutoHTTPS: &caddyhttp.AutoHTTPSConfig{},
 						// Listen to both :80 and :443 ports in order
 						// to use the same listener wrappers (PROXY protocol use it)

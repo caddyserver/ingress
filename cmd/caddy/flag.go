@@ -20,8 +20,8 @@ func parseFlags() store.Options {
 	var configMapName string
 	flag.StringVar(&configMapName, "config-map", "", "defines the config map name from where to load global options")
 
-	var leaseId string
-	flag.StringVar(&leaseId, "lease-id", "", "defines the id of this instance for certmagic lock")
+	var leaseID string
+	flag.StringVar(&leaseID, "lease-id", "", "defines the id of this instance for certmagic lock")
 
 	var verbose bool
 	flag.BoolVar(&verbose, "verbose", false, "set the log level to debug")
@@ -37,7 +37,7 @@ func parseFlags() store.Options {
 		ClassNameRequired: classNameRequired,
 		ConfigMapName:     configMapName,
 		Verbose:           verbose,
-		LeaseId:           leaseId,
+		LeaseID:           leaseID,
 		PluginsOrder:      strings.Split(pluginsOrder, ","),
 	}
 }

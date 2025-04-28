@@ -41,9 +41,9 @@ func (p ConfigMapPlugin) GlobalHandler(config *converter.Config, store *store.St
 			acmeIssuer.CA = cfgMap.AcmeCA
 		}
 
-		if cfgMap.AcmeEABKeyId != "" && cfgMap.AcmeEABMacKey != "" {
+		if cfgMap.AcmeEABKeyID != "" && cfgMap.AcmeEABMacKey != "" {
 			acmeIssuer.ExternalAccount = &acme.EAB{
-				KeyID:  cfgMap.AcmeEABKeyId,
+				KeyID:  cfgMap.AcmeEABKeyID,
 				MACKey: cfgMap.AcmeEABMacKey,
 			}
 		}

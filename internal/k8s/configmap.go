@@ -26,14 +26,14 @@ func WatchConfigMaps(options ConfigMapParams, funcs ConfigMapHandlers) cache.Sha
 	informer := options.InformerFactory.Core().V1().ConfigMaps().Informer()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			cm, ok := obj.(*v1.ConfigMap)
 
 			if ok && isControllerConfigMap(cm, options.ConfigMapName) {
 				funcs.AddFunc(cm)
 			}
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj any) {
 			oldCM, ok1 := oldObj.(*v1.ConfigMap)
 			newCM, ok2 := newObj.(*v1.ConfigMap)
 
@@ -41,7 +41,7 @@ func WatchConfigMaps(options ConfigMapParams, funcs ConfigMapHandlers) cache.Sha
 				funcs.UpdateFunc(oldCM, newCM)
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			cm, ok := obj.(*v1.ConfigMap)
 
 			if ok && isControllerConfigMap(cm, options.ConfigMapName) {

@@ -11,7 +11,7 @@ import (
 
 type Converter struct{}
 
-func (c Converter) ConvertToCaddyConfig(store *store.Store) (interface{}, error) {
+func (c Converter) ConvertToCaddyConfig(store *store.Store) (any, error) {
 	cfg := converter.NewConfig()
 
 	for _, p := range converter.Plugins(store.Options.PluginsOrder) {

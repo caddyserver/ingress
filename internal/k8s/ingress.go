@@ -27,14 +27,14 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 	informer := options.InformerFactory.Networking().V1().Ingresses().Informer()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			ingress, ok := obj.(*networkingv1.Ingress)
 
 			if ok && isControllerIngress(options, ingress) {
 				funcs.AddFunc(ingress)
 			}
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj any) {
 			oldIng, ok1 := oldObj.(*networkingv1.Ingress)
 			newIng, ok2 := newObj.(*networkingv1.Ingress)
 
@@ -42,7 +42,7 @@ func WatchIngresses(options IngressParams, funcs IngressHandlers) cache.SharedIn
 				funcs.UpdateFunc(oldIng, newIng)
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			ingress, ok := obj.(*networkingv1.Ingress)
 
 			if ok && isControllerIngress(options, ingress) {

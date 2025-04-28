@@ -69,10 +69,10 @@ func TestRedirectConvertToCaddyConfig(t *testing.T) {
 			expectedCfg, err := os.ReadFile(test.expectedConfigPath)
 			assert.NoError(t, err, "failed to find config file for comparison")
 
-			cfgJson, err := json.Marshal(&route)
+			cfgJSON, err := json.Marshal(&route)
 			assert.NoError(t, err, "failed to marshal route to JSON")
 
-			assert.JSONEq(t, string(cfgJson), string(expectedCfg))
+			assert.JSONEq(t, string(cfgJSON), string(expectedCfg))
 		})
 	}
 }
@@ -126,10 +126,10 @@ func TestMisconfiguredRedirectConvertToCaddyConfig(t *testing.T) {
 				assert.EqualError(t, err, test.expectedError)
 			}
 
-			cfgJson, err := json.Marshal(&route)
+			cfgJSON, err := json.Marshal(&route)
 			assert.NoError(t, err, "failed to marshal route to JSON")
 
-			assert.JSONEq(t, string(cfgJson), "null")
+			assert.JSONEq(t, string(cfgJSON), "null")
 		})
 	}
 }

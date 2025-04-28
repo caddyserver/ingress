@@ -60,7 +60,7 @@ type InformerFactory struct {
 }
 
 type Converter interface {
-	ConvertToCaddyConfig(store *store.Store) (interface{}, error)
+	ConvertToCaddyConfig(store *store.Store) (any, error)
 }
 
 // CaddyController represents a caddy ingress controller.
@@ -72,7 +72,7 @@ type CaddyController struct {
 	logger *zap.SugaredLogger
 
 	// main queue syncing ingresses, configmaps, ... with caddy
-	syncQueue workqueue.RateLimitingInterface
+	syncQueue workqueue.TypedRateLimitingInterface[Action]
 
 	// informer factories
 	factories *InformerFactory
@@ -100,7 +100,7 @@ func NewCaddyController(
 		kubeClient: kubeClient,
 		converter:  converter,
 		stopChan:   stopChan,
-		syncQueue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		syncQueue:  workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[Action]()),
 		informers:  &Informer{},
 		factories:  &InformerFactory{},
 	}
@@ -223,7 +223,7 @@ func (c *CaddyController) processNextItem() bool {
 	defer c.syncQueue.Done(action)
 
 	// Invoke the method containing the business logic
-	err := action.(Action).handle(c)
+	err := action.handle(c)
 	if err != nil {
 		c.handleErr(err, action)
 		return true
@@ -241,7 +241,7 @@ func (c *CaddyController) processNextItem() bool {
 // handleErrs reports errors received from queue actions.
 //
 //goland:noinspection GoUnusedParameter
-func (c *CaddyController) handleErr(err error, action interface{}) {
+func (c *CaddyController) handleErr(err error, action any) {
 	c.logger.Error(err.Error())
 }
 

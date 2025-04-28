@@ -14,7 +14,7 @@ import (
 type ConfigMapOptions struct {
 	Debug                 bool           `json:"debug,omitempty"`
 	AcmeCA                string         `json:"acmeCA,omitempty"`
-	AcmeEABKeyId          string         `json:"acmeEABKeyId,omitempty"`
+	AcmeEABKeyID          string         `json:"acmeEABKeyId,omitempty"`
 	AcmeEABMacKey         string         `json:"acmeEABMacKey,omitempty"`
 	Email                 string         `json:"email,omitempty"`
 	ExperimentalSmartSort bool           `json:"experimentalSmartSort,omitempty"`
@@ -26,7 +26,7 @@ type ConfigMapOptions struct {
 }
 
 func stringToCaddyDurationHookFunc() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, data any) (any, error) {
 		if f.Kind() != reflect.String {
 			return data, nil
 		}
