@@ -11,6 +11,8 @@ import (
 	"github.com/caddyserver/ingress/pkg/converter"
 )
 
+var ClusterDomain = "cluster.local"
+
 type ReverseProxyPlugin struct{}
 
 func (p ReverseProxyPlugin) IngressPlugin() converter.PluginInfo {
@@ -33,7 +35,7 @@ func (p ReverseProxyPlugin) IngressHandler(input converter.IngressMiddlewareInpu
 	// when setting the upstream url we should bypass kube-dns and get the ip address of
 	// the pod for the deployment we are proxying to so that we can proxy to that ip address port.
 	// this is good for session affinity and increases performance.
-	clusterHostName := fmt.Sprintf("%v.%v.svc.cluster.local:%d", path.Backend.Service.Name, ing.Namespace, path.Backend.Service.Port.Number)
+	clusterHostName := fmt.Sprintf("%v.%v.svc.%s:%d", path.Backend.Service.Name, ing.Namespace, ClusterDomain, path.Backend.Service.Port.Number)
 
 	transport := &reverseproxy.HTTPTransport{}
 

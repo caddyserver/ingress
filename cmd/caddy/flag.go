@@ -4,6 +4,7 @@ import (
 	"flag"
 	"strings"
 
+	"github.com/caddyserver/ingress/internal/caddy/ingress"
 	"github.com/caddyserver/ingress/pkg/store"
 )
 
@@ -29,7 +30,14 @@ func parseFlags() store.Options {
 	var pluginsOrder string
 	flag.StringVar(&pluginsOrder, "plugins-order", "", "defines the order plugins should be used")
 
+	var clusterDomain string
+	flag.StringVar(&clusterDomain, "cluster-domain", "", "sets the cluster domain")
+
 	flag.Parse()
+
+	if clusterDomain != "" {
+		ingress.ClusterDomain = clusterDomain
+	}
 
 	return store.Options{
 		WatchNamespace:    namespace,
