@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -66,7 +67,7 @@ func (SecretStorage) CaddyModule() caddy.ModuleInfo {
 
 // Provisions the SecretStorage instance.
 func (s *SecretStorage) Provision(ctx caddy.Context) error {
-	config, _ := clientcmd.BuildConfigFromFlags("", "")
+	config, _ := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	// creates the clientset
 	clientset, _ := kubernetes.NewForConfig(config)
 

@@ -196,7 +196,7 @@ func TestIngressTlsSkipCertificates(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 			tp := TLSPlugin{}
 			c := converter.NewConfig()
-			s := store.NewStore(store.Options{}, &store.PodInfo{})
+			s := store.NewStore(store.Options{}, "", &store.PodInfo{})
 
 			for _, ing := range tC.ingresses {
 				s.AddIngress(ing)

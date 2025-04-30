@@ -22,7 +22,7 @@ func (p SecretsStorePlugin) GlobalHandler(config *converter.Config, store *store
 	config.Storage = converter.Storage{
 		System: "secret_store",
 		StorageValues: converter.StorageValues{
-			Namespace: store.CurrentPod.Namespace,
+			Namespace: store.ConfigNamespace,
 			LeaseID:   store.Options.LeaseID,
 		},
 	}
