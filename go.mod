@@ -1,11 +1,12 @@
 module github.com/caddyserver/ingress
 
 go 1.24.0
+
 require (
 	github.com/caddyserver/caddy/v2 v2.9.1
-	github.com/caddyserver/certmagic v0.22.2
+	github.com/caddyserver/certmagic v0.23.0
 	github.com/google/uuid v1.6.0
-	github.com/mholt/acmez/v3 v3.1.1
+	github.com/mholt/acmez/v3 v3.1.2
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pires/go-proxyproto v0.8.0
 	github.com/stretchr/testify v1.10.0
@@ -74,7 +75,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
-	github.com/libdns/libdns v0.2.3 // indirect
+	github.com/libdns/libdns v1.0.0-beta.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
