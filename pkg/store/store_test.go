@@ -84,7 +84,7 @@ func TestStoreIngresses(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s := NewStore(Options{}, &PodInfo{})
+			s := NewStore(Options{}, "", &PodInfo{})
 			for _, uid := range test.addIngresses {
 				i := createIngress(uid)
 				s.AddIngress(&i)
@@ -164,7 +164,7 @@ func TestStoreReturnIfHasManagedTLS(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s := NewStore(Options{}, &PodInfo{})
+			s := NewStore(Options{}, "", &PodInfo{})
 			for _, i := range test.ingresses {
 				s.AddIngress(&i)
 			}

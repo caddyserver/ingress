@@ -6,19 +6,21 @@ import (
 
 // Store contains resources used to generate Caddy config
 type Store struct {
-	Options    *Options
-	ConfigMap  *ConfigMapOptions
-	Ingresses  []*v1.Ingress
-	CurrentPod *PodInfo
+	Options         *Options
+	Ingresses       []*v1.Ingress
+	ConfigMap       *ConfigMapOptions
+	ConfigNamespace string
+	CurrentPod      *PodInfo
 }
 
 // NewStore returns a new store that keeps track of K8S resources needed by the controller.
-func NewStore(opts Options, podInfo *PodInfo) *Store {
+func NewStore(opts Options, configNamespace string, podInfo *PodInfo) *Store {
 	s := &Store{
-		Options:    &opts,
-		Ingresses:  []*v1.Ingress{},
-		ConfigMap:  &ConfigMapOptions{},
-		CurrentPod: podInfo,
+		Options:         &opts,
+		Ingresses:       []*v1.Ingress{},
+		ConfigMap:       &ConfigMapOptions{},
+		ConfigNamespace: configNamespace,
+		CurrentPod:      podInfo,
 	}
 	return s
 }

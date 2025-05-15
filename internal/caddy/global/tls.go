@@ -40,7 +40,7 @@ func (p TLSPlugin) GlobalHandler(config *converter.Config, store *store.Store) e
 	}
 
 	if len(hosts) > 0 {
-		tlsApp.CertificatesRaw["load_folders"] = json.RawMessage(`["` + controller.CertFolder + `"]`)
+		tlsApp.CertificatesRaw["load_folders"] = json.RawMessage(`["` + controller.GetCertFolder() + `"]`)
 		// do not manage certificates for those hosts
 		httpServer.AutoHTTPS.SkipCerts = hosts
 	}

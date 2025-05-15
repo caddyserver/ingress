@@ -73,7 +73,7 @@ func main() {
 // createApiserverClient creates a new Kubernetes REST client. We assume the
 // controller runs inside Kubernetes and use the in-cluster config.
 func createApiserverClient(logger *zap.SugaredLogger) (*kubernetes.Clientset, *version.Info, error) {
-	cfg, err := clientcmd.BuildConfigFromFlags("", "")
+	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
 	if err != nil {
 		return nil, nil, err
 	}
