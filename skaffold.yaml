@@ -15,10 +15,6 @@ deploy:
         namespace: caddy-system
         chartPath: charts/caddy-ingress-controller
         createNamespace: true
-        # setValueTemplates:
-        #   image:
-        #     repository: "{{ .IMAGE_REPO_NO_DOMAIN_caddy_ingress }}"
-        #     tag: "{{.IMAGE_TAG_caddy_ingress}}@{{.IMAGE_DIGEST_caddy_ingress}}"
 manifests:
   rawYaml:
    - ./kubernetes/sample/*.yaml
