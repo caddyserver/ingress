@@ -4,9 +4,6 @@ updates:
     directory: "/"
     schedule:
       interval: daily
-    reviewers:
-      - "Embraser01"
-      - "mavimo"
     labels:
       - "dependencies"
       - "dependabot"
@@ -14,9 +11,6 @@ updates:
     directory: "/"
     schedule:
       interval: daily
-    reviewers:
-      - "Embraser01"
-      - "mavimo"
     labels:
       - "dependencies"
       - "dependabot"
