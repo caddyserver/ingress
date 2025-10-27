@@ -11,7 +11,7 @@
       ],
       "upstreams": [
         {
-          "dial": "svcName.namespace.svc.cluster.local:80"
+          "dial": "10.20.30.40:8080"
         }
       ]
     }

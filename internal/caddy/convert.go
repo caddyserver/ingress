@@ -12,9 +12,18 @@ import (
 type Converter struct{}
 
 func (c Converter) ConvertToCaddyConfig(store *store.Store) (any, error) {
-	cfg := converter.NewConfig()
+	plugins := converter.Plugins(store.Options.PluginsOrder)
 
-	for _, p := range converter.Plugins(store.Options.PluginsOrder) {
+	defer func() {
+		for _, p := range plugins {
+			if f, ok := p.(converter.Finalizer); ok {
+				f.Finalize()
+			}
+		}
+	}()
+
+	cfg := converter.NewConfig()
+	for _, p := range plugins {
 		if m, ok := p.(converter.GlobalMiddleware); ok {
 			err := m.GlobalHandler(cfg, store)
 			if err != nil {
@@ -22,5 +31,6 @@ func (c Converter) ConvertToCaddyConfig(store *store.Store) (any, error) {
 			}
 		}
 	}
+
 	return cfg, nil
 }
