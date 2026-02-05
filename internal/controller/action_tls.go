@@ -67,11 +67,17 @@ func (c *CaddyController) onSecretDeleted(obj *apiv1.Secret) {
 }
 
 // writeFile writes a secret to a .pem file on disk.
+// The PEM file must contain the certificate before the private key.
 func writeFile(s *apiv1.Secret) error {
 	content := make([]byte, 0)
 
-	for _, cert := range s.Data {
+	// Write certificate first, then key - order matters for valid PEM.
+	// Do not iterate over s.Data map as Go maps have non-deterministic order.
+	if cert, ok := s.Data["tls.crt"]; ok {
 		content = append(content, cert...)
+	}
+	if key, ok := s.Data["tls.key"]; ok {
+		content = append(content, key...)
 	}
 
 	err := os.WriteFile(filepath.Join(GetCertFolder(), s.Name+".pem"), content, 0644)
