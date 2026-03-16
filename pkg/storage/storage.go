@@ -29,6 +29,9 @@ const (
 	leasePrefix        = "caddy-lock-"
 
 	keyPrefix = "caddy.ingress--"
+
+	// originalKeyAnnotation stores the original certmagic key on the secret.
+	originalKeyAnnotation = "certmagic.io/storage-key"
 )
 
 // matchLabels are attached to each resource so that they can be found in the future.
@@ -112,6 +115,9 @@ func (s *SecretStorage) Store(ctx context.Context, key string, value []byte) err
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   cleanKey(key, keyPrefix),
 			Labels: matchLabels,
+			Annotations: map[string]string{
+				originalKeyAnnotation: key,
+			},
 		},
 		Data: map[string][]byte{
 			"value": value,
@@ -161,21 +167,50 @@ func (s *SecretStorage) Delete(ctx context.Context, key string) error {
 
 // List returns all keys that match prefix.
 func (s *SecretStorage) List(ctx context.Context, prefix string, recursive bool) ([]string, error) {
-	var keys []string
-
 	s.logger.Debug("listing secrets", zap.String("name", prefix))
 	secrets, err := s.kubeClient.CoreV1().Secrets(s.Namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(matchLabels).String(),
 	})
 	if err != nil {
-		return keys, err
+		return nil, err
 	}
 
-	// TODO :- do we need to handle the recursive flag?
+	seen := make(map[string]bool)
+	var keys []string
+
 	for _, secret := range secrets.Items {
-		key := secret.ObjectMeta.Name
-		if strings.HasPrefix(key, cleanKey(prefix, keyPrefix)) {
-			keys = append(keys, strings.TrimPrefix(key, keyPrefix))
+		// Use the original key annotation if available (secrets created after the fix).
+		// Fall back to the cleaned key for backwards compatibility with old secrets.
+		originalKey := secret.Annotations[originalKeyAnnotation]
+		if originalKey == "" {
+			// Legacy secret without annotation - use the cleaned name.
+			// This preserves the old (buggy) behaviour for secrets that
+			// predate the fix, which is acceptable because the worst case
+			// is the same as before: mostRecentAccountEmail may fail, and
+			// certmagic will create a fresh account.
+			key := secret.ObjectMeta.Name
+			if strings.HasPrefix(key, cleanKey(prefix, keyPrefix)) {
+				keys = append(keys, strings.TrimPrefix(key, keyPrefix))
+			}
+			continue
+		}
+
+		if !strings.HasPrefix(originalKey, prefix) {
+			continue
+		}
+
+		if !recursive {
+			// Non-recursive: return only the next path component after prefix.
+			rest := strings.TrimPrefix(originalKey, prefix)
+			if idx := strings.Index(rest, "/"); idx >= 0 {
+				rest = rest[:idx]
+			}
+			originalKey = prefix + rest
+		}
+
+		if !seen[originalKey] {
+			seen[originalKey] = true
+			keys = append(keys, originalKey)
 		}
 	}
 
@@ -186,7 +221,28 @@ func (s *SecretStorage) List(ctx context.Context, prefix string, recursive bool)
 func (s *SecretStorage) Stat(ctx context.Context, key string) (certmagic.KeyInfo, error) {
 	secret, err := s.kubeClient.CoreV1().Secrets(s.Namespace).Get(context.TODO(), cleanKey(key, keyPrefix), metav1.GetOptions{})
 	if err != nil {
-		return certmagic.KeyInfo{}, err
+		// The key might be a "directory" (a prefix of real keys, not a
+		// secret itself).  Check whether any secrets exist under it.
+		if !errors.IsNotFound(err) {
+			return certmagic.KeyInfo{}, err
+		}
+		allSecrets, listErr := s.kubeClient.CoreV1().Secrets(s.Namespace).List(context.TODO(), metav1.ListOptions{
+			LabelSelector: labels.SelectorFromSet(matchLabels).String(),
+		})
+		if listErr != nil {
+			return certmagic.KeyInfo{}, err
+		}
+		cleanedPrefix := cleanKey(key, keyPrefix)
+		for _, sec := range allSecrets.Items {
+			if strings.HasPrefix(sec.Name, cleanedPrefix+".") {
+				// At least one child exists - this is a non-terminal key.
+				return certmagic.KeyInfo{
+					Key:        key,
+					IsTerminal: false,
+				}, nil
+			}
+		}
+		return certmagic.KeyInfo{}, fs.ErrNotExist
 	}
 
 	s.logger.Debug("stats secret", zap.String("name", key))
@@ -195,7 +251,7 @@ func (s *SecretStorage) Stat(ctx context.Context, key string) (certmagic.KeyInfo
 		Key:        key,
 		Modified:   secret.GetCreationTimestamp().UTC(),
 		Size:       int64(len(secret.Data["value"])),
-		IsTerminal: false,
+		IsTerminal: true,
 	}, nil
 }
 
