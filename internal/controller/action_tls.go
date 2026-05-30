@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/caddyserver/ingress/internal/k8s"
 	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/cache"
 )
 
 var certFolder = ""
@@ -117,6 +119,13 @@ func (c *CaddyController) watchTLSSecrets() error {
 
 		// Run it
 		go c.informers.TLSSecret.Run(c.stopChan)
+
+		// Wait for the TLSSecret informer to sync before loading certificates.
+		// This prevents a race condition where Caddy starts listening before
+		// certificates are written to disk.
+		if !cache.WaitForCacheSync(c.stopChan, c.informers.TLSSecret.HasSynced) {
+			return fmt.Errorf("timed out waiting for TLS secrets cache to sync")
+		}
 
 		// Sync secrets
 		secrets, err := k8s.ListTLSSecrets(params, c.resourceStore.Ingresses)
