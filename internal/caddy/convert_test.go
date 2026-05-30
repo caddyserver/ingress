@@ -21,7 +21,10 @@ func TestConvertToCaddyConfig(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cfg, err := Converter{}.ConvertToCaddyConfig(store.NewStore(store.Options{}, "", &store.PodInfo{}))
+			store, err := store.NewStore(nil, nil, store.Options{}, "", &store.PodInfo{}, nil, nil, nil, nil)
+			require.NoError(t, err)
+
+			cfg, err := Converter{}.ConvertToCaddyConfig(store)
 			require.NoError(t, err)
 
 			cfgJSON, err := json.Marshal(cfg)

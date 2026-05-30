@@ -7,9 +7,14 @@ import (
 
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/ingress/pkg/converter"
+	"github.com/caddyserver/ingress/pkg/store"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/tools/cache"
 )
 
 func TestTrustedProxesConvertToCaddyConfig(t *testing.T) {
@@ -52,23 +57,8 @@ func TestTrustedProxesConvertToCaddyConfig(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			input := converter.IngressMiddlewareInput{
-				Ingress: &networkingv1.Ingress{
-					ObjectMeta: metav1.ObjectMeta{
-						Annotations: test.annotations,
-						Namespace:   "namespace",
-					},
-				},
-				Path: networkingv1.HTTPIngressPath{
-					Backend: networkingv1.IngressBackend{
-						Service: &networkingv1.IngressServiceBackend{
-							Name: "svcName",
-							Port: networkingv1.ServiceBackendPort{Number: 80},
-						},
-					},
-				},
-				Route: &caddyhttp.Route{},
-			}
+			input := prepareReverseProxyTestInput()
+			input.Ingress.ObjectMeta.Annotations = test.annotations
 
 			route, err := rpp.IngressHandler(input)
 			require.NoError(t, err)
@@ -138,23 +128,8 @@ func TestMisconfiguredTrustedProxiesConvertToCaddyConfig(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			input := converter.IngressMiddlewareInput{
-				Ingress: &networkingv1.Ingress{
-					ObjectMeta: metav1.ObjectMeta{
-						Annotations: test.annotations,
-						Namespace:   "namespace",
-					},
-				},
-				Path: networkingv1.HTTPIngressPath{
-					Backend: networkingv1.IngressBackend{
-						Service: &networkingv1.IngressServiceBackend{
-							Name: "svcName",
-							Port: networkingv1.ServiceBackendPort{Number: 80},
-						},
-					},
-				},
-				Route: &caddyhttp.Route{},
-			}
+			input := prepareReverseProxyTestInput()
+			input.Ingress.ObjectMeta.Annotations = test.annotations
 
 			route, err := rpp.IngressHandler(input)
 			require.EqualError(t, err, test.expectedError)
@@ -164,5 +139,53 @@ func TestMisconfiguredTrustedProxiesConvertToCaddyConfig(t *testing.T) {
 
 			require.JSONEq(t, string(cfgJSON), "null")
 		})
+	}
+}
+
+func prepareReverseProxyTestInput() converter.IngressMiddlewareInput {
+	serviceCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+	endpointSliceCache := cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+	store, _ := store.NewStore(nil, nil, store.Options{}, "", nil, nil, serviceCache, endpointSliceCache, nil)
+
+	serviceCache.Add(&corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "namespace",
+			Name:      "svcName",
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{Port: 80, TargetPort: intstr.FromInt(8080)},
+			},
+		},
+	})
+	endpointSliceCache.Add(&discoveryv1.EndpointSlice{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "namespace",
+			Name:      "svcName-1234",
+			Labels: map[string]string{
+				discoveryv1.LabelServiceName: "svcName",
+			},
+		},
+		Endpoints: []discoveryv1.Endpoint{
+			{Addresses: []string{"10.20.30.40"}},
+		},
+	})
+
+	return converter.IngressMiddlewareInput{
+		Store: store,
+		Ingress: &networkingv1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "namespace",
+			},
+		},
+		Path: networkingv1.HTTPIngressPath{
+			Backend: networkingv1.IngressBackend{
+				Service: &networkingv1.IngressServiceBackend{
+					Name: "svcName",
+					Port: networkingv1.ServiceBackendPort{Number: 80},
+				},
+			},
+		},
+		Route: &caddyhttp.Route{},
 	}
 }
