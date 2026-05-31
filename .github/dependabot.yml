@@ -4,6 +4,7 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    rebase-strategy: auto
     labels:
       - "dependencies"
       - "dependabot"
@@ -11,6 +12,7 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    rebase-strategy: auto
     labels:
       - "dependencies"
       - "dependabot"
