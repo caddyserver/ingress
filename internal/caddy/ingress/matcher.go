@@ -1,6 +1,8 @@
 package ingress
 
 import (
+	"strings"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
@@ -30,12 +32,19 @@ func (p MatcherPlugin) IngressHandler(input converter.IngressMiddlewareInput) (*
 	}
 
 	if input.Path.Path != "" {
-		p := input.Path.Path
+		pathPattern := input.Path.Path
 
 		if *input.Path.PathType == v1.PathTypePrefix {
-			p += "*"
+			pathPattern = strings.TrimSuffix(pathPattern, "/")
+			if pathPattern == "" {
+				// Kubernetes Prefix "/" is match-all; Caddy path "/" is exact.
+				match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{"/*"}, nil)
+			} else {
+				match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{pathPattern, pathPattern + "/*"}, nil)
+			}
+		} else {
+			match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{pathPattern}, nil)
 		}
-		match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{p}, nil)
 	}
 
 	input.Route.MatcherSetsRaw = append(input.Route.MatcherSetsRaw, match)
