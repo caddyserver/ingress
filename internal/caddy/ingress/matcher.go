@@ -32,17 +32,18 @@ func (p MatcherPlugin) IngressHandler(input converter.IngressMiddlewareInput) (*
 	}
 
 	if input.Path.Path != "" {
-		p := input.Path.Path
+		pathPattern := input.Path.Path
 
 		if *input.Path.PathType == v1.PathTypePrefix {
-			p = strings.TrimSuffix(p, "/")
-			if p == "" {
+			pathPattern = strings.TrimSuffix(pathPattern, "/")
+			if pathPattern == "" {
+				// Kubernetes Prefix "/" is match-all; Caddy path "/" is exact.
 				match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{"/*"}, nil)
 			} else {
-				match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{p, p + "/*"}, nil)
+				match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{pathPattern, pathPattern + "/*"}, nil)
 			}
 		} else {
-			match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{p}, nil)
+			match["path"] = caddyconfig.JSON(caddyhttp.MatchPath{pathPattern}, nil)
 		}
 	}
 

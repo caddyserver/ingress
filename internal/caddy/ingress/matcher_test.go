@@ -41,7 +41,7 @@ func TestPathMatcherConvertToCaddyConfig(t *testing.T) {
 			expectedPath: `["/foo","/foo/*"]`,
 		},
 		{
-			name:         "root prefix path matches everything",
+			name:         "root prefix path emits Caddy match-all pattern",
 			path:         "/",
 			pathType:     pathType(networkingv1.PathTypePrefix),
 			expectedPath: `["/*"]`,
