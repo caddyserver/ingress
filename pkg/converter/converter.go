@@ -38,6 +38,12 @@ type IngressMiddleware interface {
 	IngressHandler(input IngressMiddlewareInput) (*caddyhttp.Route, error)
 }
 
+// Finalizer is an optional interface plugins can implement to perform finalization.
+// Note that Finalize may be called even if an earlier plugin caused an error.
+type Finalizer interface {
+	Finalize()
+}
+
 type Plugin interface {
 	IngressPlugin() PluginInfo
 }
