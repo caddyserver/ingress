@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/caddyserver/caddy/v2 v2.11.4
-	github.com/caddyserver/certmagic v0.25.3
+	github.com/caddyserver/certmagic v0.25.4
 	github.com/google/uuid v1.6.0
 	github.com/mholt/acmez/v3 v3.1.6
 	github.com/mitchellh/mapstructure v1.5.0
