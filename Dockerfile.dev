@@ -1,4 +1,5 @@
-FROM golang:1.22 as build
+FROM golang:1.24.2-alpine3.21 AS build
+
 
 ENV CGO_ENABLED=0
 
@@ -10,7 +11,7 @@ RUN go mod download
 COPY . .
 RUN go build -o ./bin/ingress-controller ./cmd/caddy
 
-FROM alpine:3.18
+FROM alpine:3.21
 
 EXPOSE 80 443
 
