@@ -4,67 +4,44 @@ import (
 	v1 "k8s.io/api/networking/v1"
 )
 
-// IngressAddedAction provides an implementation of the action interface.
-type IngressAddedAction struct {
-	resource *v1.Ingress
-}
-
-// IngressUpdatedAction provides an implementation of the action interface.
-type IngressUpdatedAction struct {
-	resource    *v1.Ingress
-	oldResource *v1.Ingress
-}
-
-// IngressDeletedAction provides an implementation of the action interface.
-type IngressDeletedAction struct {
-	resource *v1.Ingress
-}
-
 // onIngressAdded runs when an ingress resource is added to the cluster.
-func (c *CaddyController) onIngressAdded(obj *v1.Ingress) {
-	c.syncQueue.Add(IngressAddedAction{
-		resource: obj,
-	})
+func (c *CaddyController) onIngressAdded(obj *v1.Ingress) error {
+	c.logger.Infof("Ingress created (%s/%s)", obj.Namespace, obj.Name)
+	return nil
 }
 
 // onIngressUpdated is run when an ingress resource is updated in the cluster.
-func (c *CaddyController) onIngressUpdated(old *v1.Ingress, new *v1.Ingress) {
-	c.syncQueue.Add(IngressUpdatedAction{
-		resource:    new,
-		oldResource: old,
-	})
+func (c *CaddyController) onIngressUpdated(obj *v1.Ingress) error {
+	c.logger.Infof("Ingress updated (%s/%s)", obj.Namespace, obj.Name)
+	return nil
 }
 
 // onIngressDeleted is run when an ingress resource is deleted from the cluster.
-func (c *CaddyController) onIngressDeleted(obj *v1.Ingress) {
-	c.syncQueue.Add(IngressDeletedAction{
-		resource: obj,
+func (c *CaddyController) onIngressDeleted(obj *v1.Ingress) error {
+	c.logger.Infof("Ingress deleted (%s/%s)", obj.Namespace, obj.Name)
+	return nil
+}
+
+// watchIngresses
+func (c *CaddyController) watchIngresses() {
+	c.informers.Ingress = c.factories.WatchedNamespace.Networking().V1().Ingresses().Informer()
+	c.informers.Ingress.SetTransform(c.ingressTransform)
+	c.informers.Ingress.AddEventHandler(&QueuedEventHandlers[v1.Ingress]{
+		Queue:      c.syncQueue,
+		AddFunc:    c.onIngressAdded,
+		UpdateFunc: c.onIngressUpdated,
+		DeleteFunc: c.onIngressDeleted,
 	})
 }
 
-func (r IngressAddedAction) handle(c *CaddyController) error {
-	c.logger.Infof("Ingress created (%s/%s)", r.resource.Namespace, r.resource.Name)
-	// add this ingress to the internal store
-	c.resourceStore.AddIngress(r.resource)
-
-	// Ingress may now have a TLS config
-	return c.watchTLSSecrets()
-}
-
-func (r IngressUpdatedAction) handle(c *CaddyController) error {
-	c.logger.Infof("Ingress updated (%s/%s)", r.resource.Namespace, r.resource.Name)
-
-	// add or update this ingress in the internal store
-	c.resourceStore.AddIngress(r.resource)
-
-	// Ingress may now have a TLS config
-	return c.watchTLSSecrets()
-}
-
-func (r IngressDeletedAction) handle(c *CaddyController) error {
-	c.logger.Infof("Ingress deleted (%s/%s)", r.resource.Namespace, r.resource.Name)
-
-	// delete all resources from caddy config that are associated with this resource
-	c.resourceStore.PluckIngress(r.resource)
-	return nil
+// ingressTransform modifies the ingress resource to fill the
+// IngressClassName field if a legacy annotation is present.
+func (*CaddyController) ingressTransform(obj any) (any, error) {
+	if obj, ok := obj.(*v1.Ingress); ok {
+		legacyAnnotation := obj.Annotations["kubernetes.io/obj.class"]
+		if legacyAnnotation != "" && obj.Spec.IngressClassName == nil {
+			obj.Spec.IngressClassName = &legacyAnnotation
+		}
+	}
+	return obj, nil
 }

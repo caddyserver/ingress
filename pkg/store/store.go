@@ -1,74 +1,175 @@
 package store
 
 import (
-	v1 "k8s.io/api/networking/v1"
+	"fmt"
+	"sort"
+	"strings"
+
+	"go.uber.org/zap"
+	apicore "k8s.io/api/core/v1"
+	apidiscovery "k8s.io/api/discovery/v1"
+	apinetworking "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
+)
+
+const (
+	isControlledIngressIndex         string = "is-controlled-ingress"
+	endpointSlicesByServiceNameIndex string = "by-service-name"
+	yesIndexValue                    string = "y"
 )
 
 // Store contains resources used to generate Caddy config
 type Store struct {
-	Options         *Options
-	Ingresses       []*v1.Ingress
-	ConfigMap       *ConfigMapOptions
-	ConfigNamespace string
-	CurrentPod      *PodInfo
+	Logger             *zap.SugaredLogger
+	KubeClient         *kubernetes.Clientset
+	Options            *Options
+	ConfigMap          *ConfigMapOptions
+	ConfigNamespace    string
+	CurrentPod         *PodInfo
+	ingressCache       cache.Indexer
+	serviceCache       cache.Indexer
+	endpointSliceCache cache.Indexer
+	secretCache        cache.Indexer
 }
 
 // NewStore returns a new store that keeps track of K8S resources needed by the controller.
-func NewStore(opts Options, configNamespace string, podInfo *PodInfo) *Store {
+func NewStore(
+	logger *zap.SugaredLogger,
+	kubeClient *kubernetes.Clientset,
+	opts Options,
+	configNamespace string,
+	podInfo *PodInfo,
+	ingressCache cache.Indexer,
+	serviceCache cache.Indexer,
+	endpointSliceCache cache.Indexer,
+	secretCache cache.Indexer,
+) (*Store, error) {
+	// For testing purposes, we allow these to be nil.
+	if logger == nil {
+		logger = zap.NewNop().Sugar()
+	}
+	if ingressCache == nil {
+		ingressCache = cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+	}
+	if serviceCache == nil {
+		serviceCache = cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+	}
+	if endpointSliceCache == nil {
+		endpointSliceCache = cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+	}
+	if secretCache == nil {
+		secretCache = cache.NewIndexer(cache.MetaNamespaceKeyFunc, make(cache.Indexers))
+	}
+
 	s := &Store{
-		Options:         &opts,
-		Ingresses:       []*v1.Ingress{},
-		ConfigMap:       &ConfigMapOptions{},
-		ConfigNamespace: configNamespace,
-		CurrentPod:      podInfo,
+		Logger:             logger,
+		KubeClient:         kubeClient,
+		Options:            &opts,
+		ConfigMap:          &ConfigMapOptions{},
+		ConfigNamespace:    configNamespace,
+		CurrentPod:         podInfo,
+		ingressCache:       ingressCache,
+		serviceCache:       serviceCache,
+		endpointSliceCache: endpointSliceCache,
+		secretCache:        secretCache,
 	}
-	return s
+
+	if err := ingressCache.AddIndexers(map[string]cache.IndexFunc{
+		// Contains the set of ingresses we control.
+		isControlledIngressIndex: func(obj any) ([]string, error) {
+			ingressClass := obj.(*apinetworking.Ingress).Spec.IngressClassName
+			if (ingressClass != nil && *ingressClass == opts.ClassName) ||
+				(ingressClass == nil && !opts.ClassNameRequired) {
+				return []string{yesIndexValue}, nil
+			}
+			return nil, nil
+		},
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := endpointSliceCache.AddIndexers(map[string]cache.IndexFunc{
+		// Indexes endpoint slices by service name.
+		endpointSlicesByServiceNameIndex: func(obj any) ([]string, error) {
+			es := obj.(*apidiscovery.EndpointSlice)
+			if serviceName, ok := es.Labels[apidiscovery.LabelServiceName]; ok {
+				return []string{fmt.Sprintf("%s/%s", es.Namespace, serviceName)}, nil
+			}
+			return nil, nil
+		},
+	}); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
-// AddIngress adds an ingress to the store. It updates the element at the given index if it is unique.
-func (s *Store) AddIngress(ing *v1.Ingress) {
-	isUniq := true
+// Ingresses returns a list of Ingress resources that match our IngressClass.
+func (s *Store) Ingresses() []*apinetworking.Ingress {
+	// Note: errors only when the index does not exist.
+	list, _ := s.ingressCache.ByIndex(isControlledIngressIndex, yesIndexValue)
+	sortResources(list)
 
-	for i := range s.Ingresses {
-		in := s.Ingresses[i]
-		if in.GetUID() == ing.GetUID() {
-			isUniq = false
-			s.Ingresses[i] = ing
-		}
+	result := make([]*apinetworking.Ingress, 0, len(list))
+	for _, ingress := range list {
+		result = append(result, ingress.(*apinetworking.Ingress))
 	}
 
-	if isUniq {
-		s.Ingresses = append(s.Ingresses, ing)
-	}
+	return result
 }
 
-// PluckIngress removes the ingress passed in as an argument from the stores list of ingresses.
-func (s *Store) PluckIngress(ing *v1.Ingress) {
-	id := ing.GetUID()
+// EndpointSlicesByService returns a list of endpoint slices for the given service.
+// The serviceName must be specified in full as `<namespace>/<name>`
+func (s *Store) EndpointSlicesByService(serviceName string) []*apidiscovery.EndpointSlice {
+	// Note: errors only when the index does not exist.
+	list, _ := s.endpointSliceCache.ByIndex(endpointSlicesByServiceNameIndex, serviceName)
+	sortResources(list)
 
-	var index int
-	var hasMatch bool
-	for i := range s.Ingresses {
-		if s.Ingresses[i].GetUID() == id {
-			index = i
-			hasMatch = true
-			break
-		}
+	result := make([]*apidiscovery.EndpointSlice, 0, len(list))
+	for _, obj := range list {
+		result = append(result, obj.(*apidiscovery.EndpointSlice))
 	}
-
-	// since order is not important we can swap the element to delete with the one at the end of the slice
-	// and then set ingresses to the n-1 first elements
-	if hasMatch {
-		s.Ingresses[len(s.Ingresses)-1], s.Ingresses[index] = s.Ingresses[index], s.Ingresses[len(s.Ingresses)-1]
-		s.Ingresses = s.Ingresses[:len(s.Ingresses)-1]
-	}
+	return result
 }
 
-func (s *Store) HasManagedTLS() bool {
-	for _, ing := range s.Ingresses {
-		if len(ing.Spec.TLS) > 0 {
-			return true
+// Service returns the current state of a service by name.
+// The serviceName must be specified in full as `<namespace>/<name>`
+func (s *Store) Service(serviceName string) *apicore.Service {
+	if service, exists, _ := s.serviceCache.GetByKey(serviceName); exists {
+		if service, ok := service.(*apicore.Service); ok {
+			return service
 		}
 	}
-	return false
+	return nil
+}
+
+// SecretMeta returns metadata for a secret.
+// The secretName must be specified in full as `<namespace>/<name>`
+func (s *Store) SecretMeta(secretName string) *apicore.Secret {
+	if secret, exists, _ := s.secretCache.GetByKey(secretName); exists {
+		if secret, ok := secret.(*apicore.Secret); ok {
+			return secret
+		}
+	}
+	return nil
+}
+
+func sortResources(slice []any) {
+	sort.Slice(slice, func(i, j int) bool {
+		iMeta, _ := meta.Accessor(slice[i])
+		jMeta, _ := meta.Accessor(slice[j])
+
+		if iMeta == nil || jMeta == nil {
+			return jMeta != nil
+		}
+
+		nsDiff := strings.Compare(iMeta.GetNamespace(), jMeta.GetNamespace())
+		if nsDiff != 0 {
+			return nsDiff < 0
+		}
+
+		return strings.Compare(iMeta.GetName(), jMeta.GetName()) < 0
+	})
 }
