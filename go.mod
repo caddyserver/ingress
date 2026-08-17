@@ -9,7 +9,7 @@ require (
 	github.com/mholt/acmez/v3 v3.1.6
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pires/go-proxyproto v0.12.0
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.0
 	go.uber.org/zap v1.28.0
 	gopkg.in/go-playground/pool.v3 v3.1.1
 	k8s.io/api v0.36.2
